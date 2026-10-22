@@ -20,6 +20,9 @@
     "Folder": "dist/workshop/SmartSkill",
     "Preview": "workshop/SmartSkill/preview.png",
     "Tags": [],
+    "Requires": [
+      "Runtime"
+    ],
     "Title": {
       "schinese": "SmartSkill：技能自动释放条件",
       "english": "SmartSkill: smarter auto-cast"
@@ -35,13 +38,16 @@
     "Folder": "dist/workshop/SmartMove",
     "Preview": "workshop/SmartMove/preview.png",
     "Tags": [],
+    "Requires": [
+      "Runtime"
+    ],
     "Title": {
       "schinese": "SmartMove：自动躲避地面预警",
       "english": "SmartMove: auto-dodge ground telegraphs"
     },
     "Description": {
-      "schinese": "[b]需要先订阅并安装 [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3824690979]Mod 运行环境（BepInEx + DBModKit）[/url][/b]（游戏的创意工坊不会自动加载代码 Mod）。装好运行环境后，订阅本条目即可，第一次加载时游戏里会让你确认。\n\n没按方向键时，地面出现红色预警（敌人技能、陷阱）会自动走出去，开不开自动战斗都生效。\n\n[list]\n[*]优先选离场地边缘和障碍物远的落脚点，避免被堵进墙角\n[*]F9 开关（和 DBStudio 撞键，可以在 DBStudio 的 Mod 页里改）\n[*]敌人的普通攻击出手必中，躲不掉；能躲的是带红色预警的技能\n[/list]\n\n[h2]注意[/h2]\n[list]\n[*]按游戏作者的规则，装了 Mod 后成绩不会上传排行榜。\n[*]界面目前只有中文。\n[*]源码（MIT）和问题反馈：https://github.com/plge0n/DungeonBrawlMods\n[/list]",
-      "english": "[b]Requires [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3824690979]Mod Runtime (BepInEx + DBModKit)[/url] to be subscribed and installed first[/b] (the game's Workshop doesn't load code mods by itself). Once the runtime is installed, just subscribe; you'll be asked to confirm the first time it loads.\n\nWhen you're not pressing a direction key, it walks you out of red ground telegraphs (enemy skills, traps), with or without auto-battle.\n\n[list]\n[*]Prefers spots away from the arena edge and obstacles so you don't get cornered\n[*]Toggle with F9 (clashes with DBStudio; change it in DBStudio's Mod page)\n[*]Enemy basic attacks always hit once started; only telegraphed skills can be dodged\n[/list]\n\n[h2]Notes[/h2]\n[list]\n[*]By the game author's rule, scores aren't uploaded to the leaderboard while mods are installed.\n[*]The in-game UI is Chinese only for now.\n[*]Source code (MIT) and issues: https://github.com/plge0n/DungeonBrawlMods\n[/list]"
+      "schinese": "[b]需要先订阅并安装 [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3824690979]Mod 运行环境（BepInEx + DBModKit）[/url][/b]（游戏的创意工坊不会自动加载代码 Mod）。装好运行环境后，订阅本条目即可，第一次加载时游戏里会让你确认。\n\n没按方向键时，地面出现红色预警（敌人技能、陷阱）会自动走出去，开不开自动战斗都生效。\n\n[list]\n[*]优先选离场地边缘和障碍物远的落脚点，避免被堵进墙角\n[*]F8 开关，可以在 DBStudio 的 Mod 页里改\n[*]敌人的普通攻击出手必中，躲不掉；能躲的是带红色预警的技能\n[/list]\n\n[h2]注意[/h2]\n[list]\n[*]按游戏作者的规则，装了 Mod 后成绩不会上传排行榜。\n[*]界面目前只有中文。\n[*]源码（MIT）和问题反馈：https://github.com/plge0n/DungeonBrawlMods\n[/list]",
+      "english": "[b]Requires [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3824690979]Mod Runtime (BepInEx + DBModKit)[/url] to be subscribed and installed first[/b] (the game's Workshop doesn't load code mods by itself). Once the runtime is installed, just subscribe; you'll be asked to confirm the first time it loads.\n\nWhen you're not pressing a direction key, it walks you out of red ground telegraphs (enemy skills, traps), with or without auto-battle.\n\n[list]\n[*]Prefers spots away from the arena edge and obstacles so you don't get cornered\n[*]Toggle with F8; change it in DBStudio's Mod page\n[*]Enemy basic attacks always hit once started; only telegraphed skills can be dodged\n[/list]\n\n[h2]Notes[/h2]\n[list]\n[*]By the game author's rule, scores aren't uploaded to the leaderboard while mods are installed.\n[*]The in-game UI is Chinese only for now.\n[*]Source code (MIT) and issues: https://github.com/plge0n/DungeonBrawlMods\n[/list]"
     }
   },
   "AutoPickup": {
@@ -50,6 +56,9 @@
     "Folder": "dist/workshop/AutoPickup",
     "Preview": "workshop/AutoPickup/preview.png",
     "Tags": [],
+    "Requires": [
+      "Runtime"
+    ],
     "Title": {
       "schinese": "AutoPickup：自动拾取",
       "english": "AutoPickup: automatic pickup"
@@ -65,6 +74,9 @@
     "Folder": "dist/workshop/DamageMeter",
     "Preview": "workshop/DamageMeter/preview.png",
     "Tags": [],
+    "Requires": [
+      "Runtime"
+    ],
     "Title": {
       "schinese": "DamageMeter：伤害统计",
       "english": "DamageMeter: damage meter"
@@ -80,6 +92,9 @@
     "Folder": "dist/workshop/Hextech",
     "Preview": "workshop/Hextech/preview.png",
     "Tags": [],
+    "Requires": [
+      "Runtime"
+    ],
     "Title": {
       "schinese": "Hextech：海克斯强化",
       "english": "Hextech: augments for your signature skill"
@@ -95,6 +110,9 @@
     "Folder": "dist/workshop/DBStudio",
     "Preview": "workshop/DBStudio/preview.png",
     "Tags": [],
+    "Requires": [
+      "Runtime"
+    ],
     "Title": {
       "schinese": "DBStudio：游戏内 Mod 工作台",
       "english": "DBStudio: in-game mod workbench"

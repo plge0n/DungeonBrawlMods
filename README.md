@@ -7,7 +7,7 @@ BepInEx 5 插件，目标游戏：地下城竞技场（Steam 4246640，Unity 202
 | [DBModKit](DBModKit) | 依赖库：游戏接口、自动释放钩子、事件、原生风格 UI、JSON 配置、兼容检查 |
 | [SmartSkill](SmartSkill) | 给"右键技能图标自动释放"加上每个技能单独的释放条件 |
 | [DBStudio](DBStudio) | 游戏内的 Mod 工作台（F9）：调试面板、规则、强化（海克斯式三选一）、数值编辑器、英雄皮肤 |
-| [SmartMove](SmartMove) | 自动躲避地面预警（F9 开关） |
+| [SmartMove](SmartMove) | 自动躲避地面预警（F8 开关） |
 | [AutoPickup](AutoPickup) | 战斗中自动拾取身边能捡的掉落物（和按 C 一样），可按类别过滤 |
 | [DamageMeter](DamageMeter) | 伤害统计：按普攻、技能、召唤物分开统计本波和本局的伤害与 DPS；Steam 联机时显示装了它的队友的伤害 |
 | [Hextech](Hextech) | 海克斯强化：每局 4 次三选一，自动生成强化英雄专属技能的卡（只在单人时生效） |
@@ -96,7 +96,7 @@ pwsh ./pack.ps1                                 # 生成 dist/ 下的发布包�
 
 - 游戏不在默认位置：设置环境变量 `GameDir`，或加 `-p:GameDir="X:\...\地下城竞技场"`。
 - 公共构建配置在 `Directory.Build.props/.targets`：Mod 项目只需写 `AssemblyName` 和对 DBModKit 的 `ProjectReference`（`Private="false"`）。模板在 `templates/DBMod`。
-- 发布新版本：改源码里的 `Version` 常量 → 在对应目录的 `CHANGELOG.md` 加条目 → 整套发版时改根目录的 `VERSION`，在 `RELEASE_NOTES.md` 写中英文发版说明（包括哪些功能没实测）→ `pack.ps1`（缺少更新日志条目或发版说明时会报错）。
+- 发布新版本：改源码里的 `Version` 常量 → 在对应目录的 `CHANGELOG.md` 和 `CHANGELOG.en.md`（英文，创意工坊的更新说明会带上）加条目 → 整套发版时改根目录的 `VERSION`，在 `RELEASE_NOTES.md` 写中英文发版说明（包括哪些功能没实测）→ `pack.ps1`（缺少更新日志条目或发版说明时会报错）。
   发布包是 `dist/DungeonBrawlMods-<VERSION>-full.zip`（带 BepInEx）和 `-plugins.zip`，根目录放 `安装说明.txt`、`INSTALL-EN.txt`、`RELEASE_NOTES.md`。
 
 ## 创意工坊
@@ -112,7 +112,7 @@ pwsh ./pack.ps1                                 # 生成 dist/ 下的发布包�
 - 条目里不要放 `manifest.json`：那是游戏自己的格式（英雄模型等），游戏会去读它。
 
 ### 上传
-- 条目的标题、说明（按语言）、可见性、预览图在 `workshop/items.json`；第一次上传后条目编号会写回这个文件，要提交。
+- 条目的标题、说明（按语言）、可见性、预览图、必需物品（`Requires`，写别的条目名，比如 Mod 条目都写 `["Runtime"]`，订阅时 Steam 会提示一起订阅）在 `workshop/items.json`；第一次上传后条目编号会写回这个文件，要提交。
 - `Runtime` 条目（BepInEx + DBModKit）：游戏工坊不加载 dll，玩家订阅后运行条目里的 `install.bat` 把文件复制进游戏目录，`uninstall.bat` 卸载。
   安装器模板在 `workshop/Runtime/`，`pack.ps1` 生成 `dist/workshop/Runtime/`。DBModKit 发现工坊里的运行环境比装的新时会在游戏里提示。
 - 上传（Steam 客户端要开着并登录拥有游戏的账号，不需要密码）：

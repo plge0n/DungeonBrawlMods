@@ -36,9 +36,9 @@ SmartSkill 让你给每个技能单独设定释放条件，比如：血量低于
 不进战斗也能在 DBStudio（F9）的 Mod 页里查看和切换所有技能的模式。
 
 【自动躲避：SmartMove】
-没按方向键时，地面出现红色预警（敌人技能、陷阱）会自动走出去，开不开自动战斗都生效。按 F9 开关。
+没按方向键时，地面出现红色预警（敌人技能、陷阱）会自动走出去，开不开自动战斗都生效。按 F8 开关。
 敌人的普通攻击一旦出手必中，躲不掉；能躲的是带红色预警的技能。
-注意：DBStudio 也用 F9。可以在 DBStudio 的 Mod 页里给其中一个换快捷键。
+快捷键可以在 DBStudio 的 Mod 页里改。0.2.0 及以前默认是 F9，和 DBStudio 撞键，0.3.0 起改成 F8；自己改过的键会保留。
 设置在 BepInEx\config\plge0n.dungeonbrawl.smartmove.cfg。
 
 【自动拾取：AutoPickup】
