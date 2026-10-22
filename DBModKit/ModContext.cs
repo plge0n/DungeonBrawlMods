@@ -219,6 +219,17 @@ namespace DBModKit
             return result;
         }
 
+        /// <summary>
+        /// 注册一个变体英雄（见 <see cref="HeroVariants"/>）。名字和说明按 Mod 的 <see cref="Text"/> 翻译（键 hero.&lt;Key&gt;.name / desc）。
+        /// 玩家在 DBStudio 的 Mod 页里选用。卸载时自动注销（已经出生的这一局不变）。
+        /// </summary>
+        public HeroVariantInfo RegisterHeroVariant(HeroVariantDef def)
+        {
+            var info = HeroVariants.Register(Metadata.GUID, Text, Folder, def);
+            AddCleanup(() => HeroVariants.Unregister(info));
+            return info;
+        }
+
         /// <summary>订阅战斗事件（见 <see cref="GameEvents"/>）。</summary>
         public void OnGameEvent(Action<GameEvent> handler)
         {

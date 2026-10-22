@@ -17,6 +17,10 @@
 - 施法动作：`ActiveSkill.PlayAnimation(片段 / 游戏动作名, 速度, 时长)` 在技能持续期间把施法者的动作换掉（游戏旋风斩、鸡舞的同款做法：
   换掉待机片段并锁住动画，结束时还原），每个装了 Mod 的客户端都能看到；`StopAnimation` 提前换回。片段可以来自 AssetBundle（Humanoid），
   也可以用游戏自带的（`Frank_RPG_2Hand_Skill01_WhirlWind` 等）。和别的换动作技能重叠时会先结束对方，游戏的旋风斩叠在后面时结束后会自动还原
+- 新增变体英雄（`HeroVariants`）：`mod.RegisterHeroVariant(new HeroVariantDef { BaseHero = 英雄, … })`，底层仍是原英雄，
+  出生时换属性（三维、成长、攻击、护甲、生命、法力、回复、移速、攻速）、专属技能（游戏的或自定义的主动/被动）、模型（Mod 自带的模型文件夹或工坊模型）和名字。
+  属性和专属技能和玩法包一样只在单人时生效，联机时只换名字和模型（模型只在自己这边显示）。玩家在 DBStudio 的 Mod 页"英雄变体"里给每个英雄选，
+  也可以用 `HeroVariants.Select`；`HeroVariants.LocalVariant` / `LocalGameplayActive` 是这一局的情况
 - 新增 Mod 资源（`ModAssets`）：`mod.LoadIcon(键, "图片.png")` / `mod.RegisterIcon(键, Sprite)` 返回图标名，填进技能的 `Icon`，
   技能栏、三选一、图鉴、构筑面板都会显示；`mod.RegisterEffect(键, 模板)` 返回特效路径，传给 `ActiveSkill.Effect`，走游戏的对象池；
   `mod.LoadBundle("xxx.bundle")` 打开 AssetBundle（`Sprite` / `Prefab` / `Clip` / `Load<T>`），卸载时自动关闭。`mod.Folder` 是插件所在文件夹
