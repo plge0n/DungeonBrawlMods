@@ -1,0 +1,37 @@
+SmartSkill —— 地下城竞技场 技能自动释放增强
+
+【这是什么】
+游戏里右键技能图标可以开启自动释放，但原版只要冷却好、蓝够、附近有敌人就会放。
+SmartSkill 让你给每个技能单独设定释放条件，比如：血量低于 50% 才放治疗、
+范围内敌人达到 3 个才放范围技能、优先打 Boss 等。
+
+【安装】
+1. 在 Steam 里右键游戏 → 管理 → 浏览本地文件，打开游戏目录（里面有 DungeonBrawl.exe）。
+2. 首次安装：把「完整包」里的所有内容解压到这个目录。
+   已经装过：把「仅插件」包解压到这个目录，覆盖旧文件即可。
+3. 启动游戏。第一次启动 BepInEx 会做初始化，可能比平时慢一点。
+
+【使用】
+1. 进入战斗，右键技能图标开启自动释放（原版功能）。
+2. 图标右上角会出现齿轮，点击齿轮打开设置面板。
+3. 模式：
+   原版       —— 不干预，和没装 Mod 一样（默认）
+   自定义条件 —— 按勾选的条件判断是否释放
+   永不自动   —— 开了自动也不放
+4. 不知道怎么设时，点「按标签推荐」，会根据技能类型填一套常用条件。
+设置会自动保存在 BepInEx\config\SmartSkill.rules.json，所有角色共用（按技能区分）。
+
+【联机】
+Mod 只影响你自己角色的自动释放，队友不需要安装。
+
+【游戏更新后】
+如果游戏更新导致 Mod 不兼容，进游戏时屏幕顶部会提示「SmartSkill 已停用」，
+此时 Mod 不会做任何修改，游戏可以正常玩，等 Mod 更新即可。
+
+【卸载】
+删除游戏目录下的 BepInEx\plugins\SmartSkill 文件夹即可。
+如果要连 BepInEx 一起卸载，再删除：BepInEx 文件夹、winhttp.dll、doorstop_config.ini、changelog.txt、.doorstop_version。
+
+【出问题时】
+把 BepInEx\LogOutput.log 发给作者。
+需要更详细的记录时，把 BepInEx\config\dry.dungeonbrawl.smartskill.cfg 里的 VerboseLog 改成 true。

@@ -1,0 +1,9 @@
+bin/
+obj/
+dist/
+.cache/
+.vs/
+*.user
+# 游戏和 BepInEx 的程序集只在编译时从游戏目录引用，不能提交
+*.dll
+*.pdb
