@@ -1,6 +1,7 @@
 using System;
 using System.Reflection;
 using HarmonyLib;
+using UnityEngine;
 
 namespace DBModKit
 {
@@ -38,6 +39,47 @@ namespace DBModKit
             TryPatch(harmony, typeof(GameDataHooks), "怪物倍率（表加载）",
                 AccessTools.Method(typeof(oo), "gad", Type.EmptyTypes),
                 postfix: nameof(GameDataHooks.EnemyTablePostfix));
+
+            HeroSkins.Available = TryPatch(harmony, typeof(HeroSkinHooks), "英雄皮肤（查找模型）",
+                AccessTools.Method(typeof(buj), "pwu", new[] { typeof(int), typeof(string).MakeByRefType(), typeof(LocalWorkshopManifest).MakeByRefType() }),
+                prefix: nameof(HeroSkinHooks.ResolvePrefix));
+            // 变身时记下是谁在变身；这两个装不上时变身按英雄判断（同英雄的其他玩家变身也会换模型）
+            TryPatch(harmony, typeof(HeroSkinHooks), "英雄皮肤（变身技能）",
+                AccessTools.Method(typeof(bgt), "mqp", new[] { typeof(string) }),
+                prefix: nameof(HeroSkinHooks.SkillTransformPrefix));
+            TryPatch(harmony, typeof(HeroSkinHooks), "英雄皮肤（变身恢复）",
+                AccessTools.Method(typeof(bbp), "lob", new[] { typeof(bbe) }),
+                prefix: nameof(HeroSkinHooks.CheckpointTransformPrefix));
+            HeroSkins.OnlyLocalPlayerAvailable =
+                TryPatch(harmony, typeof(HeroSkinHooks), "英雄皮肤（只换本地玩家）",
+                    AccessTools.Method(typeof(buj), "pwh", new[] { typeof(bbe) }),
+                    prefix: nameof(HeroSkinHooks.SpawnPrefix))
+                && TryPatch(harmony, typeof(HeroSkinHooks), "英雄皮肤（变身只换本地玩家）",
+                    AccessTools.Method(typeof(buj), "pwj", new[] { typeof(HeroType), typeof(string), typeof(RoleModeBase) }),
+                    prefix: nameof(HeroSkinHooks.TransformPrefix));
+
+            // 开关技能开着时，自动释放直接把它关掉，不经过 dxx
+            if (AutoCast.Available)
+                TryPatch(harmony, typeof(AutoCastHooks), "开关技能自动关闭",
+                    AccessTools.Method(typeof(bht), "kcac92c2266be41d3979b385715ce318e", new Type[0]),
+                    prefix: nameof(AutoCastHooks.TogglePrefix), postfix: nameof(AutoCastHooks.TogglePostfix));
+
+            MoveControl.Available =
+                TryPatch(harmony, typeof(MoveHooks), "走位（待机/移动）",
+                    AccessTools.Method(typeof(bbe), "kqi", new[] { typeof(bool) }),
+                    prefix: nameof(MoveHooks.Prefix), postfix: nameof(MoveHooks.Postfix))
+                && TryPatch(harmony, typeof(MoveHooks), "走位（攻击中）",
+                    AccessTools.Method(typeof(bbe), "kqh", new Type[0]),
+                    prefix: nameof(MoveHooks.AttackPrefix), postfix: nameof(MoveHooks.Postfix));
+
+            try
+            {
+                Combat.Install();
+            }
+            catch (Exception e)
+            {
+                Log.Error($"命中事件：订阅失败，该功能停用：{e}");
+            }
             return true;
         }
 
@@ -154,6 +196,100 @@ namespace DBModKit
             __result = (yb)target?.Native;
             return false;
         }
+
+        // bht.kcac92…()：bpf.opk 每帧在冷却好时调用的自动释放入口。开关技能开着（bhnv）时它会直接关掉技能，
+        // 这里先问处理器：Skip = 保持开着，其余 = 照原版关掉
+        internal static bool TogglePrefix(bht __instance, ref bool __result, out State? __state)
+        {
+            __state = null;
+            var handler = AutoCast.Handler;
+            var native = __instance.bhng?.bjgk;
+            if (handler == null || native == null || !native.bhnv || __instance.bhnd == null || __instance.bhnd != GameRaw.LocalPlayer())
+                return true;
+
+            var slot = SkillSlot.Wrap(native);
+            var player = Game.LocalPlayer;
+            if (slot == null || player == null) return true;
+
+            AutoCastVerdict verdict;
+            try
+            {
+                verdict = handler(slot, player);
+            }
+            catch (Exception e)
+            {
+                Safe.Report("AutoCast 处理器（开关技能）", e);
+                return true;
+            }
+            __state = new State { Slot = slot, Verdict = verdict };
+            if (verdict.Action != AutoCastAction.Skip) return true;
+            __result = false;
+            return false;
+        }
+
+        internal static void TogglePostfix(bool __result, State? __state)
+        {
+            if (__state is State s) AutoCast.RaiseResolved(new AutoCastResult(s.Slot, s.Verdict, __result));
+        }
+    }
+
+    // bbe.kqi(bool)：待机/移动状态每帧的控制逻辑（含官方自动战斗）；bbe.kqh()：攻击状态每帧，玩家有移动输入时会打断攻击。
+    // 两者都从 os.bctl / os.bctm 读移动输入。处理器要移动时，在调用期间把方向写进输入、结束后还原，
+    // 游戏就会按"玩家按住方向键"处理：转向、移速、碰撞、打断攻击都走原版逻辑。
+    internal static class MoveHooks
+    {
+        internal struct Saved
+        {
+            public float X, Z;
+        }
+
+        internal static void Prefix(bbe __instance, bool __0, out Saved? __state)
+        {
+            __state = __0 ? Inject(__instance, false) : null;
+        }
+
+        internal static void AttackPrefix(bbe __instance, out Saved? __state)
+        {
+            __state = Inject(__instance, true);
+        }
+
+        internal static void Postfix(Saved? __state)
+        {
+            if (__state is Saved s)
+            {
+                os.bctl = s.X;
+                os.bctm = s.Z;
+            }
+        }
+
+        private static Saved? Inject(bbe player, bool inAttack)
+        {
+            var handler = MoveControl.Handler;
+            if (handler == null || player == null || player != GameRaw.LocalPlayer()) return null;
+            if (player.roleType == RoleType.King || nn.bbtm) return null;
+            // 玩家自己在操作
+            if (!Mathf.Approximately(os.bctl, 0f) || !Mathf.Approximately(os.bctm, 0f)) return null;
+
+            var p = Game.LocalPlayer;
+            if (p == null) return null;
+            MoveCommand cmd;
+            try
+            {
+                cmd = handler(new MoveContext(p, inAttack));
+            }
+            catch (Exception e)
+            {
+                Safe.Report("移动处理器", e);
+                return null;
+            }
+            if (!cmd.Override) return null;
+
+            MoveControl.Last = cmd;
+            var saved = new Saved { X = os.bctl, Z = os.bctm };
+            os.bctl = cmd.Direction.x;
+            os.bctm = cmd.Direction.z;
+            return saved;
+        }
     }
 
     // oo.gad()：每局开始把 enemy 表里还没有的怪物加进 bcru（已有的不覆盖），加完后补上倍率
@@ -207,6 +343,60 @@ namespace DBModKit
                     GameEvents.Raise(new GameEvent(GameEventKind.GameOver));
                     break;
             }
+        }
+    }
+
+    // buj.pwu(英雄编号, out 文件夹, out manifest)：查找英雄模型文件夹的唯一入口，出生、选英雄预览、变身、名字和头像覆盖都经过它
+    //   （wy 是同签名的诱饵）。原版顺序：PlayerPrefs Workshop.LocalHeroModel.<编号> → 设置里的本地文件 Mod → 工坊绑定
+    // buj.pwh(bbe)：出生时（bbe.kzz）给角色换模型。每个客户端对每个玩家都会调用，只按英雄查本机设置
+    // buj.pwj(HeroType, prefab, RoleModeBase)：变身时给新模型换上 additionalModels；调用方是 bgt.mqp（变身技能）和 bbp.lob（变身状态恢复）
+    internal static class HeroSkinHooks
+    {
+        // 正在变身的角色；pwj 读取后清空
+        private static yb transformOwner;
+
+        internal static bool ResolvePrefix(int __0, ref string __1, ref LocalWorkshopManifest __2, ref bool __result)
+        {
+            if (GameRaw.ModsDisabled()) return true;
+            string folder;
+            try
+            {
+                if (!HeroSkins.TryResolve(__0, out folder)) return true;
+            }
+            catch (Exception e)
+            {
+                Safe.Report("英雄皮肤（查找模型）", e);
+                return true;
+            }
+            LocalWorkshopManifest manifest = null;
+            if (folder != null && !bup.pyx(folder, out manifest)) return true;
+            __1 = folder ?? string.Empty;
+            __2 = manifest;
+            __result = folder != null;
+            return false;
+        }
+
+        internal static void SkillTransformPrefix(bgt __instance) => transformOwner = __instance.bgwf;
+
+        internal static void CheckpointTransformPrefix(bbe __0) => transformOwner = __0;
+
+        // yb.bphc：Mirror 的 isLocalPlayer（kzz 里 pwh 之后紧接着用它设置本地玩家，这时已经有值）
+        internal static bool SpawnPrefix(bbe __0, ref bool __result)
+        {
+            if (!HeroSkins.OnlyLocalPlayer || __0 == null || __0.bphc) return true;
+            __result = false;
+            return false;
+        }
+
+        internal static bool TransformPrefix(HeroType __0, ref bool __result)
+        {
+            var owner = transformOwner;
+            transformOwner = null;
+            if (!HeroSkins.OnlyLocalPlayer) return true;
+            bool local = owner != null ? owner.bphc : GameRaw.LocalHeroId() == (int)__0;
+            if (local) return true;
+            __result = false;
+            return false;
         }
     }
 }

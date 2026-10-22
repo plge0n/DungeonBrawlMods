@@ -6,7 +6,8 @@ BepInEx 5 插件，目标游戏：地下城竞技场（Steam 4246640，Unity 202
 |---|---|
 | [DBModKit](DBModKit) | 依赖库：游戏接口、自动释放钩子、事件、原生风格 UI、JSON 配置、兼容检查 |
 | [SmartSkill](SmartSkill) | 给"右键技能图标自动释放"加上每个技能单独的释放条件 |
-| [DBStudio](DBStudio) | 游戏内的 Mod 工作台（F9）：调试面板、规则、数值编辑器，之后会加强化 |
+| [DBStudio](DBStudio) | 游戏内的 Mod 工作台（F10）：调试面板、规则、数值编辑器、英雄皮肤，之后会加强化 |
+| [SmartMove](SmartMove) | 自动躲避地面预警（F9 开关） |
 
 玩家说明见 [安装说明.txt](安装说明.txt)。
 
@@ -56,12 +57,16 @@ public class Plugin : BaseUnityPlugin
 | `SkillInfo` | 技能表数据：名字、标签、指示器、施法范围、冷却 |
 | `SkillSlot` / `SkillBar` | 技能栏里的技能：自动释放开关、剩余冷却、消耗、图标 |
 | `AutoCast` | 接管自动释放：决定放不放、打谁；`Resolved` 事件报告结果 |
+| `MoveControl` | 接管没有方向键输入时的走位（等同按住方向键） |
+| `Arena` | 地面预警（形状、剩余时间）、场地边界 |
+| `Combat` | 命中事件：伤害、是否打死、来源技能 |
 | `ModContext` | Mod 运行上下文：`OnUpdate`、`OnBattleStarted`、`UseAutoCast`、`LoadJson` 等，卸载时自动清理 |
 | `ModEvents` | 每帧、进入/离开战斗、退出游戏 |
 | `NativeUi` | 用游戏素材拼的面板、开关、滑条、下拉框、按钮，以及大窗口、页签、滚动列表、输入框 |
 | `GameInput` / `GamePause` | 打开自己的窗口时屏蔽游戏输入、暂停游戏（都要 Dispose 释放） |
 | `GameEvents` | 战斗事件：击杀、放技能、暴击、受伤、升级、波次开始/结束等 |
 | `GameData` | 改技能、英雄、怪物配置表里的数值，可随时整体恢复原版 |
+| `HeroSkins` | 给每个英雄选一套工坊或本地的模型（或原版），可以只换本地玩家 |
 | `JsonConfig<T>` | `BepInEx/config` 下的 JSON 配置，自动延迟保存 |
 | `ScreenNotice` | 屏幕顶部临时提示 |
 
@@ -77,7 +82,7 @@ pwsh ./pack.ps1                                 # 生成 dist/ 下的发布包�
 
 **热重载**：装了 ScriptEngine 后，普通 Mod 会部署到 `BepInEx/scripts`，游戏开着也能编译，约 1 秒后自动重载（也可按 F6）。DBModKit 始终在 `BepInEx/plugins`，改了它要重启游戏（编译前先关游戏，否则 dll 被占用）。没装 ScriptEngine 时一律部署到 `plugins`。
 
-**DBStudio**：游戏内按 F9，游戏风格的调试面板：玩家属性、技能栏、敌人、事件日志、已加载插件；单人时有满血、满蓝、加金币等测试操作。规则页可以不写代码做"当……如果……就……"的玩法，数值页可以改技能、英雄、怪物数值，改动都存成玩法包（`BepInEx/config/DBStudio/packs/`），只在单人时生效。
+**DBStudio**：游戏内按 F10，游戏风格的调试面板：玩家属性、技能栏、敌人、事件日志、已加载插件；单人时有满血、满蓝、加金币等测试操作。规则页可以不写代码做"当……如果……就……"的玩法，数值页可以改技能、英雄、怪物数值，改动都存成玩法包（`BepInEx/config/DBStudio/packs/`），只在单人时生效。皮肤页给每个英雄挑一套已订阅的工坊模型或 `BepInEx/skins/` 下的本地模型，只改本机显示，联机也能用。
 
 **UnityExplorer**：游戏内按 F7。可以浏览场景里的 UI 和对象、查看/修改字段、在 C# 控制台里执行代码，是找游戏对象和调 UI 的首选工具。
 

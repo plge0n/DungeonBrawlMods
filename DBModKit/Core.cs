@@ -46,6 +46,13 @@ namespace DBModKit
                 Run($"{name} → {handler.Method.DeclaringType?.FullName}.{handler.Method.Name}", handler);
         }
 
+        public static void InvokeEach<T>(Action<T> evt, string name, T arg)
+        {
+            if (evt == null) return;
+            foreach (Action<T> handler in evt.GetInvocationList())
+                Run($"{name} → {handler.Method.DeclaringType?.FullName}.{handler.Method.Name}", () => handler(arg));
+        }
+
         public static void Run(string where, Action action)
         {
             try
