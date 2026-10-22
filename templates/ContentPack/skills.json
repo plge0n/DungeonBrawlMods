@@ -74,6 +74,7 @@
       "name": "风暴法杖",
       "description": "雷霆骑士的旧武器",
       "icon": "equip_2",
+      "artifact": true,
       "attributes": { "attack": 60, "hp": 200 },
       "effects": ["storm_charge"]
     }
