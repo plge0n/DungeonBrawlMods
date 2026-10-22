@@ -166,7 +166,8 @@ namespace DBStudio.Pages
             string room = Game.IsSolo ? "单人"
                 : Game.PlayerCount > 0 ? $"联机，你是房主，{Game.PlayerCount} 人"
                 : "联机，在别人的房间里";
-            sb.Append($"房间  {room}");
+            sb.AppendLine($"房间  {room}");
+            sb.Append("改玩法的内容  " + (Multiplayer.GameplayAllowed ? Good("可用") : Bad("停用")) + "  " + Dim(Multiplayer.Status));
             return sb.ToString();
         }
 

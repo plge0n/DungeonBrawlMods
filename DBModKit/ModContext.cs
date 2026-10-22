@@ -90,6 +90,9 @@ namespace DBModKit
             }
             try
             {
+                // 联机握手按 GUID 找版本；onLoad 里注册的技能、变体都算这个 Mod 的
+                Multiplayer.AddMod(ctx.Metadata.GUID, ctx.Metadata.Name, ctx.Metadata.Version.ToString());
+                ctx.AddCleanup(() => Multiplayer.RemoveMod(ctx.Metadata.GUID));
                 onLoad(ctx);
                 ctx.Loaded = true;
                 logger.LogInfo($"{ctx.Metadata.Name} {ctx.Metadata.Version} 已加载");
@@ -157,6 +160,16 @@ namespace DBModKit
         }
 
         /// <summary>
+        /// 声明这个 Mod 正在改玩法（自定义技能和改了属性的变体英雄不用声明，ModKit 自动算）。联机时只有房间里每个人都声明了同样的
+        /// GUID、版本和指纹，或者房主允许，<see cref="Multiplayer.GameplayAllowed"/> 才为 true，见 <see cref="Multiplayer"/>。
+        /// fingerprint 用来区分同一个 Mod 的不同设置（比如玩法包内容的哈希），只能用字母、数字和 . _ - +。可以反复调用更新；卸载时自动撤销。
+        /// </summary>
+        public void DeclareGameplay(string fingerprint = null) => Multiplayer.Declare(Metadata.GUID, fingerprint);
+
+        /// <summary>不再改玩法（比如玩家关掉了功能）。</summary>
+        public void RetractGameplay() => Multiplayer.Retract(Metadata.GUID);
+
+        /// <summary>
         /// 注册一个自定义被动技能（见 <see cref="PassiveSkills"/>）。名字和说明按 Mod 的 <see cref="Text"/> 翻译
         /// （键 passive.&lt;Key&gt;.name / passive.&lt;Key&gt;.desc）。卸载时自动注销，本地玩家身上的这个被动也会被移除。
         /// </summary>
@@ -175,6 +188,17 @@ namespace DBModKit
         {
             var info = ActiveSkills.Register(Metadata.GUID, Text, def);
             AddCleanup(() => ActiveSkills.Unregister(info));
+            return info;
+        }
+
+        /// <summary>
+        /// 注册一个自定义遗物（见 <see cref="CustomRelics"/>）。名字和说明按 Mod 的 <see cref="Text"/> 翻译
+        /// （键 relic.&lt;Key&gt;.name / relic.&lt;Key&gt;.desc）。卸载时自动注销，本地玩家身上的这个遗物也会被移除。
+        /// </summary>
+        public CustomRelicInfo RegisterRelic(RelicDef def)
+        {
+            var info = CustomRelics.Register(Metadata.GUID, Text, def);
+            AddCleanup(() => CustomRelics.Unregister(info));
             return info;
         }
 

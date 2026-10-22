@@ -108,6 +108,11 @@ namespace DBModKit
                 var texts = NativeUi.Column(row, -1f, 0f);
                 NativeUi.Label(texts, $"{WorkshopPrompt.Plain(item.DisplayName)}  <size=16><color=#a6a6a6>{WorkshopPrompt.Plain(item.Manifest?.Version)}  {item.Id}</color></size>", 22);
                 NativeUi.Label(texts, StatusText(item), 16, -1f, NativeUi.DimText);
+                foreach (var dep in item.MissingDependencies.Where(d => d.Workshop != 0))
+                {
+                    ulong id = dep.Workshop;
+                    NativeUi.Button(row, $"订阅 {WorkshopPrompt.Plain(dep.DisplayName)}", false, 220f, () => HeroSkins.OpenWorkshopPage(id));
+                }
                 if (item.IsDev || item.Broken) continue;
                 // 按玩家的选择显示，不按运行状态：已加载的条目设为不加载后，还能改回来
                 bool allowed = Workshop.IsAllowed(item);

@@ -720,6 +720,9 @@ namespace DBModKit
 
         public static ulong MySteamId() => cgi.uep().m_SteamID;
 
+        // cft.tqt = GetLobbyOwner（游戏在 pq 里用它；dae / jxk 等是没人调用的副本）
+        public static ulong LobbyOwner(ulong lobby) => cft.tqt(new Steamworks.CSteamID(lobby)).m_SteamID;
+
         // 成员数据：每个成员只能写自己的，所有成员都能读。游戏不用它，pq.glv 收到成员数据的更新时直接返回
         public static void SetLobbyMemberData(ulong lobby, string key, string value)
             => cft.tqj(new Steamworks.CSteamID(lobby), key, value);
@@ -777,7 +780,7 @@ namespace DBModKit
             Set("id", info.Id.ToString());
             Set("class", ModPassiveClassPrefix + info.Id);
             Set("name", def.Name);
-            Set("lock", !def.InSkillBook);
+            Set("lock", !info.InSkillBook);
             // 国王对决里的拟人玩家不会拿到（构筑数据本来也会去掉自定义被动）
             Set("kingLock", true);
             Set("repeat", def.Repeatable);
@@ -796,7 +799,7 @@ namespace DBModKit
             EjectPassive(info.Id);
             table[info.Id.ToString()] = row;
             injectedPassives[info.Id] = row;
-            if (def.InSkillBook && cj.boyn != null)
+            if (info.InSkillBook && cj.boyn != null)
             {
                 var pool = passivePool(cj.boyn);
                 string quality = def.Quality.ToString();
@@ -882,6 +885,144 @@ namespace DBModKit
             return values != null && i >= 0 && i < values.Length ? values[i] : 0f;
         }
 
+        // ---- 自定义遗物（CustomRelics）----
+        // 原始表 cx.zyc["remains"]：编号 → 行（skill 列是效果名，bbe.kql 按它创建 rn 子类，未知名字返回什么都不做的 new rn()）。
+        // oo 构造时转换成 bcry（ItemType → RemainsData，三选一的候选池 ez.eae 从这里按品级筛）和 bcrx（物品表）。
+        // 发放 bbe.kqk(编号, 等级)：读行 → kql → 填 values/levelup/valueTypes → kqm 放进 playerAttribute.bfna 并调 gtb()。
+        // runAcquireLimit 为 0 时 kto 不发 CmdClaimRelicRunAcquisition；isTeam 为假时 ez.dzv 不发 CmdAddAllPlayerItem，所以选遗物不会发消息
+        private static readonly Dictionary<int, Dictionary<string, object>> injectedRelics = new Dictionary<int, Dictionary<string, object>>();
+
+        public const string ModRelicSkillPrefix = "DBModKit.Relic:";
+
+        private static Dictionary<string, object> RelicTable()
+            => cx.zyc.TryGetValue("remains", out var t) ? t as Dictionary<string, object> : null;
+
+        public static bool IsRelicValueType(string name) => Enum.TryParse(name, false, out RelicValueType _);
+
+        public static void InjectRelic(CustomRelicInfo info)
+        {
+            var table = RelicTable();
+            if (table == null || cj.boyl == null) return;
+            var def = info.Def;
+            var template = table.Values.OfType<Dictionary<string, object>>().FirstOrDefault();
+            var row = template != null ? new Dictionary<string, object>(template) : new Dictionary<string, object>();
+            string Join<T>(IEnumerable<T> values) => values == null || !values.Any() ? null
+                : string.Join("|", values.Select(v => Convert.ToString(v, System.Globalization.CultureInfo.InvariantCulture)));
+            string grade = def.Quality.ToString();
+            row["id"] = info.Id;
+            row["name"] = def.Name;
+            row["grade"] = grade;
+            row["icon"] = def.Icon;
+            row["isTeam"] = 0;
+            row["skill"] = ModRelicSkillPrefix + info.Id;
+            // 国王对决里的拟人玩家不会拿到（构筑数据本来也会去掉自定义遗物）
+            row["kingLock"] = true;
+            row["info"] = def.Description;
+            row["condition"] = null;
+            // values / levelup / valueTypes 都是 "|" 分隔的字符串（rn.gui → ez.dwe，rn.guj）
+            row["values"] = Join(def.Values);
+            row["levelup"] = Join(def.LevelUp);
+            row["valueTypes"] = Join(def.ValueTypes);
+            row["maxLevel"] = def.MaxLevel;
+            row["isUnique"] = def.Unique;
+            row["mapTypes"] = null;
+            row["runAcquireLimit"] = 0;
+
+            EjectRelic(info.Id);
+            table[info.Id.ToString()] = row;
+            // 和 oo 的转换一致：grade 是 ny.bcmo（D C B A S）里的下标
+            int gradeIndex = ny.bcmo.IndexOf(grade);
+            cj.boyl.bcry[(ItemType)info.Id] = new RemainsData
+            {
+                grade = gradeIndex,
+                conditions = EntryConditions.None,
+                isUnique = def.Unique,
+                isTeam = false,
+                runAcquireLimit = 0,
+                mapTypes = "",
+            };
+            cj.boyl.bcrx[(ItemType)info.Id] = new ItemData { name = "pickitem_" + info.Id, quality = gradeIndex, model = "Remains" };
+            injectedRelics[info.Id] = row;
+        }
+
+        public static bool RelicInjected(int id)
+        {
+            if (!injectedRelics.TryGetValue(id, out var row)) return false;
+            var table = RelicTable();
+            return table != null && table.TryGetValue(id.ToString(), out var current) && current == row
+                   && cj.boyl != null && cj.boyl.bcry.ContainsKey((ItemType)id);
+        }
+
+        public static void EjectRelic(int id)
+        {
+            var table = RelicTable();
+            if (table != null && injectedRelics.TryGetValue(id, out var ours) && table.TryGetValue(id.ToString(), out var row) && row == ours)
+                table.Remove(id.ToString());
+            // 只删我们自己的编号段（3000000 起），不会碰到游戏的遗物
+            if (id >= CustomRelics.FirstId && cj.boyl != null)
+            {
+                cj.boyl.bcry.Remove((ItemType)id);
+                cj.boyl.bcrx.Remove((ItemType)id);
+            }
+            injectedRelics.Remove(id);
+        }
+
+        // bbe.kql 的后缀：效果名是我们的前缀时创建 ModRelic（原版对未知名字返回空的 rn）
+        public static rn CreateModRelic(string skill)
+        {
+            if (skill == null || !skill.StartsWith(ModRelicSkillPrefix)) return null;
+            if (!int.TryParse(skill.Substring(ModRelicSkillPrefix.Length), out int id) || !CustomRelics.IsCustom(id)) return null;
+            return new ModRelic(id);
+        }
+
+        // ez.eae 的后缀：三选一候选池（品级 → 遗物）里去掉不该出现的自定义遗物
+        public static void FilterRelicPool(Dictionary<int, List<ItemType>> pool)
+        {
+            if (pool == null) return;
+            foreach (var list in pool.Values)
+                list.RemoveAll(t => (int)t >= CustomRelics.FirstId && CustomRelics.IsCustom((int)t) && !CustomRelics.InPool((int)t));
+        }
+
+        public static bool GiveRelic(Component p, int id, int level) => cj.boyl.bcry.ContainsKey((ItemType)id) && ((bbe)p).kqk(id, level) != null;
+
+        // bbe.kqn：游戏的移除（调 gtc，再刷新遗物栏）
+        public static void RemoveLocalRelics(int id)
+        {
+            var p = nn.bpbu;
+            if (p == null) return;
+            foreach (var r in p.playerAttribute.bfna.OfType<ModRelic>().Where(r => r.DefId == id).ToList())
+                p.kqn(r);
+        }
+
+        public static void LocalModRelics(List<object> output)
+        {
+            output.Clear();
+            var p = nn.bpbu;
+            if (p == null || p.playerAttribute == null) return;
+            foreach (var r in p.playerAttribute.bfna)
+                if (r is ModRelic m) output.Add(m);
+        }
+
+        public static int ModRelicInstance(object native) => ((ModRelic)native).Instance;
+        public static Component RelicOwner(object native) => ((rn)native).bdgr;
+        public static int RelicLevel(object native) => ((rn)native).bdgv;
+
+        // 同 rn.gti：values[i] + levelup[i] × 等级
+        public static float RelicValue(object native, int i, int level)
+        {
+            var r = (rn)native;
+            if (r.bdgw == null || i < 0 || i >= r.bdgw.Length) return 0f;
+            float up = r.bdgy != null && i < r.bdgy.Length ? r.bdgy[i] : 0f;
+            return r.bdgw[i] + up * level;
+        }
+
+        // ez.ebj 的后缀：构筑数据（同步给队友、上传国王对决、信息面板、结算）去掉自定义遗物
+        public static void FilterKingRelics(ref de.PlayerKingData data)
+        {
+            if (data.relic == null || !data.relic.Any(r => CustomRelics.IsCustom(r.relicName))) return;
+            data.relic = data.relic.Where(r => !CustomRelics.IsCustom(r.relicName)).ToArray();
+        }
+
         // 去掉构筑数据里的自定义被动：ez.ebf（技能列表，"p_"+编号）给 ez.ebj 用，ebj 的结果会同步给队友、上传成国王对决数据；
         // bax.ker 的镜像 Boss 快照另有一份技能来源（activeSkill = None 的是被动）
         public static de.PlayerKingSkillData[] FilterKingSkills(de.PlayerKingSkillData[] skills)
@@ -892,11 +1033,15 @@ namespace DBModKit
 
         public static void FilterMirrorSnapshot(MirrorBossPlayerSnapshot snapshot)
         {
-            if (snapshot?.skills == null) return;
+            if (snapshot == null) return;
             bool Custom(MirrorBossSkillSource s) => s.activeSkill == ActiveSkillEnum.None ? IsCustomSkillName(s.skillName) : ActiveSkills.IsCustom((int)s.activeSkill);
-            if (snapshot.skills.Any(Custom))
+            if (snapshot.skills != null && snapshot.skills.Any(Custom))
                 snapshot.skills = snapshot.skills.Where(s => !Custom(s)).ToArray();
             snapshot.player.skill = FilterKingSkills(snapshot.player.skill);
+            // 自定义遗物：镜像 Boss 按 relics 和 player.relic 重新发遗物，没装 Mod 的人那边不认识
+            if (snapshot.relics != null && snapshot.relics.Any(r => CustomRelics.IsCustom(r.relic.relicName)))
+                snapshot.relics = snapshot.relics.Where(r => !CustomRelics.IsCustom(r.relic.relicName)).ToArray();
+            FilterKingRelics(ref snapshot.player);
         }
 
         // "p_" + 被动编号 / "a_" + 主动技能编号
@@ -907,6 +1052,13 @@ namespace DBModKit
         // 本地化 cl.dfg 的前缀："p_<编号>" / "a_<编号>" 是名字，后面加 "_m" 是说明。游戏的编号都很小，先按长度和前缀排除
         public static string SkillText(string key)
         {
+            // 自定义遗物："pickitem_<编号>" 是名字，后面加 "_m" 是说明
+            if (key != null && key.Length > 16 && key.StartsWith("pickitem_"))
+            {
+                bool desc = key.EndsWith("_m");
+                string rest = desc ? key.Substring(9, key.Length - 11) : key.Substring(9);
+                return int.TryParse(rest, out int rid) && rid >= CustomRelics.FirstId ? CustomRelics.Text(rid, desc) : null;
+            }
             if (key == null || key.Length < 9 || key[1] != '_' || key[0] != 'p' && key[0] != 'a') return null;
             bool description = key.EndsWith("_m");
             string id = description ? key.Substring(2, key.Length - 4) : key.Substring(2);
@@ -955,7 +1107,7 @@ namespace DBModKit
             row["indicator"] = indicator;
             row["castingRange"] = def.CastingRange;
             row["range"] = def.Range;
-            row["lock"] = !def.InSkillBook;
+            row["lock"] = !info.InSkillBook;
             row["kingLock"] = true;
             row["auto"] = def.CanAuto;
             row["chargingNum"] = def.Charges;
@@ -1004,7 +1156,7 @@ namespace DBModKit
             table[info.Id.ToString()] = row;
             cj.boyl.bcrw[(ActiveSkillEnum)info.Id] = data;
             injectedSkills[info.Id] = row;
-            if (def.InSkillBook && cj.boyn != null)
+            if (info.InSkillBook && cj.boyn != null)
             {
                 var pool = skillPool(cj.boyn);
                 string quality = def.Quality.ToString();
@@ -1572,6 +1724,43 @@ namespace DBModKit
         {
             base.gpc();
             if (bhnd != null && bhnd == nn.bpbu) PassiveSkills.Update(Instance, this);
+        }
+    }
+
+    // 自定义遗物在游戏里的实例：bbe.kql 的后缀创建，kqm 放进 bfna 后调 gtb；bba 每帧对列表里的每个遗物调 gtf
+    internal sealed class ModRelic : rn
+    {
+        public readonly int DefId;
+        public readonly int Instance;
+
+        public ModRelic(int defId)
+        {
+            DefId = defId;
+            Instance = CustomRelics.Created(defId);
+        }
+
+        public override void gtb()
+        {
+            base.gtb();
+            CustomRelics.Added(Instance, this);
+        }
+
+        public override void gtc()
+        {
+            base.gtc();
+            CustomRelics.Removed(Instance);
+        }
+
+        protected override void gtd(int a, int b)
+        {
+            base.gtd(a, b);
+            CustomRelics.LevelChanged(Instance, this, a, b);
+        }
+
+        public override void gtf()
+        {
+            base.gtf();
+            if (bdgr != null && bdgr == nn.bpbu) CustomRelics.Update(Instance, this);
         }
     }
 

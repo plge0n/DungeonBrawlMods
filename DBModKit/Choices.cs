@@ -41,7 +41,10 @@ namespace DBModKit
 
         private static List<RelicInfo> all;
 
-        /// <summary>所有遗物（游戏表加载后才有）。</summary>
+        // 自定义遗物注册、注销后重新读
+        internal static void Invalidate() => all = null;
+
+        /// <summary>所有遗物（游戏表加载后才有），包括 Mod 注册的自定义遗物（<see cref="CustomRelics"/>）。</summary>
         public static IReadOnlyList<RelicInfo> All
         {
             get

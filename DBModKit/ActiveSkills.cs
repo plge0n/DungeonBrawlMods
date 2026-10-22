@@ -89,6 +89,9 @@ namespace DBModKit
             Text = text;
         }
 
+        // 进技能书候选池：定义里允许，而且联机握手允许改玩法
+        internal bool InSkillBook => Def.InSkillBook && Multiplayer.GameplayAllowed;
+
         public string Name => Text != null ? Text[$"skill.{Key}.name", Def.Name] : Def.Name;
         public string Description => Text != null ? Text[$"skill.{Key}.desc", Def.Description] : Def.Description;
 
@@ -267,10 +270,10 @@ namespace DBModKit
             Safe.Run($"注销技能 {info.Key}", () => GameRaw.EjectSkill(info.Id));
         }
 
-        /// <summary>直接给本地玩家这个技能。技能栏满了时：replaceSlot 为技能格序号（0 起）就替换那一格，为 -1 时不给、返回 false。</summary>
+        /// <summary>直接给本地玩家这个技能（联机时 <see cref="Multiplayer.GameplayAllowed"/> 为 false 就不给）。技能栏满了时：replaceSlot 为技能格序号（0 起）就替换那一格，为 -1 时不给、返回 false。</summary>
         public static bool Give(ActiveSkillInfo info, int replaceSlot = -1)
         {
-            if (info == null || !registered.ContainsKey(info.Id) || !Available || Game.LocalPlayer == null) return false;
+            if (info == null || !registered.ContainsKey(info.Id) || !Available || Game.LocalPlayer == null || !Multiplayer.GameplayAllowed) return false;
             return GameRaw.GiveSkill(info.Id, replaceSlot);
         }
 
@@ -279,6 +282,12 @@ namespace DBModKit
             if (hooked) return;
             hooked = true;
             ModEvents.Update += Tick;
+            Multiplayer.Changed += () =>
+            {
+                if (!GameData.Ready) return;
+                foreach (var info in registered.Values)
+                    Safe.Run($"注册技能 {info.Key}", () => GameRaw.InjectSkill(info));
+            };
             ModEvents.Update += () =>
             {
                 if (GameRaw.HasStrayAnimations) Safe.Run("施法动作（善后）", GameRaw.FixStrayAnimations);

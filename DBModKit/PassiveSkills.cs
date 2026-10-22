@@ -63,6 +63,9 @@ namespace DBModKit
             Text = text;
         }
 
+        // 进技能书候选池：定义里允许，而且联机握手允许改玩法
+        internal bool InSkillBook => Def.InSkillBook && Multiplayer.GameplayAllowed;
+
         /// <summary>当前语言的名字。</summary>
         public string Name => Text != null ? Text[$"passive.{Key}.name", Def.Name] : Def.Name;
         /// <summary>当前语言的说明（还没填数值）。</summary>
@@ -112,7 +115,7 @@ namespace DBModKit
     /// 自定义被动技能的注册表。游戏把被动按"脚本名"创建（被动表的 class 列），ModKit 在这里接上 Mod 的行为。
     /// </summary>
     /// <remarks>
-    /// 联机：被动只在自己的客户端生效，别人不用装。上传给别人的构筑数据（玩家信息面板、国王对决、镜像 Boss）
+    /// 联机：被动只在自己的客户端生效，别人不用装。被动算改玩法的内容，<see cref="Multiplayer.GameplayAllowed"/> 为 false 时不进技能书。上传给别人的构筑数据（玩家信息面板、国王对决、镜像 Boss）
     /// 会去掉自定义被动，没装 Mod 的人不会看到也不会出错；代价是这些地方也看不到它。
     /// </remarks>
     public static class PassiveSkills
@@ -167,11 +170,11 @@ namespace DBModKit
         }
 
         /// <summary>
-        /// 直接给本地玩家一个被动。技能格满了时：replaceSlot 为技能格序号（0 起）就替换那一格，为 -1 时不给、返回 false。
+        /// 直接给本地玩家一个被动（联机时 <see cref="Multiplayer.GameplayAllowed"/> 为 false 就不给，返回 false）。技能格满了时：replaceSlot 为技能格序号（0 起）就替换那一格，为 -1 时不给、返回 false。
         /// </summary>
         public static bool Give(PassiveSkillInfo info, int replaceSlot = -1)
         {
-            if (info == null || !registered.ContainsKey(info.Id) || !Available || Game.LocalPlayer == null) return false;
+            if (info == null || !registered.ContainsKey(info.Id) || !Available || Game.LocalPlayer == null || !Multiplayer.GameplayAllowed) return false;
             return GameRaw.GivePassive(info.Id, replaceSlot);
         }
 
@@ -192,6 +195,13 @@ namespace DBModKit
             hooked = true;
             ModEvents.Update += Tick;
             ModEvents.BattleEnded += Prune;
+            // 联机握手变了：重新写表，按新的结果进出技能书候选池
+            Multiplayer.Changed += () =>
+            {
+                if (!GameData.Ready) return;
+                foreach (var info in registered.Values)
+                    Safe.Run($"注册被动 {info.Key}", () => GameRaw.InjectPassive(info));
+            };
             GameEvents.Raised += e => Dispatch(b => b.OnGameEvent(e), nameof(PassiveSkill.OnGameEvent));
             Combat.Hit += hit => Dispatch(b => b.OnHit(hit), nameof(PassiveSkill.OnHit));
         }

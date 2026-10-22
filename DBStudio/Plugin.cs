@@ -8,13 +8,13 @@ namespace DBStudio
 {
     // 游戏内的 Mod 工作台：调试面板、规则、强化、数值编辑器、英雄皮肤
     [BepInPlugin(Guid, Name, Version)]
-    [BepInDependency(ModKitPlugin.Guid, "0.19.0")]
+    [BepInDependency(ModKitPlugin.Guid, "0.20.0")]
     public class Plugin : BaseUnityPlugin
     {
         public const string Guid = "plge0n.dungeonbrawl.studio";
         public const string Name = "DBStudio";
         // 发布时同步修改 CHANGELOG.md；pack.ps1 从这里读取版本号
-        public const string Version = "0.9.0";
+        public const string Version = "0.10.0";
 
         internal static ManualLogSource Log;
         // 运行记录（ModKit RunLog，来源是 DBStudio）

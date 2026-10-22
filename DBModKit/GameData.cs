@@ -169,6 +169,20 @@ namespace DBModKit
         /// <summary>改动在 Active 变化、或任何值被修改后触发。</summary>
         public static event Action Changed;
 
+        // 每项改动是哪个 Mod 写的；不同的 Mod 改了同一项、或载入时清掉了别人的改动，记下来给 ModConflicts
+        private static readonly Dictionary<(DataTable table, string key, string field), string> writers = new Dictionary<(DataTable, string, string), string>();
+        internal static readonly List<(string what, string first, string second, bool cleared)> Overlaps = new List<(string, string, string, bool)>();
+
+        private static void NoteOverlap(DataTable table, string key, string field, string first, string second, bool cleared)
+        {
+            string what = $"{table}/{key}/{field}";
+            if (Overlaps.Any(o => o.what == what && o.first == first && o.second == second && o.cleared == cleared)) return;
+            Overlaps.Add((what, first, second, cleared));
+            RunLog.WriteCore(ModKitPlugin.Name, "冲突", RunLogLevel.Warning, cleared ? "载入数值时清掉了别的 Mod 的改动" : "两个 Mod 改了同一项数值",
+                new (string, object)[] { ("项", what), ("先", first), ("后", second) }, mirror: false);
+            ModConflicts.Touch();
+        }
+
         public static IReadOnlyList<DataField> Fields(DataTable table)
         {
             switch (table)
@@ -226,7 +240,10 @@ namespace DBModKit
                 return;
             }
             if (!overrides[table].TryGetValue(key, out var fields)) overrides[table][key] = fields = new Dictionary<string, double>();
-            RunLog.Info(RunLog.CallerMod(), "数值", "修改", ("表", table.ToString()), ("行", key), ("字段", field),
+            string caller = RunLog.CallerMod();
+            if (writers.TryGetValue((table, key, field), out var writer) && writer != caller) NoteOverlap(table, key, field, writer, caller, false);
+            writers[(table, key, field)] = caller;
+            RunLog.Info(caller, "数值", "修改", ("表", table.ToString()), ("行", key), ("字段", field),
                 ("值", $"{Get(table, key, field)}→{value}"), ("原版", Original(table, key, field)), ("生效", active));
             fields[field] = value;
             Sync(table, key);
@@ -237,6 +254,7 @@ namespace DBModKit
         public static void Reset(DataTable table, string key, string field = null)
         {
             if (!overrides[table].TryGetValue(key, out var fields)) return;
+            foreach (var w in writers.Keys.Where(w => w.table == table && w.key == key && (field == null || w.field == field)).ToList()) writers.Remove(w);
             RunLog.Info(RunLog.CallerMod(), "数值", "恢复原版", ("表", table.ToString()), ("行", key), ("字段", field ?? "整行"));
             if (field == null) fields.Clear();
             else fields.Remove(field);
@@ -249,6 +267,9 @@ namespace DBModKit
         public static void Load(Dictionary<DataTable, Dictionary<string, Dictionary<string, double>>> data)
         {
             var touched = overrides.SelectMany(t => t.Value.Keys.Select(k => (t.Key, k))).ToList();
+            string caller = RunLog.CallerMod();
+            foreach (var w in writers.Where(w => w.Value != caller).ToList()) NoteOverlap(w.Key.table, w.Key.key, w.Key.field, w.Value, caller, true);
+            writers.Clear();
             foreach (var t in overrides.Values) t.Clear();
             if (data != null)
                 foreach (var t in data)
@@ -256,7 +277,11 @@ namespace DBModKit
                         if (k.Value != null && k.Value.Count > 0)
                             overrides[t.Key][k.Key] = k.Value.Where(f => Field(t.Key, f.Key) != null)
                                 .ToDictionary(f => f.Key, f => f.Value);
-            RunLog.Info(RunLog.CallerMod(), "数值", data == null ? "清空全部改动" : "载入改动", ("改动行数", overrides.Sum(t => t.Value.Count)));
+            foreach (var t in overrides)
+                foreach (var k in t.Value)
+                    foreach (var f in k.Value.Keys)
+                        writers[(t.Key, k.Key, f)] = caller;
+            RunLog.Info(caller, "数值", data == null ? "清空全部改动" : "载入改动", ("改动行数", overrides.Sum(t => t.Value.Count)));
             foreach (var (table, key) in touched.Concat(overrides.SelectMany(t => t.Value.Keys.Select(k => (t.Key, k)))).Distinct().ToList())
                 Sync(table, key);
             RaiseChanged();

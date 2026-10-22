@@ -20,6 +20,12 @@
       "datatype": "text",
       "defaultValue": "TODO：一句话介绍这个 Mod",
       "replaces": "MOD_DESCRIPTION"
+    },
+    "skills": {
+      "type": "parameter",
+      "datatype": "bool",
+      "defaultValue": "false",
+      "description": "带一个自定义被动和主动技能的示例"
     }
   }
 }
