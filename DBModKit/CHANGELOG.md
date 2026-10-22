@@ -1,7 +1,7 @@
 # DBModKit 更新日志
 
 ## 0.24.0
-自定义装备（**游戏内未实测**：只做了编译、离线的内容包解析测试和 Remap 自检，单人、联机都还没进游戏验证）：
+自定义装备（2026-10-23 单人实测通过：挂特效、新装备、内容包、构筑数据过滤；**没测**：联机、装备强化、重试波次、在神器三选一里实际选中）：
 - 新增 `CustomEquipEffects` / `EquipEffectDef` / `EquipEffectBehaviour`（`mod.RegisterEquipEffect`）：装备特效，
   可以用 `AttachTo` 挂到游戏已有的装备上（买到时一起生效，说明里多出这个特效），也可以给自定义装备用。
   行为有 `OnAdded` / `OnRemoved` / `OnLevelChanged` / `OnUpdate` / `OnGameEvent` / `OnHit`，只在本地玩家身上运行
