@@ -216,6 +216,7 @@ namespace Remap
             var nd = m.NewOf(oldDef);
             if (nd == null) return null;
             if (param >= 0) return nd is MethodDefinition md && param < md.Parameters.Count ? md.Parameters[param].Name : null;
+            if (param == SourceScan.FullNameParameter) return nd is TypeDefinition t ? t.FullName : null;
             return nd.Name;
         }
 

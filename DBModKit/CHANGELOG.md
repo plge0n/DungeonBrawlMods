@@ -8,6 +8,13 @@
 - 编号由 Mod 的 GUID 和 Key 算出（1000000 起），每次启动都一样
 - 联机：被动只在自己的客户端生效，别人不用装。同步给队友、上传国王对决、镜像 Boss 的构筑数据会去掉自定义被动，
   没装 Mod 的人不会因此出错（代价是这些地方也看不到它）
+- 新增自定义主动技能（`ActiveSkills`）：`mod.RegisterSkill(new ActiveSkillDef { … })`，蓝耗、冷却、充能、瞄准方式（None/Range/Vector/Target）、
+  施法距离、范围、伤害公式都按游戏的表填，扣蓝、冷却、瞄准、自动释放、施法动作走游戏原来的流程；技能书三选一、图鉴里也有。
+  技能生效时创建 `ActiveSkill` 行为对象（`OnCast` / `OnUpdate` / `OnEnd`），提供 `Position`、`Direction`、`Target`、`Radius`、
+  `FormulaDamage`，以及走游戏伤害结算的 `DamageArea` / `Damage`、对象池特效 `Effect`。`ActiveSkills.Give` 直接发放
+- 联机：技能在每个装了这个 Mod 的客户端上都会创建（能看到效果），伤害只在施法者那边结算；没装的人只看到施法动作，不会出错。
+  编号 2000000 起
+- 映射重建工具：重写游戏虚方法的声明、带命名空间的类型名字符串也会跟着改
 
 ## 0.14.0
 - 新增 `LobbySync`：通过 Steam 大厅成员数据和其他装了 Mod 的玩家交换少量文字数据（`Publish` / `Read` / `Clear`）。

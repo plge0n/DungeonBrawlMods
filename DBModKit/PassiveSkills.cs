@@ -118,7 +118,6 @@ namespace DBModKit
     public static class PassiveSkills
     {
         internal const int FirstId = 1000000;
-        private const int IdRange = 1000000;
 
         private static readonly Dictionary<int, PassiveSkillInfo> registered = new Dictionary<int, PassiveSkillInfo>();
         // 被动实例的编号 → 行为对象。用编号而不是实例本身：重试波次可能用快照里的副本替换实例
@@ -148,12 +147,7 @@ namespace DBModKit
             if (registered.Values.Any(r => r.Owner == owner && r.Key == def.Key))
                 throw new ArgumentException($"被动 {def.Key} 已经注册过");
 
-            // 由 GUID 和 Key 算出固定编号（FNV-1a），冲突时往后找
-            uint hash = 2166136261;
-            foreach (char c in owner + ":" + def.Key)
-                hash = (hash ^ c) * 16777619;
-            int id = FirstId + (int)(hash % IdRange);
-            while (registered.ContainsKey(id)) id = id + 1 >= FirstId + IdRange ? FirstId : id + 1;
+            int id = SkillIds.Allocate(owner, def.Key, FirstId, registered.ContainsKey);
 
             var info = new PassiveSkillInfo(id, owner, def, text);
             registered[id] = info;

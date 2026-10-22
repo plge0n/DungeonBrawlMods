@@ -83,6 +83,14 @@ namespace DBModKit
                 && TryPatch(harmony, typeof(PassiveHooks), "自定义被动（创建）",
                     AccessTools.Method(typeof(ez), "eax", new[] { typeof(string) }),
                     postfix: nameof(PassiveHooks.CreatePostfix));
+            // 主动技能和被动共用文本、构筑过滤；另外接管技能实例的创建
+            ActiveSkills.Available = PassiveSkills.Available
+                && TryPatch(harmony, typeof(PassiveHooks), "自定义主动技能（创建）",
+                    AccessTools.Method(typeof(ez), "dzc", new[]
+                    {
+                        typeof(uint), typeof(ActiveSkillEnum), typeof(Vector3), typeof(yb), typeof(int), typeof(float), typeof(int), typeof(int), typeof(bff),
+                    }),
+                    postfix: nameof(PassiveHooks.SkillCreatedPostfix));
 
             try
             {
@@ -247,7 +255,8 @@ namespace DBModKit
         }
     }
 
-    // 自定义被动（见 PassiveSkills）：
+    // 自定义被动、主动技能（见 PassiveSkills、ActiveSkills）：
+    // ez.dzc(实例编号, 技能, 位置, 施法者, _, 朝向, 目标, 技能书, 工厂)：每个客户端收到技能释放后创建技能实例（ez 里另有一个同签名、没有调用者的诱饵副本）
     // ez.eax(类名)：被动表 class 列 → qp 实例的大 switch，未知类名返回 null。学技能（yb.ivb / iuz）、镜像 Boss（zr.jzy 兜底）都经过它
     // cl.dfg(键, 默认值, 找不到时返回键)：dfe / dff 的真正实现（mee 是同签名的诱饵）
     // ez.ebf()：构筑里的技能列表（"p_" / "a_" + 编号），ez.ebj 用它生成同步给队友、上传国王对决的数据
@@ -267,9 +276,21 @@ namespace DBModKit
             }
         }
 
+        internal static void SkillCreatedPostfix(uint __0, ActiveSkillEnum __1, Vector3 __2, yb __3, float __5, int __6)
+        {
+            try
+            {
+                GameRaw.CreateModSkill(__0, __1, __2, __3, __5, __6);
+            }
+            catch (Exception e)
+            {
+                Safe.Report("自定义主动技能（创建）", e);
+            }
+        }
+
         internal static bool TextPrefix(string __0, ref string __result)
         {
-            string text = GameRaw.PassiveText(__0);
+            string text = GameRaw.SkillText(__0);
             if (text == null) return true;
             __result = text;
             return false;

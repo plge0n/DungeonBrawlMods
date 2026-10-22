@@ -761,29 +761,258 @@ namespace DBModKit
         // bax.ker 的镜像 Boss 快照另有一份技能来源（activeSkill = None 的是被动）
         public static de.PlayerKingSkillData[] FilterKingSkills(de.PlayerKingSkillData[] skills)
         {
-            if (skills == null || !skills.Any(s => IsCustomPassiveName(s.skillName))) return skills;
-            return skills.Where(s => !IsCustomPassiveName(s.skillName)).ToArray();
+            if (skills == null || !skills.Any(s => IsCustomSkillName(s.skillName))) return skills;
+            return skills.Where(s => !IsCustomSkillName(s.skillName)).ToArray();
         }
 
         public static void FilterMirrorSnapshot(MirrorBossPlayerSnapshot snapshot)
         {
             if (snapshot?.skills == null) return;
-            if (snapshot.skills.Any(s => s.activeSkill == ActiveSkillEnum.None && IsCustomPassiveName(s.skillName)))
-                snapshot.skills = snapshot.skills.Where(s => !(s.activeSkill == ActiveSkillEnum.None && IsCustomPassiveName(s.skillName))).ToArray();
+            bool Custom(MirrorBossSkillSource s) => s.activeSkill == ActiveSkillEnum.None ? IsCustomSkillName(s.skillName) : ActiveSkills.IsCustom((int)s.activeSkill);
+            if (snapshot.skills.Any(Custom))
+                snapshot.skills = snapshot.skills.Where(s => !Custom(s)).ToArray();
             snapshot.player.skill = FilterKingSkills(snapshot.player.skill);
         }
 
-        private static bool IsCustomPassiveName(string name)
-            => name != null && name.StartsWith("p_") && PassiveSkills.IsCustom(name.Substring(2));
+        // "p_" + 被动编号 / "a_" + 主动技能编号
+        private static bool IsCustomSkillName(string name)
+            => name != null && name.Length > 2 && (name.StartsWith("p_") && PassiveSkills.IsCustom(name.Substring(2))
+                                                   || name.StartsWith("a_") && ActiveSkills.IsCustom(name.Substring(2)));
 
-        // 本地化 cl.dfg 的前缀："p_<编号>" 是名字，"p_<编号>_m" 是说明
-        public static string PassiveText(string key)
+        // 本地化 cl.dfg 的前缀："p_<编号>" / "a_<编号>" 是名字，后面加 "_m" 是说明。游戏的编号都很小，先按长度和前缀排除
+        public static string SkillText(string key)
         {
-            if (key == null || key.Length < 9 || !key.StartsWith("p_")) return null;
+            if (key == null || key.Length < 9 || key[1] != '_' || key[0] != 'p' && key[0] != 'a') return null;
             bool description = key.EndsWith("_m");
             string id = description ? key.Substring(2, key.Length - 4) : key.Substring(2);
-            return int.TryParse(id, out int n) && n >= PassiveSkills.FirstId ? PassiveSkills.Text(n, description) : null;
+            if (!int.TryParse(id, out int n)) return null;
+            if (key[0] == 'p') return n >= PassiveSkills.FirstId ? PassiveSkills.Text(n, description) : null;
+            return n >= ActiveSkills.FirstId ? ActiveSkills.Text(n, description) : null;
         }
+
+        // ---- 自定义主动技能（ActiveSkills）----
+        // 技能表两份：原始表 cx.zyc["activeSkill"]（技能书候选池、图鉴读它）和 oo.bcrw（ActiveSkillEnum → ActiveSkillData，施法、冷却、描述读它，
+        // 由 oo 构造时从原始表转换，见 oo.cs 读 activeSkill 的循环）。学技能 yb.iva → new bht → ez.dzq 进技能栏。
+        // 释放：ez.dye → dyf（默认分支：切 RoleState.Skill、CmdCreateSkill）→ 服务器不校验直接 RpcCreateSkill → 每个客户端 ez.dzc
+        // 按编号的大 switch 创建 bfe 实例放进 cj.boyn.bcxi，pj.day 每帧推进（bgwg 剩余时间 < 0 时移除并 Clear）。
+        // 技能书主动候选池是 pj 的私有字段 bcxk（品级 → 原始表的行）
+        private static readonly AccessTools.FieldRef<pj, Dictionary<string, List<object>>> skillPool =
+            AccessTools.FieldRefAccess<pj, Dictionary<string, List<object>>>("bcxk");
+        private static readonly Dictionary<int, Dictionary<string, object>> injectedSkills = new Dictionary<int, Dictionary<string, object>>();
+
+        private static Dictionary<string, object> SkillTable()
+            => cx.zyc.TryGetValue("activeSkill", out var t) ? t as Dictionary<string, object> : null;
+
+        private static readonly string[] IndicatorNames = { "None", "Range", "Vector", "Target" };
+
+        public static void InjectSkill(ActiveSkillInfo info)
+        {
+            var table = SkillTable();
+            if (table == null || cj.boyl == null) return;
+            var def = info.Def;
+            var inv = System.Globalization.CultureInfo.InvariantCulture;
+            string Num(float v) => v.ToString(inv);
+            string indicator = IndicatorNames[(int)def.Indicator];
+            string tags = string.Join(",", def.Tags ?? new string[0]);
+            string values = def.Values == null || def.Values.Length == 0 ? null : string.Join("|", def.Values.Select(Num));
+
+            var template = table.Values.OfType<Dictionary<string, object>>().FirstOrDefault();
+            var row = template != null ? new Dictionary<string, object>(template) : new Dictionary<string, object>();
+            row["id"] = info.Id.ToString();
+            row["name"] = def.Name;
+            row["quality"] = def.Quality.ToString();
+            row["attribute"] = "无属性";
+            row["tags"] = tags;
+            row["icon"] = def.Icon;
+            row["info"] = def.Description;
+            row["cost"] = def.Cost;
+            row["cd"] = def.Cooldown;
+            row["indicator"] = indicator;
+            row["castingRange"] = def.CastingRange;
+            row["range"] = def.Range;
+            row["lock"] = !def.InSkillBook;
+            row["kingLock"] = true;
+            row["auto"] = def.CanAuto;
+            row["chargingNum"] = def.Charges;
+            row["chargingCd"] = def.ChargeTime;
+            row["total"] = false;
+            row["damageBase"] = def.DamageBase;
+            row["damageType"] = def.DamageType;
+            row["damageValue"] = Num(def.DamageValue);
+            row["interval"] = Num(def.Interval);
+            row["duration"] = Num(def.Duration);
+            row["damageExValue"] = values;
+
+            // 和 oo 的转换一致
+            var data = new ActiveSkillData
+            {
+                name = def.Name,
+                id = info.Id.ToString(),
+                info = def.Description,
+                quality = def.Quality.ToString(),
+                cost = def.Cost,
+                cd = def.Cooldown,
+                indicator = indicator,
+                range = def.Range,
+                castingRange = def.CastingRange,
+                icon = def.Icon,
+                damageBase = def.DamageBase,
+                damageType = def.DamageType,
+                damageValue = def.DamageValue,
+                interval = def.Interval,
+                duration = def.Duration,
+                attribute = oo.fzn("无属性"),
+                tags = bhu.mty(tags),
+                canAuto = def.CanAuto,
+                total = false,
+                chargingNum = def.Charges,
+                chargingCd = def.ChargeTime,
+                isKingLock = true,
+            };
+            if (values != null)
+            {
+                data.damageExStr = values.Split('|');
+                data.damageExValue = def.Values.ToArray();
+            }
+
+            EjectSkill(info.Id);
+            table[info.Id.ToString()] = row;
+            cj.boyl.bcrw[(ActiveSkillEnum)info.Id] = data;
+            injectedSkills[info.Id] = row;
+            if (def.InSkillBook && cj.boyn != null)
+            {
+                var pool = skillPool(cj.boyn);
+                string quality = def.Quality.ToString();
+                if (!pool.TryGetValue(quality, out var list)) pool[quality] = list = new List<object>();
+                list.Add(row);
+            }
+        }
+
+        public static bool SkillInjected(int id)
+        {
+            if (!injectedSkills.TryGetValue(id, out var row)) return false;
+            var table = SkillTable();
+            if (table == null || !table.TryGetValue(id.ToString(), out var current) || current != row) return false;
+            if (cj.boyl == null || !cj.boyl.bcrw.ContainsKey((ActiveSkillEnum)id)) return false;
+            bool wantPool = !(row.TryGetValue("lock", out var l) && Convert.ToBoolean(l));
+            return !wantPool || cj.boyn == null || skillPool(cj.boyn).Values.Any(list => list.Contains(row));
+        }
+
+        public static void EjectSkill(int id)
+        {
+            string key = id.ToString();
+            var table = SkillTable();
+            if (table != null && injectedSkills.TryGetValue(id, out var ours) && table.TryGetValue(key, out var row) && row == ours)
+                table.Remove(key);
+            // 只删我们自己的编号段（2000000 起），不会碰到游戏的技能
+            if (id >= ActiveSkills.FirstId && cj.boyl != null) cj.boyl.bcrw.Remove((ActiveSkillEnum)id);
+            if (cj.boyn != null)
+                foreach (var list in skillPool(cj.boyn).Values)
+                    list.RemoveAll(r => r is Dictionary<string, object> d && d.TryGetValue("id", out var v) && v?.ToString() == key);
+            injectedSkills.Remove(id);
+        }
+
+        // yb.iva(技能, 要替换的格子)：技能书学主动技能走它（真方法；yb.njw 是诱饵）
+        public static bool GiveSkill(int id, int replaceSlot)
+        {
+            var p = nn.bpbu;
+            if (p == null) return false;
+            bht replace = null;
+            if (p.roleSkillList.Count >= nn.MaxSkillNum)
+            {
+                if (replaceSlot < 0 || replaceSlot >= p.roleSkillList.Count) return false;
+                replace = p.roleSkillList[replaceSlot];
+            }
+            p.iva((ActiveSkillEnum)id, replace);
+            return true;
+        }
+
+        // 被动（qp）也是 bht，bhne 是 None；主动技能格子的 bhne 是技能编号
+        public static void RemoveLocalSkills(int id)
+        {
+            var p = nn.bpbu;
+            if (p == null) return;
+            foreach (var s in p.roleSkillList.Where(s => !(s is qp) && (int)s.bhne == id).ToList())
+                ez.dzo(s);
+            // 正在生效的实例也结束掉（Clear 里会调 OnEnd）
+            var effects = cj.boyn?.bcxi;
+            if (effects == null) return;
+            foreach (var kv in effects.Where(kv => kv.Value is ModSkill m && m.DefId == id).ToList())
+            {
+                effects.Remove(kv.Key);
+                kv.Value.Clear(-1);
+            }
+        }
+
+        // ez.dzc 的后缀。原方法会先做通用的事（检查表、触发"技能创建"事件），再在大 switch 里按编号创建实例；
+        // switch 没有我们的分支，所以在后缀里创建 ModSkill 放进 bcxi。原方法开头的两个提前返回（pj.bcxu、主机 bpue）这里照样判断。
+        // dzc(实例编号, 技能, 位置, 施法者, _, 朝向, 目标 netId, 技能书编号, 工厂)
+        public static void CreateModSkill(uint instanceId, ActiveSkillEnum skill, Vector3 position, yb caster, float rotation, int targetId)
+        {
+            int id = (int)skill;
+            if (id < ActiveSkills.FirstId || !ActiveSkills.IsCustom(id)) return;
+            if (caster == null || cj.boyn == null || cj.boyn.bcxu || cj.boyl == null || !cj.boyl.bcrw.TryGetValue(skill, out var data)) return;
+            if (Mirror.NetworkManager.bmxm is MyServerNetworkManager server && server.bpue) return;
+            if (cj.boyn.bcxi.ContainsKey(instanceId)) return;
+            // cik.bmvl：Mirror 客户端的 netId → NetworkIdentity（游戏的处决技能 bgh.mpx 也这样找目标）
+            Component target = null;
+            if (targetId > 0 && cik.bmvl.TryGetValue((uint)targetId, out var identity) && identity != null)
+                target = identity.GetComponent<yb>();
+            var s = new ModSkill(id)
+            {
+                bgwe = instanceId,
+                bgwi = skill,
+                bgwj = data,
+                bgwf = caster,
+                // 没有持续时间的技能也要活过 OnCast 这一帧
+                bgwg = data.duration > 0f ? data.duration : 0.01f,
+            };
+            cj.boyn.bcxi.Add(instanceId, s);
+            // yb.ixz(range)：表里的范围 × 施法者的技能范围加成（dzc 里给所有技能用的就是它）
+            s.Instance = ActiveSkills.Cast(id, s, position, rotation, target, caster.ixz(data.range));
+        }
+
+        public static Component SkillCaster(object native) => ((bfe)native).bgwf;
+        // yb.bphc：本机的角色（bfe.mmm 也用它决定是否结算伤害 mmn）
+        public static bool SkillIsMine(object native) => ((bfe)native).bgwf != null && ((bfe)native).bgwf.bphc;
+        public static float SkillRemaining(object native) => ((bfe)native).bgwg;
+        public static void SetSkillRemaining(object native, float value) => ((bfe)native).bgwg = value;
+        public static long SkillFormulaDamage(object native) => ((bfe)native).bgwf == null ? 0 : ez.dyk(((bfe)native).bgwj, ((bfe)native).bgwf);
+
+        // 照 bfi（闪电）的结算：施法者的敌人（izk）里活着的、在圆内的（加上对方体型 addRange），ez.dxt 造成技能伤害
+        // dxt(攻击者, 目标, 伤害, 方向角, 类型, 是否技能暴击 izi, 暴伤 dyl, 来源, 技能, 实例)
+        public static int SkillDamageArea(object native, Vector3 center, float radius, long? damage)
+        {
+            var s = (bfe)native;
+            var caster = s.bgwf;
+            if (caster == null) return 0;
+            long amount = damage ?? ez.dyk(s.bgwj, caster);
+            bool crit = caster.izi(AttackType.Skill);
+            int hits = 0;
+            var list = caster.izk();
+            for (int i = list.Count - 1; i >= 0; i--)
+            {
+                var t = list[i];
+                if (t == null || !t.gameObject.activeSelf || t.iym() || t.bpia == null) continue;
+                if (!ez.dxq(center, t.bphx.position, radius + t.bpia.addRange)) continue;
+                ez.dxt(caster, t, amount, ez.dxv(t.bphx.position, center), AttackType.Skill, crit, ez.dyl(s.bgwj, caster), DamageSourceKind.ActiveSkill, ActiveSkillEnum.None, s);
+                hits++;
+            }
+            return hits;
+        }
+
+        public static long SkillDamage(object native, Component target, long? damage)
+        {
+            var s = (bfe)native;
+            var caster = s.bgwf;
+            if (caster == null || !(target is yb t) || t.iym()) return 0;
+            long amount = damage ?? ez.dyk(s.bgwj, caster);
+            return ez.dxt(caster, t, amount, ez.dxv(t.bphx.position, caster.bphx.position), AttackType.Skill, caster.izi(AttackType.Skill),
+                ez.dyl(s.bgwj, caster), DamageSourceKind.ActiveSkill, ActiveSkillEnum.None, s);
+        }
+
+        // oj.fuv(路径, 时长, 位置, 缩放)：从对象池取 Bundles/路径 的预制体，到时自动回收（游戏的闪电等技能都用它）
+        public static void SpawnEffect(string path, Vector3 position, float duration, float scale) => cj.boyj?.fuv(path, duration, position, scale);
 
         // ---- 技能实例 bht ----
         public static int SkillId(object s) => (int)((bht)s).bhne;
@@ -844,6 +1073,25 @@ namespace DBModKit
         {
             base.gpc();
             if (bhnd != null && bhnd == nn.bpbu) PassiveSkills.Update(Instance, this);
+        }
+    }
+
+    // 自定义主动技能在游戏里的实例：ez.dzc 的后缀创建它并放进 bcxi，pj.day 每帧推进。
+    // kea 每个客户端都执行（mmn 只在施法者那边执行，ModKit 的伤害方法自己判断 IsMine，所以不用它）
+    internal sealed class ModSkill : bfe
+    {
+        public readonly int DefId;
+        public int Instance;
+
+        public ModSkill(int defId) => DefId = defId;
+
+        protected override void kea(float a) => ActiveSkills.Update(Instance, a);
+
+        public override void Clear(int clearData)
+        {
+            // 先通知 Mod（这时施法者还在），再让基类清字段
+            ActiveSkills.End(Instance);
+            base.Clear(clearData);
         }
     }
 }

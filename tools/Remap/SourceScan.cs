@@ -357,6 +357,9 @@ namespace Remap
         /// 按对应表计算新源码。代码里的标识符缺对应时保留原样（编译会报错，提示人工处理）；
         /// 文字里的同一处有多个候选（重载）时，只有全部改成同一个名字才改。
         /// </summary>
+        /// <summary>传给 newName 的参数序号：要类型的全名而不是简单名。</summary>
+        public const int FullNameParameter = -2;
+
         public Result Rewrite(Func<IMemberDefinition, int, string> newName, Side newSide, IEnumerable<string> extraRefs)
         {
             var result = new Result();
@@ -373,7 +376,9 @@ namespace Remap
                 foreach (var group in Uses.Where(u => u.File == path).GroupBy(u => u.Span))
                 {
                     var uses = group.ToList();
-                    var names = uses.Select(u => newName(u.Def, u.ParameterIndex)).Distinct().ToList();
+                    // 字符串里写的是带命名空间的全名（"Mirror.NetworkManager"）时换成新的全名
+                    var names = uses.Select(u => newName(u.Def, u.Kind == UseKind.Literal && u.Def is TypeDefinition && u.OldText.Contains('.') ? FullNameParameter : u.ParameterIndex))
+                        .Distinct().ToList();
                     var first = uses[0];
                     if (names.Count != 1 || names[0] == null)
                     {

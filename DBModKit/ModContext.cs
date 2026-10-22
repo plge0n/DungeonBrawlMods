@@ -145,6 +145,17 @@ namespace DBModKit
             return info;
         }
 
+        /// <summary>
+        /// 注册一个自定义主动技能（见 <see cref="ActiveSkills"/>）。名字和说明按 Mod 的 <see cref="Text"/> 翻译
+        /// （键 skill.&lt;Key&gt;.name / skill.&lt;Key&gt;.desc）。卸载时自动注销，本地玩家技能栏里的这个技能也会被移除。
+        /// </summary>
+        public ActiveSkillInfo RegisterSkill(ActiveSkillDef def)
+        {
+            var info = ActiveSkills.Register(Metadata.GUID, Text, def);
+            AddCleanup(() => ActiveSkills.Unregister(info));
+            return info;
+        }
+
         /// <summary>订阅战斗事件（见 <see cref="GameEvents"/>）。</summary>
         public void OnGameEvent(Action<GameEvent> handler)
         {
