@@ -51,13 +51,16 @@ namespace DBModKit
             var row = NativeUi.Row(parent, 90f, 14f);
             var texts = NativeUi.Column(row, -1f, 2f);
             var m = item.Manifest;
-            NativeUi.Label(texts, $"{item.DisplayName}  <size=18><color=#a6a6a6>{m.Version}{(string.IsNullOrEmpty(m.Author) ? "" : "  作者 " + m.Author)}</color></size>", 24);
-            if (!string.IsNullOrEmpty(m.Description)) NativeUi.Label(texts, m.Description, 18, -1f, NativeUi.DimText);
+            NativeUi.Label(texts, $"{Plain(item.DisplayName)}  <size=18><color=#a6a6a6>{Plain(m.Version)}{(string.IsNullOrEmpty(m.Author) ? "" : "  作者 " + Plain(m.Author))}</color></size>", 24);
+            if (!string.IsNullOrEmpty(m.Description)) NativeUi.Label(texts, Plain(m.Description), 18, -1f, NativeUi.DimText);
             NativeUi.Label(texts, $"工坊编号 {item.Id}", 16, -1f, NativeUi.DimText);
             Button allow = null, decline = null;
             allow = NativeUi.Button(row, "允许", true, 150f, () => Decide(item, true, allow, decline));
             decline = NativeUi.Button(row, "不加载", false, 150f, () => Decide(item, false, allow, decline));
         }
+
+        // 条目作者写的文字不能带富文本标签，否则能伪装成"官方"或把字缩到看不见
+        public static string Plain(string s) => string.IsNullOrEmpty(s) ? "" : s.Replace("<", "＜").Replace(">", "＞");
 
         private static void Decide(WorkshopItem item, bool allow, Button a, Button b)
         {
@@ -103,10 +106,11 @@ namespace DBModKit
             {
                 var row = NativeUi.Row(list, 64f, 12f);
                 var texts = NativeUi.Column(row, -1f, 0f);
-                NativeUi.Label(texts, $"{item.DisplayName}  <size=16><color=#a6a6a6>{item.Manifest?.Version}  {item.Id}</color></size>", 22);
+                NativeUi.Label(texts, $"{WorkshopPrompt.Plain(item.DisplayName)}  <size=16><color=#a6a6a6>{WorkshopPrompt.Plain(item.Manifest?.Version)}  {item.Id}</color></size>", 22);
                 NativeUi.Label(texts, StatusText(item), 16, -1f, NativeUi.DimText);
-                if (item.IsDev) continue;
-                bool allowed = item.Status == WorkshopStatus.Loaded || item.Status == WorkshopStatus.Failed;
+                if (item.IsDev || item.Broken) continue;
+                // 按玩家的选择显示，不按运行状态：已加载的条目设为不加载后，还能改回来
+                bool allowed = Workshop.IsAllowed(item);
                 var target = item;
                 // 回调里会改 Workshop.Version，列表在下一次 Refresh 重建，不在回调里销毁按钮
                 NativeUi.Button(row, allowed ? "设为不加载" : "允许并加载", !allowed, 190f, () => Workshop.Decide(target, !allowed));
@@ -124,7 +128,7 @@ namespace DBModKit
                 default: status = "<color=#e07a5f>没有加载</color>"; break;
             }
             if (item.IsDev) status += "（本地测试）";
-            return string.IsNullOrEmpty(item.Message) ? status : $"{status}：{item.Message}";
+            return string.IsNullOrEmpty(item.Message) ? status : $"{status}：{WorkshopPrompt.Plain(item.Message)}";
         }
     }
 }

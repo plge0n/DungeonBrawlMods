@@ -55,6 +55,10 @@ namespace DBModKit
         public string Message { get; internal set; } = "";
         /// <summary>加载出来的插件 GUID。</summary>
         public List<string> Plugins { get; } = new List<string>();
+        /// <summary>dbmod.json 读不了或需要更新的 DBModKit：不能允许加载。</summary>
+        public bool Broken { get; internal set; }
+        // 因为缺依赖没加载：之后允许了别的条目时再试一次
+        internal bool WaitingForDependency;
 
         public string DisplayName => string.IsNullOrEmpty(Manifest?.Name) ? Path.GetFileName(Folder) : Manifest.Name;
     }
@@ -103,27 +107,44 @@ namespace DBModKit
         /// <summary>允许或拒绝一个条目（记住选择）。允许时立刻加载；拒绝已加载的条目要重启游戏才卸掉。</summary>
         public static void Decide(WorkshopItem item, bool allow)
         {
-            if (item.IsDev || decisions == null) return;
+            if (item.IsDev || item.Broken || decisions == null) return;
             decisions.Data[item.Id] = allow;
             decisions.MarkDirty();
-            if (allow && (item.Status == WorkshopStatus.Pending || item.Status == WorkshopStatus.Declined))
+            if (item.Status == WorkshopStatus.Loaded)
             {
-                item.Status = WorkshopStatus.Pending;
+                // 已经在运行的插件卸不掉
+                item.Message = allow ? "" : "已设为不加载，重启游戏后生效";
+            }
+            else if (allow)
+            {
+                Reset(item);
                 LoadAll(new List<WorkshopItem> { item });
+                // 刚加载的可能是别的条目在等的依赖
+                var waiting = items.Where(i => i.WaitingForDependency && IsAllowed(i)).ToList();
+                if (waiting.Count > 0 && item.Status == WorkshopStatus.Loaded)
+                {
+                    waiting.ForEach(Reset);
+                    LoadAll(waiting);
+                }
             }
-            else if (!allow && item.Status == WorkshopStatus.Loaded)
-            {
-                item.Message = "已设为不加载，重启游戏后生效";
-            }
-            else if (!allow)
+            else
             {
                 item.Status = WorkshopStatus.Declined;
                 item.Message = "";
+                item.WaitingForDependency = false;
             }
             Version++;
         }
 
-        private static bool IsAllowed(WorkshopItem item) => item.IsDev || (decisions.Data.TryGetValue(item.Id, out bool allow) && allow);
+        /// <summary>玩家允许了这个条目（本地测试目录的总是允许）。</summary>
+        public static bool IsAllowed(WorkshopItem item) => item.IsDev || (decisions != null && decisions.Data.TryGetValue(item.Id, out bool allow) && allow);
+
+        private static void Reset(WorkshopItem item)
+        {
+            item.Status = WorkshopStatus.Pending;
+            item.Message = "";
+            item.WaitingForDependency = false;
+        }
 
         private static void Scan()
         {
@@ -155,6 +176,7 @@ namespace DBModKit
             }
             catch (Exception e)
             {
+                item.Broken = true;
                 return Fail(item, $"dbmod.json 格式不对：{e.Message}");
             }
             if (item.Manifest.Type != "plugin")
@@ -163,7 +185,10 @@ namespace DBModKit
                 return item;
             }
             if (item.Manifest.Format > WorkshopManifest.CurrentFormat)
+            {
+                item.Broken = true;
                 return Fail(item, "这个条目需要更新版本的 DBModKit");
+            }
             item.Status = dev || !decisions.Data.TryGetValue(item.Id, out bool allow) ? WorkshopStatus.Pending
                 : allow ? WorkshopStatus.Pending : WorkshopStatus.Declined;
             return item;
@@ -194,20 +219,24 @@ namespace DBModKit
                 }
             }
 
-            // 依赖可能在同一批里：每轮加载依赖已满足的，直到没有进展
-            bool progress = true;
-            while (progress && candidates.Count > 0)
+            // 依赖可能在同一批里：每轮加载依赖已满足的，直到没有进展。
+            // 软依赖也尽量排在后面（插件常在 Awake 里检查可选联动）；只剩软依赖卡住时不再等
+            bool waitSoft = true;
+            while (candidates.Count > 0)
             {
-                progress = false;
+                bool progress = false;
                 foreach (var c in candidates.ToList())
                 {
-                    string missing = MissingDependency(c, candidates);
+                    string missing = MissingDependency(c, candidates, waitSoft);
                     if (missing == "") continue; // 依赖在本批里，下一轮再试
                     candidates.Remove(c);
                     progress = true;
-                    if (missing != null) Fail(c.Item, missing);
+                    if (missing != null) Fail(c.Item, missing, missing.StartsWith("缺少依赖"));
                     else Instantiate(c);
                 }
+                if (progress) continue;
+                if (!waitSoft) break;
+                waitSoft = false;
             }
             foreach (var c in candidates) Fail(c.Item, "依赖之间有循环");
             foreach (var item in batch.Where(i => i.Status == WorkshopStatus.Pending))
@@ -226,13 +255,23 @@ namespace DBModKit
                 ? item.Manifest.Assemblies.Select(a => Path.GetFullPath(Path.Combine(item.Folder, a))).ToList()
                 : Directory.GetFiles(item.Folder, "*.dll").ToList();
             var result = new List<Candidate>();
+            // 末尾加分隔符：否则条目 123 能用 ..\1234\x.dll 加载未确认的条目 1234
+            string folder = Path.GetFullPath(item.Folder).TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar) + Path.DirectorySeparatorChar;
+            bool listed = item.Manifest.Assemblies.Count > 0;
             foreach (var file in files)
             {
-                // 不能跑出条目目录
-                if (!file.StartsWith(Path.GetFullPath(item.Folder), StringComparison.OrdinalIgnoreCase))
+                if (!file.StartsWith(folder, StringComparison.OrdinalIgnoreCase))
                     throw new Exception($"dll 路径不在条目目录里：{file}");
                 if (!File.Exists(file)) throw new Exception($"找不到 {Path.GetFileName(file)}");
-                var assembly = Assembly.LoadFrom(file);
+                Assembly assembly;
+                try
+                {
+                    assembly = Assembly.LoadFrom(file);
+                }
+                catch (BadImageFormatException) when (!listed)
+                {
+                    continue; // 没指定 Assemblies 时，根目录里的原生 dll 跳过
+                }
                 foreach (var type in SafeTypes(assembly))
                 {
                     if (type.IsAbstract || !typeof(BaseUnityPlugin).IsAssignableFrom(type)) continue;
@@ -256,7 +295,7 @@ namespace DBModKit
         }
 
         // null = 可以加载；"" = 依赖在同一批里还没加载；其他 = 不能加载的原因
-        private static string MissingDependency(Candidate c, List<Candidate> batch)
+        private static string MissingDependency(Candidate c, List<Candidate> batch, bool waitSoft)
         {
             if (Chainloader.PluginInfos.ContainsKey(c.Metadata.GUID))
                 return $"已经装了同一个插件（{c.Metadata.GUID}），用的是本地那份";
@@ -265,7 +304,11 @@ namespace DBModKit
                     return $"和 {inc.IncompatibilityGUID} 不兼容";
             foreach (var dep in MetadataHelper.GetDependencies(c.Type))
             {
-                if ((dep.Flags & BepInDependency.DependencyFlags.HardDependency) == 0) continue;
+                if ((dep.Flags & BepInDependency.DependencyFlags.HardDependency) == 0)
+                {
+                    if (waitSoft && batch.Any(o => o != c && o.Metadata.GUID == dep.DependencyGUID)) return "";
+                    continue;
+                }
                 if (Chainloader.PluginInfos.TryGetValue(dep.DependencyGUID, out var info))
                 {
                     if (info.Metadata.Version < dep.MinimumVersion)
@@ -313,8 +356,9 @@ namespace DBModKit
         private static void Set(PluginInfo info, string property, object value)
             => AccessTools.Property(typeof(PluginInfo), property).SetValue(info, value, null);
 
-        private static WorkshopItem Fail(WorkshopItem item, string message)
+        private static WorkshopItem Fail(WorkshopItem item, string message, bool waitingForDependency = false)
         {
+            item.WaitingForDependency |= waitingForDependency;
             // 同一条目里有插件已加载成功时保留"已加载"，原因附在后面
             if (item.Status != WorkshopStatus.Loaded) item.Status = WorkshopStatus.Failed;
             item.Message = string.IsNullOrEmpty(item.Message) ? message : item.Message + "；" + message;
