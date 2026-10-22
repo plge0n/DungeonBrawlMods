@@ -44,6 +44,19 @@ namespace DBModKit
             }
         }
 
+        /// <summary>场上所有玩家（含自己）。会遍历场景，不要每帧调用。</summary>
+        public static List<Player> Players()
+        {
+            var result = new List<Player>();
+            if (!ModKit.Compatible) return result;
+            foreach (var p in GameRaw.AllPlayers())
+            {
+                var player = Player.Wrap(p);
+                if (player != null) result.Add(player);
+            }
+            return result;
+        }
+
         /// <summary>游戏设置里的"自动战斗"开着。</summary>
         public static bool AutoBattle => ModKit.Compatible && GameRaw.AutoBattleOn();
 
@@ -132,6 +145,15 @@ namespace DBModKit
         internal Player(Component native) : base(native) { }
 
         internal new static Player Wrap(Component native) => Role.Wrap(native) as Player;
+
+        /// <summary>联机编号（Mirror netId）：同一局里每台电脑看到的都一样，可以用来对应别人发来的数据。</summary>
+        public uint NetId => GameRaw.NetId(Native);
+        /// <summary>玩家名（Steam 昵称）；局域网模式下可能为空。</summary>
+        public string Name => GameRaw.PlayerName(Native);
+        /// <summary>英雄编号（HeroType）。</summary>
+        public int HeroId => GameRaw.HeroIdOf(Native);
+        /// <summary>英雄名（本地化，不受工坊模型影响）。</summary>
+        public string HeroName => Game.Localize("hero_" + HeroId, "英雄 " + HeroId);
 
         public int Mana => GameRaw.Mana(Native);
         public int MaxMana => GameRaw.MaxMana(Native);

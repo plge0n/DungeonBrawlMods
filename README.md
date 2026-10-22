@@ -9,7 +9,7 @@ BepInEx 5 插件，目标游戏：地下城竞技场（Steam 4246640，Unity 202
 | [DBStudio](DBStudio) | 游戏内的 Mod 工作台（F9）：调试面板、规则、强化（海克斯式三选一）、数值编辑器、英雄皮肤 |
 | [SmartMove](SmartMove) | 自动躲避地面预警（F9 开关） |
 | [AutoPickup](AutoPickup) | 战斗中自动拾取身边能捡的掉落物（和按 C 一样），可按类别过滤 |
-| [DamageMeter](DamageMeter) | 伤害统计：按普攻、技能、召唤物分开统计本波和本局的伤害与 DPS |
+| [DamageMeter](DamageMeter) | 伤害统计：按普攻、技能、召唤物分开统计本波和本局的伤害与 DPS；Steam 联机时显示装了它的队友的伤害 |
 
 玩家说明见 [安装说明.txt](安装说明.txt)。
 
@@ -72,6 +72,7 @@ public class Plugin : BaseUnityPlugin
 | `ModSettings` | 往 DBStudio 的 Mod 页里挂自定义设置区块 |
 | `GameData` | 改技能、英雄、怪物配置表里的数值，可随时整体恢复原版 |
 | `HeroSkins` | 给每个英雄选一套工坊或本地的模型（或原版），可以只换本地玩家；Steam 联机时通过大厅成员数据同步 |
+| `LobbySync` | 通过 Steam 大厅成员数据和其他装了 Mod 的玩家交换少量文字数据（局域网不可用） |
 | `JsonConfig<T>` | `BepInEx/config` 下的 JSON 配置，自动延迟保存 |
 | `ScreenNotice` | 屏幕顶部临时提示 |
 | `ModText` / `Localization` | 多语言文本：代码里写中文原文，翻译放在插件旁的 `lang/<语言>.json`，跟随游戏语言（见下） |

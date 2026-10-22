@@ -6,13 +6,13 @@ namespace DamageMeter
 {
     // 伤害统计：按普攻、技能、召唤物分开统计本波和本局的伤害与 DPS。只看自己打出的伤害，不改游戏，联机也能用
     [BepInPlugin(Guid, Name, Version)]
-    [BepInDependency(ModKitPlugin.Guid, "0.13.0")]
+    [BepInDependency(ModKitPlugin.Guid, "0.14.0")]
     public class Plugin : BaseUnityPlugin
     {
         public const string Guid = "plge0n.dungeonbrawl.damagemeter";
         public const string Name = "DamageMeter";
         // 发布时同步修改 CHANGELOG.md；pack.ps1 从这里读取版本号
-        public const string Version = "0.1.0";
+        public const string Version = "0.2.0";
 
         internal static ConfigEntry<bool> Enabled;
         internal static ConfigEntry<KeyboardShortcut> ToggleKey;
@@ -23,6 +23,8 @@ namespace DamageMeter
         internal static ConfigEntry<float> Scale;
         internal static ConfigEntry<float> Opacity;
         internal static ConfigEntry<bool> LogSummary;
+        internal static ConfigEntry<bool> ShareInLobby;
+        internal static ConfigEntry<bool> ShowTeam;
 
         // 必须直接继承 BaseUnityPlugin（不能继承 ModKit 里的类），否则 ScriptEngine 热重载会出错
         private ModContext mod;
@@ -37,6 +39,9 @@ namespace DamageMeter
             ToggleKey = Config.Bind("General", "ToggleKey", KeyboardShortcut.Empty, "显示/隐藏面板的快捷键（默认不设）");
             ShowRun = Config.Bind("General", "ShowRun", false, "显示整局的统计（关掉时显示当前波次）；面板上的按钮也能切换");
             LogSummary = Config.Bind("General", "LogSummary", true, "每波结束和本局结束时把统计写进 BepInEx 日志");
+            ShareInLobby = Config.Bind("Team", "ShareInLobby", true,
+                "Steam 联机时把自己的伤害统计共享给装了 DamageMeter 的队友（通过 Steam 大厅数据，没装 Mod 的人不受影响；局域网模式不支持）");
+            ShowTeam = Config.Bind("Team", "ShowTeam", true, "联机时在面板下方显示队伍里每个人的伤害");
             MaxRows = Config.Bind("Panel", "MaxRows", 6,
                 new ConfigDescription("最多显示几个伤害来源", new AcceptableValueRange<int>(1, 12)));
             OffsetX = Config.Bind("Panel", "OffsetX", 20f,
@@ -71,10 +76,15 @@ namespace DamageMeter
             mod.OnUpdate(() =>
             {
                 if (ToggleKey.Value.IsDown()) Enabled.Value = !Enabled.Value;
+                Team.Tick();
                 Panel.Tick();
             });
         }
 
-        private void OnUnload() => Panel.Destroy();
+        private void OnUnload()
+        {
+            Panel.Destroy();
+            Team.Clear();
+        }
     }
 }

@@ -1,5 +1,10 @@
 # DBModKit 更新日志
 
+## 0.14.0
+- 新增 `LobbySync`：通过 Steam 大厅成员数据和其他装了 Mod 的玩家交换少量文字数据（`Publish` / `Read` / `Clear`）。
+  皮肤同步用的同一个通道，没装 Mod 的玩家不受影响；局域网模式没有大厅，不可用
+- `Game.Players()`：场上所有玩家；`Player.NetId`、`Name`、`HeroId`、`HeroName`
+
 ## 0.13.0
 - `HitInfo.IsNormalAttack`：这一下是普攻（游戏命中记录的 `Normal`）
 - `Game.Wave`（以及 `GameEvent.Wave`）改为从 1 开始，和游戏界面一致；原来比显示的少 1，DBStudio 规则的"波次至少"也因此差一波；运行记录里的波次同样改为从 1 开始
