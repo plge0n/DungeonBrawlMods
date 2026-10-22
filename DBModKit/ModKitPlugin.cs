@@ -12,7 +12,7 @@ namespace DBModKit
         public const string Guid = "plge0n.dungeonbrawl.modkit";
         public const string Name = "DBModKit";
         // 发布时同步修改 CHANGELOG.md；pack.ps1 从这里读取版本号
-        public const string Version = "0.17.1";
+        public const string Version = "0.18.0";
 
         private void Awake()
         {

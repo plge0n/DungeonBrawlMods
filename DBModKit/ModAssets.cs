@@ -1,0 +1,145 @@
+using System;
+using System.Collections.Generic;
+using System.IO;
+using UnityEngine;
+
+namespace DBModKit
+{
+    /// <summary>
+    /// Mod 自己的 AssetBundle（Unity 编辑器打包），用 <see cref="ModContext.LoadBundle"/> 打开，Mod 卸载时自动关闭。
+    /// </summary>
+    public sealed class ModBundle
+    {
+        internal AssetBundle Bundle;
+
+        public string File { get; }
+
+        internal ModBundle(string file, AssetBundle bundle)
+        {
+            File = file;
+            Bundle = bundle;
+        }
+
+        /// <summary>包里的资源名（打包时的路径，小写）。</summary>
+        public string[] AssetNames => Bundle != null ? Bundle.GetAllAssetNames() : new string[0];
+
+        /// <summary>按名字读资源（可以写完整路径，也可以只写文件名，不带扩展名也行）；没有时为 null。</summary>
+        public T Load<T>(string name) where T : UnityEngine.Object => Bundle != null ? Bundle.LoadAsset<T>(name) : null;
+
+        public Sprite Sprite(string name)
+        {
+            var sprite = Load<Sprite>(name);
+            if (sprite != null) return sprite;
+            // 贴图没设成 Sprite 类型时自己包一个
+            var texture = Load<Texture2D>(name);
+            return texture != null ? ModAssets.ToSprite(texture) : null;
+        }
+
+        public GameObject Prefab(string name) => Load<GameObject>(name);
+
+        public AnimationClip Clip(string name) => Load<AnimationClip>(name);
+    }
+
+    /// <summary>
+    /// Mod 的图标和特效。注册后得到一个名字，用法和游戏自己的资源一样：
+    /// 图标名填进 <see cref="PassiveSkillDef.Icon"/> / <see cref="ActiveSkillDef.Icon"/>，特效路径传给 <see cref="ActiveSkill.Effect"/>。
+    /// </summary>
+    /// <remarks>
+    /// 游戏按 Resources 路径加载图标（Bundles/UI/Icon/Skill/ + 名字）和特效（Bundles/ + 路径，经对象池）。
+    /// 我们的名字都以 "DBMod/" 开头，ModKit 在加载处把它们换成 Mod 注册的资源。
+    /// </remarks>
+    public static class ModAssets
+    {
+        internal const string Prefix = "DBMod/";
+
+        private static readonly Dictionary<string, Sprite> icons = new Dictionary<string, Sprite>();
+        private static readonly Dictionary<string, GameObject> effects = new Dictionary<string, GameObject>();
+        private static GameObject templateRoot;
+
+        /// <summary>游戏各处的图标加载都能换成 Mod 的图标（Resources.Load 补丁装上了）。为 false 时只有技能栏按钮能显示。</summary>
+        public static bool IconsAvailable { get; internal set; }
+
+        /// <summary>特效补丁装上了。</summary>
+        public static bool EffectsAvailable { get; internal set; }
+
+        internal static string Name(string owner, string key)
+        {
+            if (string.IsNullOrEmpty(key) || key.IndexOfAny(new[] { '/', '\\' }) >= 0) throw new ArgumentException($"资源的键不能为空或包含 / \\：\"{key}\"");
+            return Prefix + owner + "/" + key;
+        }
+
+        internal static string RegisterIcon(string owner, string key, Sprite sprite)
+        {
+            if (sprite == null) throw new ArgumentNullException(nameof(sprite));
+            string name = Name(owner, key);
+            icons[name] = sprite;
+            return name;
+        }
+
+        internal static void UnregisterIcon(string name) => icons.Remove(name);
+
+        internal static string RegisterEffect(string owner, string key, GameObject template)
+        {
+            if (template == null) throw new ArgumentNullException(nameof(template));
+            string name = Name(owner, key);
+            // 场景里的对象（代码搭的特效）做成不显示、不随场景销毁的模板；包里的预制体本来就不在场景里
+            if (template.scene.IsValid())
+            {
+                if (templateRoot == null)
+                {
+                    templateRoot = new GameObject("DBModKit.EffectTemplates");
+                    templateRoot.SetActive(false);
+                    UnityEngine.Object.DontDestroyOnLoad(templateRoot);
+                }
+                template.transform.SetParent(templateRoot.transform, false);
+            }
+            effects[name] = template;
+            Safe.Run("清理特效对象池", () => GameRaw.ForgetPooledEffect(name));
+            return name;
+        }
+
+        internal static void UnregisterEffect(string name)
+        {
+            if (!effects.TryGetValue(name, out var template)) return;
+            effects.Remove(name);
+            // 对象池里缓存了模板和已生成的实例，要一起清掉，否则下次会拿到已销毁的模板
+            Safe.Run("清理特效对象池", () => GameRaw.ForgetPooledEffect(name));
+            if (template != null && template.scene.IsValid()) UnityEngine.Object.Destroy(template);
+        }
+
+        internal static bool IsOurs(string path) => path != null && path.IndexOf(Prefix, StringComparison.Ordinal) >= 0;
+
+        /// <summary>按游戏的加载路径找图标（路径里 "DBMod/" 起的部分是名字）。</summary>
+        internal static Sprite IconFor(string path)
+        {
+            int i = path?.IndexOf(Prefix, StringComparison.Ordinal) ?? -1;
+            return i >= 0 && icons.TryGetValue(path.Substring(i), out var sprite) ? sprite : null;
+        }
+
+        internal static GameObject EffectFor(string path)
+        {
+            int i = path?.IndexOf(Prefix, StringComparison.Ordinal) ?? -1;
+            return i >= 0 && effects.TryGetValue(path.Substring(i), out var template) ? template : null;
+        }
+
+        /// <summary>读 PNG/JPG 文件做成图标（Sprite）。</summary>
+        public static Sprite LoadSprite(string file)
+        {
+            var texture = new Texture2D(2, 2, TextureFormat.RGBA32, false);
+            if (!ImageConversion.LoadImage(texture, File.ReadAllBytes(file)))
+            {
+                UnityEngine.Object.Destroy(texture);
+                throw new InvalidDataException($"不是能读的图片：{file}");
+            }
+            texture.name = Path.GetFileNameWithoutExtension(file);
+            return ToSprite(texture);
+        }
+
+        internal static Sprite ToSprite(Texture2D texture)
+        {
+            var sprite = Sprite.Create(texture, new Rect(0, 0, texture.width, texture.height), new Vector2(0.5f, 0.5f), 100f);
+            sprite.name = texture.name;
+            return sprite;
+        }
+    }
+}

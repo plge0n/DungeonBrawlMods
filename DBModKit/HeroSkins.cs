@@ -243,6 +243,12 @@ namespace DBModKit
         // 自己这个英雄实际显示的、可以告诉别人的皮肤：工坊皮肤或原版；本地皮肤别人没有，返回 null
         internal static string ShareableSkin(int heroId)
         {
+            // 用的是变体英雄的模型：工坊模型可以告诉别人，Mod 自带的别人没有
+            if (HeroVariants.TryModelFolder(heroId, out _))
+            {
+                ulong workshop = HeroVariants.Selected(heroId)?.Def.WorkshopModel ?? 0;
+                return workshop != 0 && HeroVariants.Selected(heroId).ModelFolder == null ? WorkshopId(workshop) : null;
+            }
             string id = Get(heroId);
             if (id == Original) return Original;
             if (id != null && TryResolve(heroId, out string folder) && folder != null)
@@ -256,6 +262,8 @@ namespace DBModKit
 
         internal static bool TryResolve(int heroId, out string folder)
         {
+            // 选了带模型的变体英雄：用变体的模型（只影响自己这边）
+            if (HeroVariants.TryModelFolder(heroId, out folder)) return true;
             folder = null;
             var id = Get(heroId);
             if (id == null) return false;

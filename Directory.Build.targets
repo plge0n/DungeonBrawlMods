@@ -11,6 +11,9 @@
     1. 当前代码包含 origin/main 的最新提交（从旧的 main 拉出来、还没变基的分支不部署）；
     2. 当前代码包含游戏里这个项目上一次部署时的提交（记在 BepInEx/DBMods.deploy/<项目名>.commit）。
     确定要覆盖时：dotnet build -p:ForceDeploy=true
+
+    项目里的 lang/（翻译）和 assets/（图片、AssetBundle）一起复制：plugins 下放在插件文件夹里，
+    热重载时放在 BepInEx/scripts/<程序集名>/（ScriptEngine 从内存加载 dll，ModContext 到这里找文件）。
   -->
   <PropertyGroup>
     <!-- 部署到哪个游戏目录（默认就是编译时引用的 GameDir；测试部署逻辑时可以指向别的目录） -->
@@ -20,6 +23,7 @@
     <!-- ScriptEngine 加载时会读取同名 .pdb，缺失就抛异常、整批 Mod 都不加载 -->
     <ScriptsPdb>$(DeployDir)\BepInEx\scripts\$(TargetName).pdb</ScriptsPdb>
     <BuiltPdb>$(TargetDir)$(TargetName).pdb</BuiltPdb>
+    <ScriptsContentDir>$(DeployDir)\BepInEx\scripts\$(TargetName)</ScriptsContentDir>
     <DeployMarker>$(DeployDir)\BepInEx\DBMods.deploy\$(MSBuildProjectName).commit</DeployMarker>
   </PropertyGroup>
 
@@ -73,6 +77,18 @@
     <MakeDir Directories="$(PluginDir)" Condition="'$(HotReload)' != 'true'" />
     <Copy SourceFiles="$(TargetPath)" DestinationFolder="$(PluginDir)" Condition="'$(HotReload)' != 'true'" />
     <Delete Files="$(ScriptsFile);$(ScriptsPdb)" Condition="'$(HotReload)' != 'true'" />
+
+    <ItemGroup>
+      <ModLang Include="$(MSBuildProjectDirectory)\lang\**\*" />
+      <ModAssetFile Include="$(MSBuildProjectDirectory)\assets\**\*" />
+    </ItemGroup>
+    <PropertyGroup>
+      <ContentDest Condition="'$(HotReload)' == 'true'">$(ScriptsContentDir)</ContentDest>
+      <ContentDest Condition="'$(HotReload)' != 'true'">$(PluginDir)</ContentDest>
+    </PropertyGroup>
+    <RemoveDir Directories="$(ScriptsContentDir)" Condition="'$(HotReload)' != 'true'" ContinueOnError="true" />
+    <Copy SourceFiles="@(ModLang)" DestinationFiles="@(ModLang->'$(ContentDest)\lang\%(RecursiveDir)%(Filename)%(Extension)')" />
+    <Copy SourceFiles="@(ModAssetFile)" DestinationFiles="@(ModAssetFile->'$(ContentDest)\assets\%(RecursiveDir)%(Filename)%(Extension)')" />
 
     <!-- 记下这次部署来自哪个提交，供下一次部署检查 -->
     <MakeDir Directories="$(DeployDir)\BepInEx\DBMods.deploy" Condition="'$(GitHead)' != ''" />

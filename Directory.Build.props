@@ -26,6 +26,10 @@
     <Reference Include="UnityEngine.TextRenderingModule" HintPath="$(Managed)\UnityEngine.TextRenderingModule.dll" Private="false" />
     <Reference Include="UnityEngine.UI" HintPath="$(Managed)\UnityEngine.UI.dll" Private="false" />
     <Reference Include="UnityEngine.UIModule" HintPath="$(Managed)\UnityEngine.UIModule.dll" Private="false" />
+    <!-- ModKit 的图标、AssetBundle、施法动作接口用到 Sprite、AssetBundle、AnimationClip，Mod 调用这些接口时也要引用 -->
+    <Reference Include="UnityEngine.ImageConversionModule" HintPath="$(Managed)\UnityEngine.ImageConversionModule.dll" Private="false" />
+    <Reference Include="UnityEngine.AssetBundleModule" HintPath="$(Managed)\UnityEngine.AssetBundleModule.dll" Private="false" />
+    <Reference Include="UnityEngine.AnimationModule" HintPath="$(Managed)\UnityEngine.AnimationModule.dll" Private="false" />
   </ItemGroup>
 
   <!-- 只有 ModKit 引用游戏代码（设置 ReferenceGame=true）；其他 Mod 一律通过 ModKit 访问游戏 -->
