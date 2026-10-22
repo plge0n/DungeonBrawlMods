@@ -20,7 +20,7 @@ namespace DBModKit
             ["nn"] = new[] { "bpbu", "bbtv", "bbtm", "fqr", "frk" },
             ["os"] = new[] { "gba", "bctl", "bctm" },
             ["cj"] = new[] { "boyb", "boyi", "boyj", "boyl", "boyn", "boyt" },
-            ["ez"] = new[] { "dxx", "dxy", "dyk" },
+            ["ez"] = new[] { "dxx", "dxy", "dyk", "dvm" },
             ["bfl"] = new[] { "mna" },
             ["pj"] = new[] { "bcxi" },
             ["bfe"] = new[] { "bgwf", "bgwg", "bgwi" },
@@ -37,13 +37,13 @@ namespace DBModKit
             ["LeaderboardUploadStage"] = new string[0],
             ["yb"] = new[]
             {
-                "hp", "maxHp", "izk", "iyn", "ivj", "bphx", "bpia", "bphc", "bpgz", "beqd", "ivk", "bphy", "roleType",
+                "hp", "maxHp", "izk", "iyn", "ivj", "bphx", "bpia", "bphc", "roleName", "bpgz", "beqd", "ivk", "bphy", "roleType",
                 "henShinSkillId", "timer", "iyi", "iyj", "isCheckAttack",
                 "bphz", "bphq", "bphp", "bpho", "bphb", "bphl", "bphm", "bphk", "bphr", "bphv", "iwz", "iwh",
             },
             ["bbe"] = new[]
             {
-                "heroType", "bfru", "bfrv", "kqi", "kqh", "addDamagePercent", "addBossEnemy", "addEliteEnemy", "addNormalEnemy",
+                "heroType", "kzz", "bfru", "bfrv", "kqi", "kqh", "addDamagePercent", "addBossEnemy", "addEliteEnemy", "addNormalEnemy",
                 "ksd", "k4a25de8c63fe4a7192613346ae51af4e", "kfd63a19d353a42878846361e6af4f637",
             },
             ["GoldIncomeSource"] = new[] { "Gameplay" },
@@ -79,7 +79,7 @@ namespace DBModKit
             ["ActiveSkillEnum"] = new[] { "None", "D_Execution", "S_Execution", "D_Alchemy", "S_Alchemy", "Bite" },
             ["SkillTag"] = new[] { "Heal", "Revive", "Shield", "Defense", "Buff", "Summon", "Aura", "Area", "Move", "Control", "Henshin", "Duration" },
             // 英雄皮肤
-            ["buj"] = new[] { "pwu", "pwh", "pwj", "pwm", "pwf", "pyb" },
+            ["buj"] = new[] { "pwu", "pwm", "pwf", "pyb" },
             ["bup"] = new[] { "pyx" },
             ["buu"] = new[] { "qaq", "qar", "bptc" },
             ["buo"] = new[] { "bkkn" },

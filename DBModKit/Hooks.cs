@@ -39,20 +39,17 @@ namespace DBModKit
             HeroSkins.Available = TryPatch(harmony, typeof(HeroSkinHooks), "英雄皮肤（查找模型）",
                 AccessTools.Method(typeof(buj), "pwu", new[] { typeof(int), typeof(string).MakeByRefType(), typeof(LocalWorkshopManifest).MakeByRefType() }),
                 prefix: nameof(HeroSkinHooks.ResolvePrefix));
-            // 变身时记下是谁在变身；这两个装不上时变身按英雄判断（同英雄的其他玩家变身也会换模型）
-            TryPatch(harmony, typeof(HeroSkinHooks), "英雄皮肤（变身技能）",
-                AccessTools.Method(typeof(bgt), "mqp", new[] { typeof(string) }),
-                prefix: nameof(HeroSkinHooks.SkillTransformPrefix));
-            TryPatch(harmony, typeof(HeroSkinHooks), "英雄皮肤（变身恢复）",
-                AccessTools.Method(typeof(bbp), "lob", new[] { typeof(bbe) }),
-                prefix: nameof(HeroSkinHooks.CheckpointTransformPrefix));
+            // 出生、变身期间记下是哪个角色：pwu 据此对其他玩家返回原版（模型和名字都按原版）
             HeroSkins.OnlyLocalPlayerAvailable =
-                TryPatch(harmony, typeof(HeroSkinHooks), "英雄皮肤（只换本地玩家）",
-                    AccessTools.Method(typeof(buj), "pwh", new[] { typeof(bbe) }),
-                    prefix: nameof(HeroSkinHooks.SpawnPrefix))
-                && TryPatch(harmony, typeof(HeroSkinHooks), "英雄皮肤（变身只换本地玩家）",
-                    AccessTools.Method(typeof(buj), "pwj", new[] { typeof(HeroType), typeof(string), typeof(RoleModeBase) }),
-                    prefix: nameof(HeroSkinHooks.TransformPrefix));
+                TryPatch(harmony, typeof(HeroSkinHooks), "英雄皮肤（出生）",
+                    AccessTools.Method(typeof(bbe), "kzz", new[] { typeof(Vector3), typeof(uint), typeof(HeroType), typeof(string) }),
+                    prefix: nameof(HeroSkinHooks.SpawnPrefix), finalizer: nameof(HeroSkinHooks.RestoreOwner))
+                & TryPatch(harmony, typeof(HeroSkinHooks), "英雄皮肤（变身技能）",
+                    AccessTools.Method(typeof(bgt), "mqp", new[] { typeof(string) }),
+                    prefix: nameof(HeroSkinHooks.SkillTransformPrefix), finalizer: nameof(HeroSkinHooks.RestoreOwner))
+                & TryPatch(harmony, typeof(HeroSkinHooks), "英雄皮肤（变身恢复）",
+                    AccessTools.Method(typeof(bbp), "lob", new[] { typeof(bbe) }),
+                    prefix: nameof(HeroSkinHooks.CheckpointTransformPrefix), finalizer: nameof(HeroSkinHooks.RestoreOwner));
 
             // 开关技能开着时，自动释放直接把它关掉，不经过 dxx
             if (AutoCast.Available)
@@ -79,7 +76,8 @@ namespace DBModKit
             return true;
         }
 
-        private static bool TryPatch(Harmony harmony, Type hooks, string feature, MethodBase target, string prefix = null, string postfix = null)
+        private static bool TryPatch(Harmony harmony, Type hooks, string feature, MethodBase target,
+            string prefix = null, string postfix = null, string finalizer = null)
         {
             if (target == null)
             {
@@ -90,7 +88,8 @@ namespace DBModKit
             {
                 harmony.Patch(target,
                     prefix: prefix == null ? null : new HarmonyMethod(hooks, prefix),
-                    postfix: postfix == null ? null : new HarmonyMethod(hooks, postfix));
+                    postfix: postfix == null ? null : new HarmonyMethod(hooks, postfix),
+                    finalizer: finalizer == null ? null : new HarmonyMethod(hooks, finalizer));
                 return true;
             }
             catch (Exception e)
@@ -318,14 +317,15 @@ namespace DBModKit
         private static int ScaleInt(int v, double scale) => (int)Math.Round(Math.Min(int.MaxValue, v * scale));
     }
 
-    // buj.pwu(英雄编号, out 文件夹, out manifest)：查找英雄模型文件夹的唯一入口，出生、选英雄预览、变身、名字和头像覆盖都经过它
-    //   （wy 是同签名的诱饵）。原版顺序：PlayerPrefs Workshop.LocalHeroModel.<编号> → 设置里的本地文件 Mod → 工坊绑定
-    // buj.pwh(bbe)：出生时（bbe.kzz）给角色换模型。每个客户端对每个玩家都会调用，只按英雄查本机设置
-    // buj.pwj(HeroType, prefab, RoleModeBase)：变身时给新模型换上 additionalModels；调用方是 bgt.mqp（变身技能）和 bbp.lob（变身状态恢复）
+    // buj.pwu(英雄编号, out 文件夹, out manifest)：查找英雄模型文件夹的唯一入口，出生、选英雄预览、变身、英雄名和头像覆盖都经过它
+    //   （wy 是同签名的诱饵）。原版顺序：PlayerPrefs Workshop.LocalHeroModel.<编号> → 设置里的本地文件 Mod → 工坊绑定。
+    //   只按英雄查本机设置，所以原版在你这边会把同英雄的其他玩家也换掉，名字（roleName）也换成模型里的 heroName
+    // bbe.kzz：出生（ClientRpcBornPos），每个客户端对每个玩家都会调用；里面 yb.iuh → ez.dvm 算名字、buj.pwh 换模型
+    // bgt.mqp（变身技能）、bbp.lob（变身状态恢复）：通过 buj.pwj → pwl 给新模型换上 additionalModels
     internal static class HeroSkinHooks
     {
-        // 正在变身的角色；pwj 读取后清空
-        private static yb transformOwner;
+        // 正在出生或变身的角色；不在这些方法里时为 null（例如选英雄界面的预览）
+        private static yb owner;
 
         internal static bool ResolvePrefix(int __0, ref string __1, ref LocalWorkshopManifest __2, ref bool __result)
         {
@@ -333,7 +333,9 @@ namespace DBModKit
             string folder;
             try
             {
-                if (!HeroSkins.TryResolve(__0, out folder)) return true;
+                // yb.bphc：Mirror 的 isLocalPlayer（出生的 RPC 到达时已经有值）
+                if (HeroSkins.OnlyLocalPlayer && owner != null && !owner.bphc) folder = null;
+                else if (!HeroSkins.TryResolve(__0, out folder)) return true;
             }
             catch (Exception e)
             {
@@ -348,27 +350,25 @@ namespace DBModKit
             return false;
         }
 
-        internal static void SkillTransformPrefix(bgt __instance) => transformOwner = __instance.bgwf;
-
-        internal static void CheckpointTransformPrefix(bbe __0) => transformOwner = __0;
-
-        // yb.bphc：Mirror 的 isLocalPlayer（kzz 里 pwh 之后紧接着用它设置本地玩家，这时已经有值）
-        internal static bool SpawnPrefix(bbe __0, ref bool __result)
+        internal static void SpawnPrefix(bbe __instance, out yb __state)
         {
-            if (!HeroSkins.OnlyLocalPlayer || __0 == null || __0.bphc) return true;
-            __result = false;
-            return false;
+            __state = owner;
+            owner = __instance;
         }
 
-        internal static bool TransformPrefix(HeroType __0, ref bool __result)
+        internal static void SkillTransformPrefix(bgt __instance, out yb __state)
         {
-            var owner = transformOwner;
-            transformOwner = null;
-            if (!HeroSkins.OnlyLocalPlayer) return true;
-            bool local = owner != null ? owner.bphc : GameRaw.LocalHeroId() == (int)__0;
-            if (local) return true;
-            __result = false;
-            return false;
+            __state = owner;
+            owner = __instance.bgwf;
         }
+
+        internal static void CheckpointTransformPrefix(bbe __0, out yb __state)
+        {
+            __state = owner;
+            owner = __0;
+        }
+
+        // 用 finalizer 而不是 postfix：原方法抛异常时也要恢复
+        internal static void RestoreOwner(yb __state) => owner = __state;
     }
 }
