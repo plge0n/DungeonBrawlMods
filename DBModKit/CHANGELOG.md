@@ -1,5 +1,15 @@
 # DBModKit 更新日志
 
+## 0.19.0
+- 主菜单"创意工坊"下面加了"Mod"按钮（照抄原版按钮的样式和悬停效果），后面显示正在运行的 Mod 数，有要处理的问题时显示红色"!"。
+  点开是 Mod 列表：游戏版本和兼容状态、排行榜规则、已安装的 Mod 和运行状态、BepInEx 没能加载的插件（缺前置、版本旧）、
+  创意工坊插件（有等确认的可以直接去确认）、其他插件；"打开 Mod 文件夹"打开 BepInEx/plugins。
+  ModKit 和游戏版本不兼容时照样显示，告诉玩家 Mod 已停用；没装 DBStudio 也能用
+- `ModList.Plugins()`：已加载的插件和状态（`ModInfo.State` 运行中 / 已停用 / 启动出错 / 不用 ModKit）、是否热重载、来自哪个工坊条目；
+  `ModList.LoadErrors`、`ModList.ProblemCount()`；`ModContext.Failed`
+- `ModSettings.SetOpener` / `Open(guid)` / `CanOpen`：设置界面登记打开方法，Mod 列表的"设置"按钮跳过去
+- 版本号跳过 0.18.0（PR #19 已占用）
+
 ## 0.17.0
 - 英雄专属技能 `HeroSkill`（`HeroSkill.Of(英雄)`、`Player.HeroSkill`）：hero 表里每个英雄出生时发放的那个技能，主动或被动；主动的带冷却、蓝耗、持续时间、充能、伤害参数，被动的带表里的数值
 - `Player.HeroSkillSlot`（篮球巨星拿到"鸡舞"卡牌后返回换过的真·鸡舞）、`Player.FindSkill`、`SkillSlot.SkillId` / `CooldownTotal` / `ReduceCooldown`

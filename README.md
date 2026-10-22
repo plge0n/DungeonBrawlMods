@@ -73,6 +73,7 @@ public class Plugin : BaseUnityPlugin
 | `Loot` | 地上的掉落物（类别、位置、自己能不能捡）；替本地玩家拾取，范围和按 C 一样不超过 5 米 |
 | `ChoicePanel` / `RelicInfo` | 用游戏的三选一界面显示自定义选项；遗物列表、发遗物 |
 | `ModSettings` | 往 DBStudio 的 Mod 页里挂自定义设置区块 |
+| `ModList` | 已安装的插件和运行状态、BepInEx 没能加载的插件（主菜单"Mod"按钮打开的列表也用它） |
 | `GameData` | 改技能、英雄、怪物配置表里的数值，可随时整体恢复原版 |
 | `HeroSkins` | 给每个英雄选一套工坊或本地的模型（或原版），可以只换本地玩家；Steam 联机时通过大厅成员数据同步 |
 | `LobbySync` | 通过 Steam 大厅成员数据和其他装了 Mod 的玩家交换少量文字数据（局域网不可用） |
