@@ -112,6 +112,9 @@ namespace DBModKit
         /// <summary>水平距离（忽略高度）。</summary>
         public float DistanceTo(Role other) => GameRaw.Distance(Native, other.Position);
 
+        /// <summary>到某个位置的水平距离（忽略高度）。</summary>
+        public float DistanceTo(Vector3 point) => GameRaw.Distance(Native, point);
+
         /// <summary>与游戏判定一致：range ≤ 0 表示不限距离，否则 距离 ≤ range + 对方体型半径。</summary>
         public bool IsWithin(Role other, float range)
             => range <= 0f || DistanceTo(other) <= range + other.HitRadius;

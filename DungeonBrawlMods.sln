@@ -11,6 +11,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DBStudio", "DBStudio\DBStud
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SmartMove", "SmartMove\SmartMove.csproj", "{232291A8-088E-4FBF-8D25-156018C38DC2}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AutoPickup", "AutoPickup\AutoPickup.csproj", "{CC5073C7-B068-475B-90A0-2DAB3D95D6D1}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -36,5 +38,9 @@ Global
 		{232291A8-088E-4FBF-8D25-156018C38DC2}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{232291A8-088E-4FBF-8D25-156018C38DC2}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{232291A8-088E-4FBF-8D25-156018C38DC2}.Release|Any CPU.Build.0 = Release|Any CPU
+		{CC5073C7-B068-475B-90A0-2DAB3D95D6D1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{CC5073C7-B068-475B-90A0-2DAB3D95D6D1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{CC5073C7-B068-475B-90A0-2DAB3D95D6D1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{CC5073C7-B068-475B-90A0-2DAB3D95D6D1}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

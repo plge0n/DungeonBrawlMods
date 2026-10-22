@@ -1,5 +1,12 @@
 # DBModKit 更新日志
 
+## 0.12.0
+- 新增 `Loot`：读地上的掉落物（编号、`LootKind` 类别、位置、能不能捡、占不占背包格子、名字），
+  `Loot.TryPick` 替本地玩家拾取（游戏的 `CmdPickItem`）。服务器不检查拾取距离，所以 ModKit 限制在按 C 的 5 米内；
+  死亡中、别人的物品、背包满时不发请求
+- `Loot.BagCount`、`Loot.KeyPickTalisman`（游戏设置"护符需按键拾取"）、`Loot.PlayPickSound`
+- `Role.DistanceTo(Vector3)`
+
 ## 0.11.0
 - 运行记录 `RunLog`：所有 Mod 共用的结构化日志（时间、来源 Mod、分类、级别、键=值数据、波次、帧号），
   内存保留最近 3000 条，同时写进 `BepInEx/DBModKit/trace.log`（上一次启动的在 trace.prev.log）。

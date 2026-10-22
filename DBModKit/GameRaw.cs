@@ -162,6 +162,37 @@ namespace DBModKit
         // bbe.kqk(编号, 等级)：游戏的遗物三选一（ez.dzv）就调它；超过本局获取上限、或王者模式禁用时返回 null
         public static bool GiveRelic(Component p, int id) => cj.boyl.bcry.ContainsKey((ItemType)id) && ((bbe)p).kqk(id, 0) != null;
 
+        // ---- 掉落物：cj.boyq（ot）.bctu，ou 的 bcty = 编号、bctz = 所属玩家 netId（0 = 公共）、bcua = ItemType、bcuc = 位置 ----
+        public static void ReadLoot(List<LootItem> output)
+        {
+            output.Clear();
+            var items = cj.boyq?.bctu;
+            if (items == null) return;
+            foreach (var kv in items)
+            {
+                var o = kv.Value;
+                if (o == null) continue;
+                // ot.gdb：公共物品、自己的物品，或物主允许共享时能捡（服务器 bbe.lbf 用同样的判断）
+                output.Add(new LootItem(o.bcty, (int)o.bcua, o.bcuc, ot.gdb(o), ez.eaz(o.bcua), ez.ebc(o.bcua)));
+            }
+        }
+
+        public static string ItemName(int itemType) => cj.boyi.dff("pickitem_" + itemType, ((ItemType)itemType).ToString());
+
+        // bio.Pick（点击单个物品）的判断：死了不能捡（nn.bbth 时除外）
+        public static bool CanPickNow(Component p) => nn.bbth || (((yb)p).hp > 0 && ((yb)p).bphy != RoleState.Dead);
+
+        // 背包 bba.bfnb，上限 6 格；金币、宝石、阳光、力量/敏捷/耐力之书、护符不占格子（ez.eaz；全属性之书、金币袋占格子）
+        public static int BagCount(Component p) => ((bbe)p).playerAttribute.kgw();
+
+        // 护符需按键拾取（设置项 IsKeyPickTalisman）；关掉时护符靠碰到自动拾取，按 C 也不捡
+        public static bool KeyPickTalisman() => nn.bbtz;
+
+        // CmdPickItem 由服务器 bbe.lbf 处理：只检查物主，不检查距离，距离要自己限制
+        public static void PickItem(Component p, uint id) => ((bbe)p).CmdPickItem(id);
+
+        public static void PlayPickSound() => bz.ddr<AudioManager>()?.daw("Audio/Battle_Audio/UI/拾取物品", 0.9f);
+
         // ---- 三选一界面 bqa（ui_roguelike）----
         // 和游戏自己弹遗物前的判断一致（MyServerNetworkManager.qhz）：三选一界面开着，或技能栏的子面板（bpe.bprr）开着
         public static bool ChoiceBusy()

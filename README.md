@@ -8,6 +8,7 @@ BepInEx 5 插件，目标游戏：地下城竞技场（Steam 4246640，Unity 202
 | [SmartSkill](SmartSkill) | 给"右键技能图标自动释放"加上每个技能单独的释放条件 |
 | [DBStudio](DBStudio) | 游戏内的 Mod 工作台（F9）：调试面板、规则、强化（海克斯式三选一）、数值编辑器、英雄皮肤 |
 | [SmartMove](SmartMove) | 自动躲避地面预警（F9 开关） |
+| [AutoPickup](AutoPickup) | 战斗中自动拾取身边能捡的掉落物（和按 C 一样），可按类别过滤 |
 
 玩家说明见 [安装说明.txt](安装说明.txt)。
 
@@ -65,6 +66,7 @@ public class Plugin : BaseUnityPlugin
 | `NativeUi` | 用游戏素材拼的面板、开关、滑条、下拉框、按钮，以及大窗口、页签、滚动列表、输入框 |
 | `GameInput` / `GamePause` | 打开自己的窗口时屏蔽游戏输入、暂停游戏（都要 Dispose 释放） |
 | `GameEvents` | 战斗事件：击杀、放技能、暴击、受伤、升级、波次开始/结束等 |
+| `Loot` | 地上的掉落物（类别、位置、自己能不能捡）；替本地玩家拾取，范围和按 C 一样不超过 5 米 |
 | `ChoicePanel` / `RelicInfo` | 用游戏的三选一界面显示自定义选项；遗物列表、发遗物 |
 | `ModSettings` | 往 DBStudio 的 Mod 页里挂自定义设置区块 |
 | `GameData` | 改技能、英雄、怪物配置表里的数值，可随时整体恢复原版 |
