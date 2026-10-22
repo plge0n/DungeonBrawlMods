@@ -124,6 +124,7 @@ namespace DBModKit
                 lastPlayers = players;
             }
             Safe.Run("GameEvents", GameEvents.Tick);
+            Safe.Run("语言", Localization.Tick);
             ModEvents.RaiseUpdate();
             Safe.Run("皮肤同步", HeroSkinSync.Tick);
             JsonConfigRegistry.Tick();

@@ -36,14 +36,18 @@ namespace DBModKit
         /// <summary>写运行记录（见 <see cref="DBModKit.RunLog"/>），来源是这个 Mod 的名字。</summary>
         public ModRunLog RunLog { get; }
 
+        /// <summary>这个 Mod 的多语言文本（翻译放在插件 dll 旁边的 lang 文件夹，见 <see cref="ModText"/>）。</summary>
+        public ModText Text { get; }
+
         /// <summary>Mod 已启动（ModKit 兼容且 onLoad 成功）。</summary>
         public bool Loaded { get; private set; }
 
-        private ModContext(BepInPlugin metadata, ManualLogSource logger, Action onUnload)
+        private ModContext(BepInPlugin metadata, ManualLogSource logger, Action onUnload, string folder)
         {
             Metadata = metadata;
             Logger = logger;
             RunLog = new ModRunLog(metadata.Name);
+            Text = new ModText(folder == null ? null : System.IO.Path.Combine(folder, "lang"));
             this.onUnload = onUnload;
         }
 
@@ -52,7 +56,11 @@ namespace DBModKit
         /// </summary>
         public static ModContext Start(BaseUnityPlugin plugin, ManualLogSource logger, Action<ModContext> onLoad, Action onUnload = null)
         {
-            var ctx = new ModContext(MetadataHelper.GetMetadata(plugin), logger, onUnload);
+            // ScriptEngine 加载的插件 Info.Location 可能为空，就从程序集位置找
+            string location = plugin.Info?.Location;
+            if (string.IsNullOrEmpty(location)) location = plugin.GetType().Assembly.Location;
+            string folder = string.IsNullOrEmpty(location) ? null : System.IO.Path.GetDirectoryName(location);
+            var ctx = new ModContext(MetadataHelper.GetMetadata(plugin), logger, onUnload, folder);
             if (!ModKit.Compatible)
             {
                 // ModKit 不兼容时它自己会在屏幕上提示

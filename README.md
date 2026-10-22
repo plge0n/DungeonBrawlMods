@@ -71,6 +71,7 @@ public class Plugin : BaseUnityPlugin
 | `HeroSkins` | 给每个英雄选一套工坊或本地的模型（或原版），可以只换本地玩家；Steam 联机时通过大厅成员数据同步 |
 | `JsonConfig<T>` | `BepInEx/config` 下的 JSON 配置，自动延迟保存 |
 | `ScreenNotice` | 屏幕顶部临时提示 |
+| `ModText` / `Localization` | 多语言文本：代码里写中文原文，翻译放在插件旁的 `lang/<语言>.json`，跟随游戏语言（见下） |
 | `RunLog` | 运行记录：所有 Mod 共用、带波次和帧号的结构化日志，写进 `BepInEx/DBModKit/trace.log`；可以加标记、导出诊断报告（见下） |
 
 ### 运行记录（RunLog）
@@ -83,6 +84,16 @@ mod.RunLog.Debug("躲避", "换落脚点");                                     
 - ModKit 自动记录：Mod 加载/卸载、进出战斗、房间人数、`Player` 的回血/加蓝/加金币/发遗物/改属性（前后数值，以及是哪个 Mod 调的）、配置表修改、三选一、被拦下的异常；Debug 级：每个战斗事件、自动释放决策变化、输入屏蔽和暂停。所以 Mod 自己只需要记"为什么这么做"。
 - 测试时：在 Mod 页把 DBModKit 的 `FileLevel` 改成 `Debug`，文件里就有全部细节。看到问题按 **Ctrl+F10** 加一个编号标记（调试页也有按钮），之后说"标记 3 附近"就能在文件里找到。
 - 反馈问题：调试页点"导出"，生成 `BepInEx/DBModKit/report-时间.txt`（版本、插件列表、兼容检查、当前状态、全部记录），把它发过来。
+
+### 多语言（ModText）
+代码里直接写中文原文当默认值；要支持其他语言时，在插件 dll 旁边放 `lang/en.json`、`lang/ja.json` 等（平铺的 键 → 文本）。
+`csharp
+NativeUi.Label(parent, mod.Text["debug.title", "调试"]);
+mod.Text.Format("rule.fired", "规则「{0}」触发", rule.Name);
+`
+- 语言跟随游戏设置（`Localization.Language`：zh-CN、zh-TW、en、ja……），玩家换语言时触发 `Localization.Changed`。
+- 查找顺序：当前语言 → 英文（游戏不是中文时）→ 代码里的中文。没有翻译文件时一切照旧。
+- 现有 Mod 的界面文字还没有改成这种写法，以后翻译时逐步替换。
 
 ## 开发
 需要 .NET SDK 8+，游戏目录已装 BepInEx 5。
