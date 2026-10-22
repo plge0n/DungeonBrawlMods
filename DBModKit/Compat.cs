@@ -17,10 +17,10 @@ namespace DBModKit
         // 类型名 → Mod 用到的成员（字段/属性/方法，含继承自基类的）
         private static readonly Dictionary<string, string[]> Required = new Dictionary<string, string[]>
         {
-            ["nn"] = new[] { "bpbu", "bbsr", "bbtv", "bbtm", "bbth", "bbtz", "fqr", "frk" },
+            ["nn"] = new[] { "bpbu", "bbsr", "bbst", "bbtv", "bbtm", "bbth", "bbtz", "fqr", "frk" },
             ["os"] = new[] { "gba", "bctl", "bctm" },
             ["cj"] = new[] { "boyb", "boyi", "boyj", "boyl", "boyn", "boyq", "boyt" },
-            ["ez"] = new[] { "dxx", "dxy", "dyk", "dvm", "eaz", "ebc" },
+            ["ez"] = new[] { "dxx", "dxy", "dyk", "dvm", "eaz", "ebc", "dzc", "dye", "dyf" },
             ["bfl"] = new[] { "mna" },
             ["pj"] = new[] { "bcxi" },
             ["bfe"] = new[] { "bgwf", "bgwg", "bgwi" },
@@ -50,6 +50,7 @@ namespace DBModKit
                 "henShinSkillId", "timer", "iyi", "iyj", "isCheckAttack",
                 "enemyDefeatedEvent", "activeSkillCastEvent", "criticalEvent", "dogeEvent",
                 "bphz", "bphq", "bphp", "bpho", "bphb", "bphl", "bphm", "bphk", "bphr", "bphv", "bpgy", "iwz", "iwh",
+                "localActiveSkillCastEvent", "iqz", "irv", "roleBuffManager", "iwk",
             },
             ["bbe"] = new[]
             {
@@ -93,14 +94,28 @@ namespace DBModKit
             {
                 "bhne", "bhny", "bhnv", "bhng", "bhnd", "bpqi", "k896ff3548b31472b8b2cf8f649c25e65", "kacb7d091b5904139a602f04ed9552242",
                 "k4b2ca10ddec34cdb90bf84a3f664f727", "kbb80bea445ac47778d36b05d19be7f37", "kcac92c2266be41d3979b385715ce318e",
+                "kb7f88a1b0a6e4124b9b27921f2778742", "k443b7b692a1648099b5e5890ad35ed6d", "bhnj", "bhnp", "bhnq", "bhof",
             },
+            // 英雄专属技能：被动技能基类、buff、重试波次、波次配置、开场界面
+            ["qp"] = new[] { "gou", "gov" },
+            ["beu"] = new[] { "mim" },
+            ["Buff无敌"] = new string[0],
+            ["wb"] = new[] { "gyk", "gym", "bpcw" },
+            ["SOSpawnConfig"] = new[] { "enemySpawnData" },
+            ["RoguelikeEventType"] = new[] { "Roguelike" },
+            ["bkh"] = new[] { "bacf" },
+            ["bka"] = new[] { "njb" },
+            ["bff"] = new string[0],
+            ["AttackType"] = new string[0],
+            ["DamageSourceKind"] = new string[0],
+            ["PlayerDamageFeedbackKind"] = new string[0],
             ["RoleModeBase"] = new[] { "addRange", "ico" },
             ["ActiveSkillData"] = new[]
             {
                 "tags", "indicator", "castingRange", "range", "cd", "canAuto", "icon",
                 "damageBase", "damageValue", "cost", "duration", "interval", "chargingNum", "chargingCd",
             },
-            ["ActiveSkillEnum"] = new[] { "None", "D_Execution", "S_Execution", "D_Alchemy", "S_Alchemy", "Bite" },
+            ["ActiveSkillEnum"] = new[] { "None", "D_Execution", "S_Execution", "D_Alchemy", "S_Alchemy", "Bite", "ChickenDance", "RealChickenDance" },
             ["SkillTag"] = new[] { "Heal", "Revive", "Shield", "Defense", "Buff", "Summon", "Aura", "Area", "Move", "Control", "Henshin", "Duration" },
             // 英雄皮肤
             ["buj"] = new[] { "pwu", "pwm", "pwn", "pwh", "pwf", "pyb" },

@@ -103,6 +103,7 @@ namespace DBModKit
             public Action LevelUp;
             public Action Relife;
             public bbe.AddBagItem BagItem;
+            public yb.LocalActiveSkillCastEvent LocalCast;
         }
 
         public static object BindPlayerEvents(Component player)
@@ -121,6 +122,9 @@ namespace DBModKit
                 LevelUp = () => GameEvents.Raise(new GameEvent(GameEventKind.LevelUp)),
                 Relife = () => GameEvents.Raise(new GameEvent(GameEventKind.Revived)),
                 BagItem = item => GameEvents.Raise(new GameEvent(GameEventKind.ItemPicked, itemId: (int)item)),
+                // localActiveSkillCastEvent(玩家, 技能, 目标点, 朝向, 目标 netId, 技能书编号, 是否免费)：只在 ez.dyf 末尾触发（真正放出技能时），
+                // 免费释放（dyf 的 h = true）也会触发
+                LocalCast = (_, skill, pos, rot, target, book, free) => Combat.RaiseSkillCast(new SkillCast((int)skill, pos, rot, target, book, free)),
             };
             p.enemyDefeatedEvent += b.Defeated;
             p.activeSkillCastEvent += b.SkillCast;
@@ -129,6 +133,7 @@ namespace DBModKit
             p.onPlayerLevelUp += b.LevelUp;
             p.onPlayerRelife += b.Relife;
             p.addBagItemEvent += b.BagItem;
+            p.localActiveSkillCastEvent += b.LocalCast;
             return b;
         }
 
@@ -144,6 +149,7 @@ namespace DBModKit
             p.onPlayerLevelUp -= b.LevelUp;
             p.onPlayerRelife -= b.Relife;
             p.addBagItemEvent -= b.BagItem;
+            p.localActiveSkillCastEvent -= b.LocalCast;
         }
 
         // ---- 遗物：bcry（ItemType → RemainsData），名字/图标在原始 remains 表和本地化 "pickitem_" + 编号 ----
@@ -197,13 +203,14 @@ namespace DBModKit
         public static void PlayPickSound() => bz.ddr<AudioManager>()?.daw("Audio/Battle_Audio/UI/拾取物品", 0.9f);
 
         // ---- 三选一界面 bqa（ui_roguelike）----
-        // 和游戏自己弹遗物前的判断一致（MyServerNetworkManager.qhz）：三选一界面开着，或技能栏的子面板（bpe.bprr）开着
+        // 和游戏自己弹遗物前的判断一致（MyServerNetworkManager.qhz）：三选一界面开着，或技能栏的子面板（bpe.bprr）开着；
+        // 另外开场界面开着时也算忙（它一关游戏就弹开局遗物，抢在前面打开会被游戏随机选掉）
         public static bool ChoiceBusy()
         {
             var ui = cj.boyb?.dqr<bqa>();
             if (ui != null && ui.bacf) return true;
             var bar = cj.boyb?.dqr<bpe>();
-            return bar != null && bar.bprr;
+            return (bar != null && bar.bprr) || OpeningPending();
         }
 
         // bqa.osj(选项, 选中回调, 标题, 刷新(null = 不能刷新), 关闭回调, 延迟, 队伍数据, 来源)：ez.dzu 用的真方法。
@@ -735,6 +742,202 @@ namespace DBModKit
         // bht.bhng 技能按钮、bhnd 所属玩家
         public static object ButtonSkill(object s) => ((bht)s).bhng?.bjgk;
         public static Component SkillOwner(object s) => ((bht)s).bhnd;
+
+        // ---- 英雄专属技能：hero 表 skill 列是编号，zhuDong 为真时是主动技能（ActiveSkillEnum），否则是被动（PasssiveSkillEnum）。
+        // 出生时 bbe.kzz 按它发放（主动 yb.iuy、被动 yb.iuz） ----
+        public static bool ReadHeroSkill(int heroId, out int skillId, out bool active)
+        {
+            skillId = 0;
+            active = false;
+            if (!cx.zyc.TryGetValue("hero", out var t) || !(t is Dictionary<string, object> rows)
+                || !rows.TryGetValue(heroId.ToString(), out var r) || !(r is Dictionary<string, object> row))
+                return false;
+            if (!int.TryParse(Cell(row, "skill"), out skillId)) return false;
+            active = row.TryGetValue("zhuDong", out var z) && z != null && (z is bool b ? b : bool.TryParse(z.ToString(), out b) && b);
+            return true;
+        }
+
+        // 被动技能表 passsiveSkill：class（脚本类名）、icon、value（"|" 分隔）。名字的本地化 key 是 "p_" + 编号（yb.iuz）
+        public static bool ReadPassive(int id, out string icon, out float[] values)
+        {
+            icon = null;
+            values = new float[0];
+            if (!cx.zyc.TryGetValue("passsiveSkill", out var t) || !(t is Dictionary<string, object> rows)
+                || !rows.TryGetValue(id.ToString(), out var r) || !(r is Dictionary<string, object> row))
+                return false;
+            icon = IconPath("Skill/", Cell(row, "icon"));
+            string raw = Cell(row, "value");
+            if (raw != null)
+                values = raw.Split('|').Select(s => float.TryParse(s, System.Globalization.NumberStyles.Float,
+                    System.Globalization.CultureInfo.InvariantCulture, out float v) ? v : 0f).ToArray();
+            return true;
+        }
+
+        // 主动技能的完整参数（SkillInfo 之外的数值）
+        public static bool ReadSkillNumbers(int id, out float cost, out float duration, out int charges, out float damageBase, out float damageValue)
+        {
+            cost = duration = damageBase = damageValue = 0f;
+            charges = 0;
+            if (!cj.boyl.bcrw.TryGetValue((ActiveSkillEnum)id, out var d)) return false;
+            cost = d.cost;
+            duration = d.duration;
+            charges = d.chargingNum;
+            damageBase = d.damageBase;
+            damageValue = d.damageValue;
+            return true;
+        }
+
+        public static string SkillIcon(int id) => cj.boyl.bcrw.TryGetValue((ActiveSkillEnum)id, out var d) ? IconPath("Skill/", d.icon) : null;
+
+        // 玩家身上的技能 bbe.roleSkillList：主动技能看 bhne，被动技能（qp）看 bhnj（= 被动表的 id，见 bht.msz）
+        public static object FindActiveSkill(Component p, int id)
+        {
+            foreach (var s in ((bbe)p).roleSkillList)
+                if (s != null && !(s is qp) && (int)s.bhne == id) return s;
+            return null;
+        }
+
+        // 游戏后来替换掉的专属技能：拿到"鸡舞"卡牌后 iz.enj 把 ChickenDance 换成 RealChickenDance
+        public static object FindReplacedSkill(Component p, int id)
+            => id == (int)ActiveSkillEnum.ChickenDance ? FindActiveSkill(p, (int)ActiveSkillEnum.RealChickenDance) : null;
+
+        public static object FindPassiveSkill(Component p, int id)
+        {
+            string key = id.ToString();
+            foreach (var s in ((bbe)p).roleSkillList)
+                if (s is qp && s.bhnj == key) return s;
+            return null;
+        }
+
+        // ---- bht 上从表里拷来的数值（yb.iva / yb.iuy 获得技能时拷贝；yb.njw 是诱饵）。nn.fsx 不校验这些，游戏自己（ix.enp）也直接写 ----
+        public static float CooldownTotal(object s) => ((bht)s).kb7f88a1b0a6e4124b9b27921f2778742;
+        public static void SetCooldownTotal(object s, float v) => ((bht)s).kb7f88a1b0a6e4124b9b27921f2778742 = v;
+        public static void SetCooldownRemaining(object s, float v) => ((bht)s).k896ff3548b31472b8b2cf8f649c25e65 = v;
+        // 按键时判断蓝够不够用它；真正扣蓝时 ez.dyg 重新查表（所以 TuningHooks 还要临时替换表）
+        public static int BaseCost(object s) => ((bht)s).k443b7b692a1648099b5e5890ad35ed6d;
+        public static void SetBaseCost(object s, int v) => ((bht)s).k443b7b692a1648099b5e5890ad35ed6d = v;
+        public static void SetMaxCharges(object s, int v)
+        {
+            var skill = (bht)s;
+            skill.kbb80bea445ac47778d36b05d19be7f37 = v;
+            if (skill.k4b2ca10ddec34cdb90bf84a3f664f727 > v) skill.k4b2ca10ddec34cdb90bf84a3f664f727 = v;
+        }
+
+        // 被动技能的数值：获得时 bht.msz 把表里的 value 解析进私有 bhnq，再由 mtm 算出 bhnp = bhnq + levelup × 等级；
+        // 多数被动每次触发都读 bhnp。升级（grs）会用 bhnq 重算覆盖，所以两个一起改
+        private static readonly AccessTools.FieldRef<bht, float[]> passiveBase = AccessTools.FieldRefAccess<bht, float[]>("bhnq");
+
+        public static float[] PassiveValues(object s) => ((bht)s).bhnp;
+
+        // 504 内部折扣在 gou 里把折扣加进 shopDiscount、gov 按值删除；511 电锯恶魔在 gou 里把数值缓存到私有字段。
+        // 这两个要先 gov（按旧值撤销），改完再 gou（按新值生效）
+        private static readonly HashSet<string> rebindPassives = new HashSet<string> { "504", "511" };
+
+        public static void SetPassiveValues(object s, float[] values)
+        {
+            var skill = (qp)s;
+            bool rebind = rebindPassives.Contains(skill.bhnj);
+            if (rebind) skill.gov();
+            var current = skill.bhnp;
+            var baseValues = passiveBase(skill);
+            for (int i = 0; i < values.Length; i++)
+            {
+                if (current != null && i < current.Length) current[i] = values[i];
+                if (baseValues != null && i < baseValues.Length) baseValues[i] = values[i];
+            }
+            if (rebind) skill.gou();
+        }
+
+        // ---- 只改本地玩家的技能参数：施法者是本地玩家时，在 ez.dzc / dye / dyf 执行期间把 bcrw[技能] 换成调过的副本，结束后换回原版。
+        // 表本身一直是原版，镜像 Boss（zq 复制英雄技能）和其他玩家的同名技能不受影响 ----
+        private static readonly List<(ActiveSkillEnum key, ActiveSkillData original)> swaps = new List<(ActiveSkillEnum, ActiveSkillData)>();
+
+        public static bool BeginSwap(Component caster, int id)
+        {
+            if (caster == null || caster != nn.bpbu) return false;
+            var tune = SkillTuning.Get(id);
+            if (tune.Cost == 1f && tune.Duration == 1f) return false;
+            var key = (ActiveSkillEnum)id;
+            // 嵌套调用（dyf 里会再走到 dzc）时表已经换过了
+            foreach (var s in swaps)
+                if (s.key == key) return false;
+            if (!cj.boyl.bcrw.TryGetValue(key, out var original)) return false;
+            var tuned = original;
+            tuned.cost = Mathf.Max(0, Mathf.RoundToInt(original.cost * tune.Cost));
+            tuned.duration = original.duration * tune.Duration;
+            cj.boyl.bcrw[key] = tuned;
+            swaps.Add((key, original));
+            return true;
+        }
+
+        public static void EndSwap()
+        {
+            if (swaps.Count == 0) return;
+            var (key, original) = swaps[swaps.Count - 1];
+            swaps.RemoveAt(swaps.Count - 1);
+            cj.boyl.bcrw[key] = original;
+        }
+
+        // 换过之后 dyf 的参数也要换成调过的那份
+        public static ActiveSkillData CurrentRow(ActiveSkillEnum key) => cj.boyl.bcrw[key];
+
+        // ez.dyf(玩家, 技能, 目标点, 技能数据, 朝向, 目标 netId, 技能书编号, h = true)：游戏的免费释放（被动"长老的多重施法"就这么用）。
+        // 不查蓝、不扣蓝、不进冷却，技能自己的检查和状态切换照常。不要用 h = false：冷却会扣到最后按下的那一格
+        public static bool FreeCast(Component p, int skill, Vector3 pos, float rotation, int target, int book)
+            => cj.boyl.bcrw.TryGetValue((ActiveSkillEnum)skill, out var d)
+               && ez.dyf((bbe)p, (ActiveSkillEnum)skill, pos, d, rotation, target, book, h: true);
+
+        // ---- 属性加成（都是累加，负数撤销；不在 nn.fsx 的校验范围内）----
+        // yb.iqz：攻速加成（比例，0.25 = +25%）；ez.ebt 的 "AttackSpeed" 就是它
+        public static void AddAttackSpeed(Component p, float ratio) => ((yb)p).iqz(ratio);
+        // yb.irv：护甲（会刷新属性面板）
+        public static void AddArmor(Component p, int amount) => ((yb)p).irv(amount);
+        // 游戏的无敌药水 buff（roleBuffManager.mim<T>(名字, 秒)，同名 buff 重复添加时刷新时长）
+        public static void GiveInvulnerable(Component p, float seconds) => ((yb)p).roleBuffManager.mim<Buff无敌>("Buff无敌", seconds);
+
+        // ---- 悬停提示框 bka：技能（wh）、遗物和 buff（iq）、三选一卡片（bqa.osp）都用它。njb(true, 信息) 显示、njb(false, default) 隐藏；
+        // 还没创建时用 dqk 打开（同 bqa.osp）----
+        public static void ShowTip(string name, string info, string icon, Vector3 position, int quality)
+        {
+            var tip = cj.boyb?.dqr<bka>() ?? cj.boyb?.dqk<bka>() as bka;
+            tip?.njb(true, new bka.TipInfo
+            {
+                nameStr = name ?? "",
+                info = info ?? "",
+                iconPath = icon ?? "",
+                showPos = position,
+                quality = quality,
+                isRelic = false,
+            });
+        }
+
+        public static void HideTip() => cj.boyb?.dqr<bka>()?.njb(false, default(bka.TipInfo));
+
+        // bht.bhof：技能悬停提示末尾的附加说明（wh.OnPointerEnter 拼在描述后面）。游戏自己也会写（五五开的外挂、土豆兄弟），所以只追加
+        public static string SkillExtraInfo(object s) => ((bht)s).bhof;
+        public static void SetSkillExtraInfo(object s, string v) => ((bht)s).bhof = v;
+
+        // ---- 波次配置 nn.bbst（SOSpawnConfig）：enemySpawnData[i] 是第 i+1 波，eventList 带 Roguelike 时，
+        // 进入这一波前的休息阶段弹遗物三选一（服务器先 bbsr++ 再发 OnStartRest）----
+        public static int TotalWaves() => nn.bbst?.enemySpawnData?.Length ?? 0;
+
+        public static bool RelicBeforeWave(int index)
+        {
+            var waves = nn.bbst?.enemySpawnData;
+            if (waves == null || index < 0 || index >= waves.Length) return false;
+            var events = waves[index].eventList;
+            return events != null && Array.IndexOf(events, RoguelikeEventType.Roguelike) >= 0;
+        }
+
+        // 开场界面 bkh：关闭时（bift = MyServerNetworkManager.qib）游戏弹开局遗物
+        public static bool OpeningPending()
+        {
+            var ui = cj.boyb?.dqr<bkh>();
+            return ui != null && ui.bacf;
+        }
+
+        // 重试波次的快照有效（wb.bpcw）
+        public static bool CheckpointValid() => wb.bpcw;
 
         // ---- 技能栏 bpe.bjes（bpf 按钮，bpf.bjgk 技能实例，bpf.bjgm 图标上的 bpa 组件） ----
         public static void ReadSkillBar(List<(object button, object skill, RectTransform icon)> output)

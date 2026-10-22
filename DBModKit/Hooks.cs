@@ -83,6 +83,39 @@ namespace DBModKit
                     AccessTools.Method(typeof(yb), "iwr", new[] { typeof(AttackType), typeof(double), typeof(bool), typeof(yb), typeof(bool) }),
                     prefix: nameof(DamageContextHooks.DotPrefix), finalizer: nameof(DamageContextHooks.Pop));
 
+            SkillTuning.Available =
+                TryPatch(harmony, typeof(TuningHooks), "技能调整（创建技能）",
+                    AccessTools.Method(typeof(ez), "dzc", new[]
+                    {
+                        typeof(uint), typeof(ActiveSkillEnum), typeof(Vector3), typeof(yb), typeof(int), typeof(float), typeof(int), typeof(int), typeof(bff),
+                    }),
+                    prefix: nameof(TuningHooks.FactoryPrefix), finalizer: nameof(TuningHooks.Restore))
+                && TryPatch(harmony, typeof(TuningHooks), "技能调整（按键检查）",
+                    AccessTools.Method(typeof(ez), "dye", new[] { typeof(ActiveSkillEnum), typeof(bbe), typeof(int) }),
+                    prefix: nameof(TuningHooks.CheckPrefix), finalizer: nameof(TuningHooks.Restore))
+                && TryPatch(harmony, typeof(TuningHooks), "技能调整（释放）",
+                    AccessTools.Method(typeof(ez), "dyf", new[]
+                    {
+                        typeof(bbe), typeof(ActiveSkillEnum), typeof(Vector3), typeof(ActiveSkillData), typeof(float), typeof(int), typeof(int), typeof(bool),
+                    }),
+                    prefix: nameof(TuningHooks.CastPrefix), finalizer: nameof(TuningHooks.Restore))
+                && TryPatch(harmony, typeof(TuningHooks), "技能调整（伤害）",
+                    AccessTools.Method(typeof(yb), "iwk", new[]
+                    {
+                        typeof(yb), typeof(double), typeof(float), typeof(AttackType), typeof(bool), typeof(float?), typeof(ActiveSkillEnum),
+                        typeof(DamageSourceKind), typeof(bfe), typeof(PlayerDamageFeedbackKind),
+                    }),
+                    prefix: nameof(TuningHooks.DamagePrefix));
+
+            // 两个都装上才通知：只有一半时还原会出错
+            CheckpointHooks.Available =
+                TryPatch(harmony, typeof(CheckpointHooks), "重试波次（快照）",
+                    AccessTools.Method(typeof(wb), "gyk", Type.EmptyTypes),
+                    postfix: nameof(CheckpointHooks.SavedPostfix))
+                && TryPatch(harmony, typeof(CheckpointHooks), "重试波次（还原）",
+                    AccessTools.Method(typeof(wb), "gym", Type.EmptyTypes),
+                    postfix: nameof(CheckpointHooks.RestoredPostfix));
+
             try
             {
                 Combat.Install();
@@ -302,6 +335,62 @@ namespace DBModKit
             os.bctl = cmd.Direction.x;
             os.bctm = cmd.Direction.z;
             return saved;
+        }
+    }
+
+    // 只改本地玩家技能的补丁（见 SkillTuning）：
+    // ez.dzc(…, 技能, …, 施法者, …)：所有技能实例的工厂，范围、持续时间、damageExValue 等都在这里从表里读出来交给技能实例；
+    // ez.dye(技能, 玩家, 技能书)：按键后检查蓝量、选瞄准方式；ez.dyf(玩家, 技能, …, 技能数据, …)：真正放出，扣蓝时 ez.dyg 重新查表。
+    // 施法者是本地玩家时，调用期间把 bcrw[技能] 换成调过的副本，结束后（finalizer，原方法抛异常也会执行）换回原版。
+    // yb.iwk(攻击者, 伤害, …, 技能 g, 来源, 技能实例 i, …)：在受害者身上调用的真正受伤方法，伤害只在攻击方客户端算
+    internal static class TuningHooks
+    {
+        internal static void FactoryPrefix(ActiveSkillEnum __1, yb __3, out bool __state) => __state = GameRaw.BeginSwap(__3, (int)__1);
+
+        internal static void CheckPrefix(ActiveSkillEnum __0, bbe __1, out bool __state) => __state = GameRaw.BeginSwap(__1, (int)__0);
+
+        internal static void CastPrefix(bbe __0, ActiveSkillEnum __1, ref ActiveSkillData __3, out bool __state)
+        {
+            __state = GameRaw.BeginSwap(__0, (int)__1);
+            if (__state) __3 = GameRaw.CurrentRow(__1);
+        }
+
+        internal static void Restore(bool __state)
+        {
+            if (__state) GameRaw.EndSwap();
+        }
+
+        // 技能实例 i 的 bgwi 是技能编号；有的技能只传了 g（例如撕咬、雷之一闪两者都有，闪烁、炸弹只有 i）
+        internal static void DamagePrefix(yb __0, ref double __1, ActiveSkillEnum __6, bfe __8)
+        {
+            if (__0 == null || __0 != GameRaw.LocalPlayer()) return;
+            var skill = __8 != null ? __8.bgwi : __6;
+            if (skill == ActiveSkillEnum.None) return;
+            float m = SkillTuning.Get((int)skill).Damage;
+            if (m != 1f) __1 *= m;
+        }
+    }
+
+    // 重试波次（wb）：wb.gyk 在 OnStartRest 之后的下一次网络循环里拍快照（wb.bpcw 为真表示快照有效）；
+    // wb.gym 是点"重试"后的还原入口，同步执行完还原，返回是否成功
+    internal static class CheckpointHooks
+    {
+        public static bool Available { get; internal set; }
+
+        internal static void SavedPostfix()
+        {
+            if (!GameRaw.CheckpointValid()) return;
+            RunLog.Info(ModKitPlugin.Name, "重试波次", "快照", ("波次", Game.Wave));
+            SkillTuning.SaveCheckpoint();
+            ModEvents.RaiseCheckpointSaved();
+        }
+
+        internal static void RestoredPostfix(bool __result)
+        {
+            if (!__result) return;
+            RunLog.Info(ModKitPlugin.Name, "重试波次", "还原", ("波次", Game.Wave));
+            SkillTuning.RestoreCheckpoint();
+            ModEvents.RaiseCheckpointRestored();
         }
     }
 

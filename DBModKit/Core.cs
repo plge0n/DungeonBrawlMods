@@ -30,7 +30,18 @@ namespace DBModKit
         /// <summary>游戏退出，适合落盘。</summary>
         public static event Action Quitting;
 
+        /// <summary>
+        /// 游戏拍下了重试波次的快照（单人时每次进入休息阶段，早于这一波的遗物选择）。
+        /// 游戏只还原它自己的对象（英雄、技能实例、遗物等），Mod 自己的状态要在这里存一份。
+        /// </summary>
+        public static event Action CheckpointSaved;
+
+        /// <summary>玩家点了"重试"，游戏已经还原到快照（随后会重新弹出这一波的遗物选择）。Mod 在这里还原自己的状态。</summary>
+        public static event Action CheckpointRestored;
+
         internal static void RaiseUpdate() => Safe.InvokeEach(Update, nameof(Update));
+        internal static void RaiseCheckpointSaved() => Safe.InvokeEach(CheckpointSaved, nameof(CheckpointSaved));
+        internal static void RaiseCheckpointRestored() => Safe.InvokeEach(CheckpointRestored, nameof(CheckpointRestored));
         internal static void RaiseBattleStarted() => Safe.InvokeEach(BattleStarted, nameof(BattleStarted));
         internal static void RaiseBattleEnded() => Safe.InvokeEach(BattleEnded, nameof(BattleEnded));
         internal static void RaiseQuitting() => Safe.InvokeEach(Quitting, nameof(Quitting));
@@ -124,6 +135,8 @@ namespace DBModKit
                 lastPlayers = players;
             }
             Safe.Run("GameEvents", GameEvents.Tick);
+            if (SkillTuning.Available) Safe.Run("技能调整", SkillTuning.Tick);
+            Safe.Run("技能提示", SkillTooltips.Tick);
             Safe.Run("语言", Localization.Tick);
             ModEvents.RaiseUpdate();
             Safe.Run("皮肤同步", HeroSkinSync.Tick);

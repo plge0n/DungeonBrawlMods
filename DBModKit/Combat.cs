@@ -121,6 +121,18 @@ namespace DBModKit
         /// <summary>伤害上下文的钩子已安装（<see cref="HitInfo.Type"/>、<see cref="HitInfo.Origin"/>、<see cref="HitInfo.SourceSkillId"/> 可用）。</summary>
         public static bool ContextAvailable { get; internal set; }
 
+        /// <summary>
+        /// 本地玩家放出技能时触发（扣蓝、进冷却之前；取消瞄准不算）。免费释放也会触发，看 <see cref="SkillCast.IsFree"/>。
+        /// 形态切换类技能关闭、雷之一闪连闪中再按都不触发。
+        /// </summary>
+        public static event Action<SkillCast> Cast;
+
+        internal static void RaiseSkillCast(SkillCast cast)
+        {
+            var evt = Cast;
+            if (evt != null) Safe.InvokeEach(evt, nameof(Cast), cast);
+        }
+
         internal static void Install()
         {
             GameRaw.SubscribeHits(OnHit);
