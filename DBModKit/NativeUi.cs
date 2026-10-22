@@ -141,6 +141,17 @@ namespace DBModKit
 
         public static readonly Color BoxColor = new Color(0.133f, 0.153f, 0.196f, 1f);
 
+        /// <summary>
+        /// 列表项、卡片的背景（游戏的方框贴图）。贴图的九宫格边框很宽（约 110 像素），直接用的话 Unity 会把边框当成最小尺寸，
+        /// 列表项至少 220 高；这里把边框按 1/4 绘制，高度就能跟着内容走。
+        /// </summary>
+        public static void ListItemBackground(Image img)
+        {
+            img.sprite = BoxSprite;
+            img.type = Image.Type.Sliced;
+            img.pixelsPerUnitMultiplier = 4f;
+        }
+
         private static void StyleBox(Image img, float outlineAlpha = 0.6f)
         {
             img.sprite = BoxSprite;

@@ -341,7 +341,8 @@ namespace DBModKit
                         string id = Cell(row, "id");
                         if (id == null || !cj.boyl.bcru.ContainsKey(id) || !int.TryParse(id, out int n)) continue;
                         string head = ((HeroType)n).ToString().Split('_').Last();
-                        list.Add(new DataEntry(table, id, cj.boyi.dff(Cell(row, "name") ?? id, id), IconPath("HeadIcon/Player_", head)));
+                        // 英雄名的本地化 key 是 "hero_" + 编号（见 ez.dvm；不直接调 dvm，它会返回工坊模型的名字）
+                        list.Add(new DataEntry(table, id, cj.boyi.dff("hero_" + id, id), IconPath("HeadIcon/Player_", head)));
                     }
                     break;
                 case DataTable.Enemy:
