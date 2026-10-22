@@ -143,7 +143,7 @@ namespace DBModKit
             // 皮肤同步：Steam 大厅成员数据
             ["pq"] = new[] { "bpcn" },
             ["bz"] = new[] { "ddr" },
-            ["cft"] = new[] { "tqj", "tqi", "tqb", "tqc" },
+            ["cft"] = new[] { "tqj", "tqi", "tqb", "tqc", "tqt" },
             ["cgi"] = new[] { "uep" },
             ["WorkshopItemStatus"] = new[] { "publishedFileId", "installed", "heroId", "installFolder" },
             ["LocalWorkshopManifest"] = new[] { "heroId", "title", "heroName", "heroIcon", "author", "contentType", "bundleRelativePath", "bundleAssetName" },

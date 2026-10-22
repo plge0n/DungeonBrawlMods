@@ -713,6 +713,9 @@ namespace DBModKit
 
         public static ulong MySteamId() => cgi.uep().m_SteamID;
 
+        // cft.tqt = GetLobbyOwner（游戏在 pq 里用它；dae / jxk 等是没人调用的副本）
+        public static ulong LobbyOwner(ulong lobby) => cft.tqt(new Steamworks.CSteamID(lobby)).m_SteamID;
+
         // 成员数据：每个成员只能写自己的，所有成员都能读。游戏不用它，pq.glv 收到成员数据的更新时直接返回
         public static void SetLobbyMemberData(ulong lobby, string key, string value)
             => cft.tqj(new Steamworks.CSteamID(lobby), key, value);
@@ -770,7 +773,7 @@ namespace DBModKit
             Set("id", info.Id.ToString());
             Set("class", ModPassiveClassPrefix + info.Id);
             Set("name", def.Name);
-            Set("lock", !def.InSkillBook);
+            Set("lock", !info.InSkillBook);
             // 国王对决里的拟人玩家不会拿到（构筑数据本来也会去掉自定义被动）
             Set("kingLock", true);
             Set("repeat", def.Repeatable);
@@ -789,7 +792,7 @@ namespace DBModKit
             EjectPassive(info.Id);
             table[info.Id.ToString()] = row;
             injectedPassives[info.Id] = row;
-            if (def.InSkillBook && cj.boyn != null)
+            if (info.InSkillBook && cj.boyn != null)
             {
                 var pool = passivePool(cj.boyn);
                 string quality = def.Quality.ToString();
@@ -948,7 +951,7 @@ namespace DBModKit
             row["indicator"] = indicator;
             row["castingRange"] = def.CastingRange;
             row["range"] = def.Range;
-            row["lock"] = !def.InSkillBook;
+            row["lock"] = !info.InSkillBook;
             row["kingLock"] = true;
             row["auto"] = def.CanAuto;
             row["chargingNum"] = def.Charges;
@@ -997,7 +1000,7 @@ namespace DBModKit
             table[info.Id.ToString()] = row;
             cj.boyl.bcrw[(ActiveSkillEnum)info.Id] = data;
             injectedSkills[info.Id] = row;
-            if (def.InSkillBook && cj.boyn != null)
+            if (info.InSkillBook && cj.boyn != null)
             {
                 var pool = skillPool(cj.boyn);
                 string quality = def.Quality.ToString();

@@ -1,5 +1,16 @@
 # DBModKit 更新日志
 
+## 0.20.0
+（0.19.0 留给 feat/mod-menu）
+- 新增联机握手（`Multiplayer`）：装了 ModKit 的玩家通过 Steam 大厅成员数据（键 `dbmods.mods`）公布 ModKit 版本和自己改玩法的内容，
+  `Multiplayer.Policy` 给出 Solo（只有自己）/ AllHaveSame（每个人装的一样）/ HostAllowed（房主允许）/ Blocked，`GameplayAllowed` 是前三种。
+  进入战斗时锁定，本局只会降级不会升级；局域网联机没有大厅，确认不了，算 Blocked
+- 改玩法的内容：自定义被动、主动技能，改了属性或专属技能的变体英雄（自动算），以及调用 `mod.DeclareGameplay(指纹)` 声明的 Mod。
+  "装的一样"按"GUID@版本#指纹"整套比较。外观（皮肤、变体的模型和名字）不受影响
+- 自定义被动、主动技能在 `GameplayAllowed` 为 false 时不进技能书三选一，`Give` 也不给；变体英雄的属性和专属技能改为看 `GameplayAllowed`（原来只看单人）
+- 房主可以在 DBStudio 的 Mod 页 → DBModKit → 联机 里勾选"在这个房间里允许"，换房间自动取消；装了 ModKit 的人都会收到提示。
+  进入战斗时策略为 Blocked 而自己有改玩法的内容，屏幕上会说明原因
+
 ## 0.18.0
 - 新增自定义被动技能（`PassiveSkills`）：`mod.RegisterPassive(new PassiveSkillDef { … })` 注册后和游戏的被动一样，
   会出现在技能书三选一里（按品级进池，可关）、占一个技能格、图鉴里能看到；名字和说明走 Mod 的 `Text`（键 `passive.<Key>.name/desc`），

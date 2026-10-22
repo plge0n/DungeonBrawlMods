@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using DBModKit;
+using Newtonsoft.Json;
 
 namespace DBStudio
 {
@@ -7,7 +8,7 @@ namespace DBStudio
     internal sealed class Pack
     {
         public string Name = "我的玩法";
-        // 玩家的总开关；即使打开，联机时也会自动停用
+        // 玩家的总开关；即使打开，联机时握手不通过也会自动停用
         public bool Enabled = true;
         // 表 → 键（技能枚举名 / 英雄编号 / 怪物枚举名）→ 字段 → 值；怪物的值是倍率
         public Dictionary<DataTable, Dictionary<string, Dictionary<string, double>>> Values =
@@ -17,10 +18,12 @@ namespace DBStudio
         public AugmentOffer Offer = new AugmentOffer();
     }
 
-    // 当前玩法包的加载、保存，以及"只在单人时生效"
+    // 当前玩法包的加载、保存，以及联机时按 ModKit 的握手结果（Multiplayer）启停
     internal static class Packs
     {
         private static JsonConfig<Pack> config;
+        private static ModContext context;
+        private static float nextDeclare;
 
         public static Pack Current => config.Data;
 
@@ -38,13 +41,14 @@ namespace DBStudio
                 if (GameData.Active) return null;
                 if (!Current.Enabled) return "已关闭";
                 if (!GameData.Ready) return "等游戏加载完";
-                return "联机中，已停用（表已恢复原版）";
+                return Multiplayer.Status + "，已停用（表已恢复原版）";
             }
         }
 
         public static void Init(ModContext mod)
         {
             config = mod.LoadJson<Pack>("DBStudio/packs/default.json");
+            context = mod;
             var owner = new object();
             GameData.Owner = owner;
             GameData.Load(Current.Values);
@@ -67,18 +71,37 @@ namespace DBStudio
             if (Current.Enabled == enabled) return;
             Current.Enabled = enabled;
             config.MarkDirty();
+            nextDeclare = 0f;
             UpdateActive();
         }
 
-        // 每帧检查：有人进房间就停用，回到单人再恢复
+        // 每帧检查：联机握手不允许就停用，允许了再恢复
         private static void UpdateActive()
         {
-            bool want = Current.Enabled && Game.IsSolo && GameData.Ready;
+            Declare();
+            bool want = Current.Enabled && Multiplayer.GameplayAllowed && GameData.Ready;
             if (GameData.Active == want) return;
             GameData.Active = want;
             if (GameData.Active) EventLog.Add("玩法包生效");
-            else if (Current.Enabled && GameData.Ready) EventLog.Add("进入联机，玩法包停用，数值已恢复原版");
+            else if (Current.Enabled && GameData.Ready) EventLog.Add($"{Multiplayer.Status}，玩法包停用，数值已恢复原版");
             else EventLog.Add("玩法包已关闭");
+        }
+
+        // 打开的玩法包向联机握手声明，指纹是内容的哈希：队友要用一模一样的玩法包才算"装的一样"。每秒最多算一次
+        private static void Declare()
+        {
+            if (UnityEngine.Time.unscaledTime < nextDeclare) return;
+            nextDeclare = UnityEngine.Time.unscaledTime + 1f;
+            if (!Current.Enabled)
+            {
+                context.RetractGameplay();
+                return;
+            }
+            string json = JsonConvert.SerializeObject(new { Current.Values, Current.Rules, Current.Augments, Current.Offer });
+            uint hash = 2166136261;
+            foreach (char c in json)
+                hash = (hash ^ c) * 16777619;
+            context.DeclareGameplay(hash.ToString("x8"));
         }
 
         private static void Save()

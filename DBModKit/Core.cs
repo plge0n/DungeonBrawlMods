@@ -110,6 +110,7 @@ namespace DBModKit
             if (!ModKit.Compatible) return;
             // 第一帧：Chainloader 已经加载完 plugins 目录，再加载工坊插件（依赖检查才准）
             Workshop.Start();
+            Safe.Run("联机握手", Multiplayer.Tick);
             bool inBattle = InBattle();
             if (inBattle != wasInBattle)
             {
@@ -119,11 +120,13 @@ namespace DBModKit
                     Safe.Run("运行记录（进入战斗）", LogBattleStarted);
                     // gad 的补丁没装上时，怪物行在主菜单还不存在，进入战斗时补写倍率
                     Safe.Run("怪物倍率（进入战斗）", GameData.OnEnemyTableLoaded);
+                    Safe.Run("联机握手（锁定）", Multiplayer.Lock);
                     ModEvents.RaiseBattleStarted();
                 }
                 else
                 {
                     RunLog.Info(ModKitPlugin.Name, "战斗", "离开战斗");
+                    Multiplayer.Unlock();
                     ModEvents.RaiseBattleEnded();
                 }
             }

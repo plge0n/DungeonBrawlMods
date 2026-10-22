@@ -76,10 +76,11 @@ public class Plugin : BaseUnityPlugin
 | `GameData` | 改技能、英雄、怪物配置表里的数值，可随时整体恢复原版 |
 | `PassiveSkills` | 自定义被动技能：注册后进技能书三选一、占技能格，行为由 Mod 写（`mod.RegisterPassive`） |
 | `ActiveSkills` | 自定义主动技能：蓝耗、冷却、瞄准等按游戏的表填，生效时的效果由 Mod 写，伤害走游戏结算（`mod.RegisterSkill`） |
-| `HeroVariants` | 变体英雄：基于已有英雄换属性、专属技能、模型和名字（`mod.RegisterHeroVariant`；改玩法的部分只在单人时生效） |
+| `HeroVariants` | 变体英雄：基于已有英雄换属性、专属技能、模型和名字（`mod.RegisterHeroVariant`；改玩法的部分按 `Multiplayer` 决定是否生效） |
 | `ModAssets` / `ModBundle` | Mod 自己的图标（图片或 AssetBundle）和特效，用法和游戏资源一样（`mod.LoadIcon`、`RegisterEffect`、`LoadBundle`） |
 | `HeroSkins` | 给每个英雄选一套工坊或本地的模型（或原版），可以只换本地玩家；Steam 联机时通过大厅成员数据同步 |
 | `LobbySync` | 通过 Steam 大厅成员数据和其他装了 Mod 的玩家交换少量文字数据（局域网不可用） |
+| `Multiplayer` | 联机握手：公布各自改玩法的内容，`Policy` = 单人 / 每个人装的一样 / 房主允许 / 停用，改玩法的功能看 `GameplayAllowed`；自定义技能和变体自动计入，其他 Mod 用 `mod.DeclareGameplay(指纹)` 声明 |
 | `JsonConfig<T>` | `BepInEx/config` 下的 JSON 配置，自动延迟保存 |
 | `ScreenNotice` | 屏幕顶部临时提示 |
 | `ModText` / `Localization` | 多语言文本：代码里写中文原文，翻译放在插件旁的 `lang/<语言>.json`，跟随游戏语言（见下） |
@@ -120,7 +121,7 @@ pwsh ./pack.ps1                                 # 生成 dist/ 下的发布包�
 
 **部署检查**：几个工作目录（git worktree）共用一个游戏目录，后编译的会覆盖先部署的。所以部署前会检查：当前代码要包含 `origin/main` 的最新提交，也要包含游戏里这个项目上一次部署时的提交（记在 `BepInEx/DBMods.deploy/<项目名>.commit`，里面有提交、分支和工作目录）。不满足就跳过部署并给出警告，编译照常完成；先变基或合并，确定要覆盖时加 `-p:ForceDeploy=true`。测试部署逻辑时用 `-p:DeployDir=<别的目录>` 部署到别处，不碰真实游戏目录。
 
-**DBStudio**：游戏内按 F9，游戏风格的调试面板：玩家属性、技能栏、敌人、事件日志、已加载插件；单人时有满血、满蓝、加金币等测试操作。规则页可以不写代码做"当……如果……就……"的玩法，强化页可以做波次结束时三选一的强化，数值页可以改技能、英雄、怪物数值，改动都存成玩法包（`BepInEx/config/DBStudio/packs/`），只在单人时生效。皮肤页给每个英雄挑一套已订阅的工坊模型或 `BepInEx/skins/` 下的本地模型，只改显示、不影响玩法；Steam 联机时也装了 Mod 的队友能互相看到对方的工坊皮肤。
+**DBStudio**：游戏内按 F9，游戏风格的调试面板：玩家属性、技能栏、敌人、事件日志、已加载插件；单人时有满血、满蓝、加金币等测试操作。规则页可以不写代码做"当……如果……就……"的玩法，强化页可以做波次结束时三选一的强化，数值页可以改技能、英雄、怪物数值，改动都存成玩法包（`BepInEx/config/DBStudio/packs/`），只在单人、房间里每个人都装了同样的玩法包、或房主允许时生效。皮肤页给每个英雄挑一套已订阅的工坊模型或 `BepInEx/skins/` 下的本地模型，只改显示、不影响玩法；Steam 联机时也装了 Mod 的队友能互相看到对方的工坊皮肤。
 
 **UnityExplorer**：游戏内按 F7。可以浏览场景里的 UI 和对象、查看/修改字段、在 C# 控制台里执行代码，是找游戏对象和调 UI 的首选工具。
 

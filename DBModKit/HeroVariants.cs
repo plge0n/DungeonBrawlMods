@@ -12,8 +12,8 @@ namespace DBModKit
     /// 出生时换掉属性、专属技能、模型和名字，所以联机、存档、图鉴、成就都按原英雄走，没装 Mod 的人看到的是原英雄。
     /// </summary>
     /// <remarks>
-    /// 属性和专属技能会改变玩法，和 DBStudio 的玩法包一样<b>只在单人时生效</b>（出生时房间里只有自己）；
-    /// 联机时只换名字和模型。玩家在 DBStudio 的 Mod 页（"英雄变体"）里给每个英雄选用哪个变体，Mod 也可以用 <see cref="HeroVariants.Select"/>。
+    /// 属性和专属技能会改变玩法，和 DBStudio 的玩法包一样只在 <see cref="Multiplayer.GameplayAllowed"/> 时生效
+    /// （单人、房间里每个人都装了同样的 Mod，或房主允许）；否则只换名字和模型。玩家在 DBStudio 的 Mod 页（"英雄变体"）里给每个英雄选用哪个变体，Mod 也可以用 <see cref="HeroVariants.Select"/>。
     /// </remarks>
     public sealed class HeroVariantDef
     {
@@ -75,7 +75,7 @@ namespace DBModKit
         public string Name => Text != null ? Text[$"hero.{Def.Key}.name", Def.Name] : Def.Name;
         public string Description => Text != null ? Text[$"hero.{Def.Key}.desc", Def.Description] : Def.Description;
 
-        /// <summary>改了属性或专属技能（这部分只在单人时生效）。</summary>
+        /// <summary>改了属性或专属技能（这部分算改玩法的内容，见 <see cref="Multiplayer"/>）。</summary>
         public bool ChangesGameplay
         {
             get
@@ -116,7 +116,7 @@ namespace DBModKit
         /// <summary>本地玩家这一局用的变体；没用时为 null。</summary>
         public static HeroVariantInfo LocalVariant { get; internal set; }
 
-        /// <summary>这一局变体的属性和专属技能生效了（出生时是单人）。</summary>
+        /// <summary>这一局变体的属性和专属技能生效了（出生时 <see cref="Multiplayer.GameplayAllowed"/>）。</summary>
         public static bool LocalGameplayActive { get; internal set; }
 
         /// <summary>选择变了。</summary>
@@ -206,12 +206,11 @@ namespace DBModKit
             LocalVariant = Selected(heroId);
             LocalGameplayActive = false;
             if (LocalVariant == null) return null;
-            bool gameplay = LocalVariant.ChangesGameplay && Game.IsSolo;
+            bool gameplay = LocalVariant.ChangesGameplay && Multiplayer.GameplayAllowed;
             LocalGameplayActive = gameplay;
             RunLog.WriteCore(ModKitPlugin.Name, "变体英雄", RunLogLevel.Info, "出生",
-                new (string, object)[] { ("变体", LocalVariant.Id), ("英雄", heroId), ("属性和技能", gameplay ? "生效" : LocalVariant.ChangesGameplay ? "联机，不生效" : "没改") }, mirror: false);
-            if (LocalVariant.ChangesGameplay && !gameplay)
-                ScreenNotice.Show($"{LocalVariant.Name}：联机时只换名字和模型，属性和专属技能不生效。", 6f);
+                new (string, object)[] { ("变体", LocalVariant.Id), ("英雄", heroId), ("属性和技能", gameplay ? "生效" : LocalVariant.ChangesGameplay ? "联机握手不允许，不生效" : "没改") }, mirror: false);
+            // 不生效时的提示由 Multiplayer 在进入战斗时统一给
             return gameplay ? GameRaw.ApplyVariantTables(heroId, LocalVariant) : null;
         }
 
@@ -232,7 +231,7 @@ namespace DBModKit
 
         private static void Build(RectTransform container)
         {
-            NativeUi.Label(container, "选英雄时用哪个变体。属性和专属技能只在单人时生效，联机时只换名字和模型。", 16, -1f, NativeUi.DimText);
+            NativeUi.Label(container, "选英雄时用哪个变体。属性和专属技能只在单人、或房间里每个人都装了同样的 Mod（或房主允许）时生效，否则只换名字和模型。", 16, -1f, NativeUi.DimText);
             list = NativeUi.Column(container, -1f, 6f);
             list.GetComponent<LayoutElement>().flexibleHeight = 0f;
             dirty = true;
