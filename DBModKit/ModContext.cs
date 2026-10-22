@@ -124,6 +124,20 @@ namespace DBModKit
             AddCleanup(() => AutoCast.Resolved -= handler);
         }
 
+        /// <summary>接管没有移动输入时的走位（见 <see cref="MoveControl"/>）。</summary>
+        public void UseMovement(MoveHandler handler)
+        {
+            MoveControl.SetHandler(Metadata.GUID, handler);
+            AddCleanup(() => MoveControl.ClearHandler(Metadata.GUID));
+        }
+
+        /// <summary>订阅命中事件（见 <see cref="Combat.Hit"/>）。</summary>
+        public void OnHit(Action<HitInfo> handler)
+        {
+            Combat.Hit += handler;
+            AddCleanup(() => Combat.Hit -= handler);
+        }
+
         /// <summary>打开 BepInEx/config 下的 JSON 配置；卸载时自动保存并释放。</summary>
         public JsonConfig<T> LoadJson<T>(string fileName) where T : new()
         {

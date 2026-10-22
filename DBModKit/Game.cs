@@ -13,6 +13,9 @@ namespace DBModKit
 
         public static bool InBattle => LocalPlayer != null;
 
+        /// <summary>游戏设置里的"自动战斗"开着。</summary>
+        public static bool AutoBattle => ModKit.Compatible && GameRaw.AutoBattleOn();
+
         /// <summary>取游戏本地化文本，找不到时返回 fallback。</summary>
         public static string Localize(string key, string fallback = null)
             => ModKit.Compatible ? GameRaw.Localize(key, fallback ?? key) : fallback ?? key;
@@ -46,6 +49,20 @@ namespace DBModKit
         public float HitRadius => GameRaw.HitRadius(Native);
         public bool IsBoss => GameRaw.IsBoss(Native);
         public bool IsElite => GameRaw.IsElite(Native);
+        public long Shield => GameRaw.Shield(Native);
+        /// <summary>血量 + 护盾：伤害要达到这个值才能击杀。</summary>
+        public long EffectiveHp => Hp + Shield;
+        /// <summary>无敌中，受到的伤害记为 0。</summary>
+        public bool IsInvulnerable => GameRaw.IsInvulnerable(Native);
+        /// <summary>普攻距离；对方在 距离 ≤ AttackRange + 对方体型半径 内时可以被普攻打到。</summary>
+        public float AttackRange => GameRaw.AttackRange(Native);
+        public float MoveSpeed => GameRaw.MoveSpeed(Native);
+        /// <summary>当前状态（RoleState 枚举名）：Idle、Run、Attack、Skill、Skill2…、Dead 等。</summary>
+        public string State => GameRaw.State(Native);
+        public bool IsAttacking => GameRaw.IsAttacking(Native);
+        /// <summary>在对方的普攻范围内。</summary>
+        public bool InAttackRangeOf(Role attacker, float extra = 0f)
+            => attacker.DistanceTo(this) <= attacker.AttackRange + HitRadius + extra;
 
         /// <summary>水平距离（忽略高度）。</summary>
         public float DistanceTo(Role other) => GameRaw.Distance(Native, other.Position);
@@ -64,6 +81,26 @@ namespace DBModKit
 
         public int Mana => GameRaw.Mana(Native);
         public int MaxMana => GameRaw.MaxMana(Native);
+
+        /// <summary>变身中（变身类技能生效期间）。</summary>
+        public bool IsTransformed => GameRaw.IsTransformed(Native);
+
+        /// <summary>普攻冷却好了。</summary>
+        public bool AttackReady => GameRaw.AttackTimer(Native) > GameRaw.AttackInterval(Native);
+        /// <summary>距离下次能普攻还有多少秒。</summary>
+        public float AttackCooldownLeft => Mathf.Max(0f, GameRaw.AttackInterval(Native) - GameRaw.AttackTimer(Native));
+        public float AttackInterval => GameRaw.AttackInterval(Native);
+        /// <summary>本次普攻已经出手（伤害或弹道已经发出）。之后移动不会丢掉这次攻击；出手前移动会取消攻击，但冷却会立刻转好。</summary>
+        public bool AttackHitDone => GameRaw.AttackHitDone(Native);
+
+        /// <summary>
+        /// 自己放的某个技能还在生效的剩余秒数（持续伤害、增益、变身等），没有则为 0。
+        /// 瞬发技能的实例也会短暂存在，判断"增益还在"时最好留一点阈值。
+        /// </summary>
+        public float SkillEffectRemaining(int skillId) => GameRaw.SkillEffectRemaining(Native, skillId);
+
+        /// <summary>对该敌人的增伤比例（全局增伤 + 对 Boss/精英/普通敌人的增伤），0.3 表示 +30%。</summary>
+        public float DamageBonusAgainst(Role target) => GameRaw.DamageBonus(Native, target.Native);
 
         /// <summary>当前所有存活的敌人。</summary>
         public List<Role> Enemies()
