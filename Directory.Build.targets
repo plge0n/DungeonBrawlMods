@@ -5,25 +5,80 @@
       游戏开着也能重新编译，ScriptEngine 检测到变化后自动重载（也可按 F6）。
     - 否则复制到 BepInEx/plugins/<项目名>（需先关闭游戏）。
     两个位置只保留一份，避免同一个 Mod 被加载两次。
+
+    多个工作目录（git worktree）共用同一个游戏目录，后编译的会覆盖先部署的。为了不把别人正在测的新版本换成旧版本，
+    部署前检查（不满足就跳过部署并警告，编译照常）：
+    1. 当前代码包含 origin/main 的最新提交（从旧的 main 拉出来、还没变基的分支不部署）；
+    2. 当前代码包含游戏里这个项目上一次部署时的提交（记在 BepInEx/DBMods.deploy/<项目名>.commit）。
+    确定要覆盖时：dotnet build -p:ForceDeploy=true
   -->
   <PropertyGroup>
-    <HotReload Condition="'$(HotReload)' == '' And Exists('$(GameDir)\BepInEx\plugins\ScriptEngine.dll')">true</HotReload>
-    <ScriptsFile>$(GameDir)\BepInEx\scripts\$(TargetFileName)</ScriptsFile>
+    <!-- 部署到哪个游戏目录（默认就是编译时引用的 GameDir；测试部署逻辑时可以指向别的目录） -->
+    <DeployDir Condition="'$(DeployDir)' == ''">$(GameDir)</DeployDir>
+    <HotReload Condition="'$(HotReload)' == '' And Exists('$(DeployDir)\BepInEx\plugins\ScriptEngine.dll')">true</HotReload>
+    <ScriptsFile>$(DeployDir)\BepInEx\scripts\$(TargetFileName)</ScriptsFile>
     <!-- ScriptEngine 加载时会读取同名 .pdb，缺失就抛异常、整批 Mod 都不加载 -->
-    <ScriptsPdb>$(GameDir)\BepInEx\scripts\$(TargetName).pdb</ScriptsPdb>
+    <ScriptsPdb>$(DeployDir)\BepInEx\scripts\$(TargetName).pdb</ScriptsPdb>
     <BuiltPdb>$(TargetDir)$(TargetName).pdb</BuiltPdb>
+    <DeployMarker>$(DeployDir)\BepInEx\DBMods.deploy\$(MSBuildProjectName).commit</DeployMarker>
   </PropertyGroup>
 
-  <Target Name="DeployToGame" AfterTargets="Build" Condition="'$(DeployToGame)' == 'true'">
-    <MakeDir Directories="$(GameDir)\BepInEx\scripts" Condition="'$(HotReload)' == 'true'" />
-    <Copy SourceFiles="$(TargetPath);$(BuiltPdb)" DestinationFolder="$(GameDir)\BepInEx\scripts" Condition="'$(HotReload)' == 'true'" />
+  <!-- 当前提交和分支；不是 git 仓库（或没装 git）时为空，跳过检查 -->
+  <Target Name="ReadGitHead" AfterTargets="Build" Condition="'$(DeployToGame)' == 'true'">
+    <Exec Command="git rev-parse HEAD" WorkingDirectory="$(MSBuildProjectDirectory)" ConsoleToMSBuild="true"
+          StandardOutputImportance="low" StandardErrorImportance="low" IgnoreExitCode="true" EchoOff="true">
+      <Output TaskParameter="ConsoleOutput" PropertyName="GitHeadRaw" />
+      <Output TaskParameter="ExitCode" PropertyName="GitHeadExit" />
+    </Exec>
+    <Exec Command="git rev-parse --abbrev-ref HEAD" WorkingDirectory="$(MSBuildProjectDirectory)" ConsoleToMSBuild="true"
+          StandardOutputImportance="low" StandardErrorImportance="low" IgnoreExitCode="true" EchoOff="true" Condition="'$(GitHeadExit)' == '0'">
+      <Output TaskParameter="ConsoleOutput" PropertyName="GitBranch" />
+    </Exec>
+    <PropertyGroup>
+      <GitHead Condition="'$(GitHeadExit)' == '0'">$(GitHeadRaw.Trim())</GitHead>
+    </PropertyGroup>
+  </Target>
+
+  <Target Name="CheckDeploySource" AfterTargets="ReadGitHead"
+          Condition="'$(DeployToGame)' == 'true' And '$(ForceDeploy)' != 'true' And '$(GitHead)' != ''">
+    <!-- 1. 包含 origin/main（退出码 1 = 不包含；128 = 没有 origin/main，不检查） -->
+    <Exec Command="git merge-base --is-ancestor origin/main HEAD" WorkingDirectory="$(MSBuildProjectDirectory)"
+          StandardOutputImportance="low" StandardErrorImportance="low" IgnoreExitCode="true" EchoOff="true">
+      <Output TaskParameter="ExitCode" PropertyName="MainExit" />
+    </Exec>
+    <PropertyGroup>
+      <DeployedInfo Condition="Exists('$(DeployMarker)')">$([System.IO.File]::ReadAllText('$(DeployMarker)').Trim())</DeployedInfo>
+      <DeployedCommit>$([System.Text.RegularExpressions.Regex]::Match('$(DeployedInfo)', '^[0-9a-f]{40}'))</DeployedCommit>
+    </PropertyGroup>
+    <!-- 2. 包含上一次部署的提交（退出码 1 = 不包含；128 = 本仓库里没有这个提交，比如变基前的旧提交已被清理） -->
+    <Exec Command="git merge-base --is-ancestor $(DeployedCommit) HEAD" WorkingDirectory="$(MSBuildProjectDirectory)"
+          StandardOutputImportance="low" StandardErrorImportance="low" IgnoreExitCode="true" EchoOff="true"
+          Condition="'$(DeployedCommit)' != '' And '$(DeployedCommit)' != '$(GitHead)'">
+      <Output TaskParameter="ExitCode" PropertyName="DeployedExit" />
+    </Exec>
+    <PropertyGroup>
+      <DeployBlocked Condition="'$(MainExit)' == '1' Or ('$(DeployedExit)' != '' And '$(DeployedExit)' != '0')">true</DeployBlocked>
+    </PropertyGroup>
+    <Warning Condition="'$(MainExit)' == '1'"
+             Text="$(MSBuildProjectName) 没有部署到游戏：当前分支（$(GitBranch)）不包含 origin/main 的最新提交，部署会把游戏里较新的版本换成旧的。先变基到 origin/main；确定要覆盖时加 -p:ForceDeploy=true。" />
+    <Warning Condition="'$(DeployedExit)' != '' And '$(DeployedExit)' != '0'"
+             Text="$(MSBuildProjectName) 没有部署到游戏：游戏里现在是另一份代码部署的（$(DeployedInfo)），当前分支（$(GitBranch)）不包含它的提交，部署会覆盖别人正在测的版本。先合并或变基到那份代码；如果那是你自己变基前的旧提交，或者确定要覆盖，加 -p:ForceDeploy=true。" />
+  </Target>
+
+  <Target Name="DeployToGame" AfterTargets="CheckDeploySource" Condition="'$(DeployToGame)' == 'true' And '$(DeployBlocked)' != 'true'">
+    <MakeDir Directories="$(DeployDir)\BepInEx\scripts" Condition="'$(HotReload)' == 'true'" />
+    <Copy SourceFiles="$(TargetPath);$(BuiltPdb)" DestinationFolder="$(DeployDir)\BepInEx\scripts" Condition="'$(HotReload)' == 'true'" />
     <RemoveDir Directories="$(PluginDir)" Condition="'$(HotReload)' == 'true'" ContinueOnError="true" />
 
     <MakeDir Directories="$(PluginDir)" Condition="'$(HotReload)' != 'true'" />
     <Copy SourceFiles="$(TargetPath)" DestinationFolder="$(PluginDir)" Condition="'$(HotReload)' != 'true'" />
     <Delete Files="$(ScriptsFile);$(ScriptsPdb)" Condition="'$(HotReload)' != 'true'" />
 
-    <Message Importance="high" Text="$(MSBuildProjectName) -> $(GameDir)\BepInEx\scripts（热重载）" Condition="'$(HotReload)' == 'true'" />
+    <!-- 记下这次部署来自哪个提交，供下一次部署检查 -->
+    <MakeDir Directories="$(DeployDir)\BepInEx\DBMods.deploy" Condition="'$(GitHead)' != ''" />
+    <WriteLinesToFile File="$(DeployMarker)" Lines="$(GitHead) $(GitBranch) $(MSBuildProjectDirectory)" Overwrite="true" Condition="'$(GitHead)' != ''" />
+
+    <Message Importance="high" Text="$(MSBuildProjectName) -> $(DeployDir)\BepInEx\scripts（热重载）" Condition="'$(HotReload)' == 'true'" />
     <Message Importance="high" Text="$(MSBuildProjectName) -> $(PluginDir)" Condition="'$(HotReload)' != 'true'" />
   </Target>
 </Project>
