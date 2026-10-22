@@ -7,9 +7,10 @@
     <!-- 游戏不在默认位置时：设置环境变量 GameDir，或 dotnet build -p:GameDir="X:\...\地下城竞技场" -->
     <GameDir Condition="'$(GameDir)' == ''">D:\Steam\steamapps\common\地下城竞技场</GameDir>
     <Managed>$(GameDir)\DungeonBrawl_Data\Managed</Managed>
+    <DeployDir Condition="'$(DeployDir)' == ''">$(GameDir)</DeployDir>
     <!-- 编译后复制到游戏的 BepInEx/plugins/<项目名>；打包时关闭，避免覆盖正在玩的游戏里的插件 -->
     <DeployToGame Condition="'$(DeployToGame)' == ''">true</DeployToGame>
-    <PluginDir>$(GameDir)\BepInEx\plugins\$(MSBuildProjectName)</PluginDir>
+    <PluginDir>$(DeployDir)\BepInEx\plugins\$(MSBuildProjectName)</PluginDir>
   </PropertyGroup>
 
   <!-- BepInEx、Unity 和游戏自带的第三方库：只用于编译，不随 Mod 分发 -->
