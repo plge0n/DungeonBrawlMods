@@ -32,7 +32,7 @@
 
 | 功能 | 没测的部分 |
 |---|---|
-| 自定义装备（DBModKit 0.24.0） | **全部**：给已有装备挂自定义特效、全新装备、神器三选一、内容包里的装备 |
+| 自定义装备（DBModKit 0.24.0） | 单人下已测（挂特效、新装备、内容包、构筑数据过滤）；没测：联机、装备强化、重试波次、在神器三选一里实际选中 |
 | 依赖和冲突（DBModKit 0.23.0） | 缺依赖时的提示和"订阅"按钮、两个 Mod 抢自动释放/走位时在设置里指定、两个 Mod 改同一项数值的提示 |
 | 创意工坊 | 从真实工坊条目加载代码 Mod、运行环境条目的 `install.bat` / `uninstall.bat`、上传工具（都还没真正上传过） |
 | 排行榜拦截 | 实际打到结算、出现"是否上传排名"时的拦截（拦截装上了，但还没在真实结算时触发过） |
@@ -87,7 +87,7 @@ These are implemented and compile, but haven't been fully verified in the game y
 
 | Feature | Untested part |
 |---|---|
-| Custom equipment (DBModKit 0.24.0) | **Everything**: custom effects attached to existing equipment, brand-new equipment, the artifact pick, equipment in content packs |
+| Custom equipment (DBModKit 0.24.0) | Tested in single-player (effects on existing equipment, new equipment, content packs, build-data filtering); untested: multiplayer, upgrading, retrying a wave, actually picking it from the artifact choice |
 | Dependencies and conflicts (DBModKit 0.23.0) | Missing-dependency notice and "Subscribe" button, choosing which mod handles auto-cast/movement, warning when two mods change the same value |
 | Steam Workshop | Loading code mods from real Workshop items, the runtime item's `install.bat` / `uninstall.bat`, the upload tool (nothing has been uploaded yet) |
 | Leaderboard block | Blocking at the real "upload your score?" dialog at the end of a run (the hook is installed but hasn't fired in a real run yet) |
