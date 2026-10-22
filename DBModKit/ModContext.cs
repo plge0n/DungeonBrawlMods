@@ -51,6 +51,9 @@ namespace DBModKit
         /// <summary>onLoad 抛了异常，Mod 没有启动。</summary>
         public bool Failed { get; private set; }
 
+        /// <summary>启动过、后来被卸载了（<see cref="Dispose"/>）。</summary>
+        public bool Unloaded { get; private set; }
+
         // 按 GUID 记下每个 Mod 最近一次启动的上下文，Mod 列表据此显示状态；热重载时新的替换旧的
         internal static readonly Dictionary<string, ModContext> All = new Dictionary<string, ModContext>();
 
@@ -113,6 +116,7 @@ namespace DBModKit
         {
             if (Loaded) RunLog.Info("生命周期", "卸载");
             if (Loaded && onUnload != null) Safe.Run($"{Metadata.Name} 卸载", onUnload);
+            if (Loaded) Unloaded = true;
             Loaded = false;
             RunCleanups();
         }
