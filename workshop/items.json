@@ -1,0 +1,17 @@
+{
+  "Runtime": {
+    "Id": 0,
+    "Visibility": "private",
+    "Folder": "dist/workshop/Runtime",
+    "Preview": "workshop/Runtime/preview.png",
+    "Tags": [],
+    "Title": {
+      "schinese": "Mod 运行环境（BepInEx + DBModKit）",
+      "english": "Mod Runtime (BepInEx + DBModKit)"
+    },
+    "Description": {
+      "schinese": "[b]其他代码 Mod 都需要先装这个。[/b]\n\n游戏的创意工坊不会自动加载代码 Mod。本条目包含 Mod 加载器 BepInEx 5 和公共依赖库 DBModKit，订阅后需要运行一次安装器。\n\n[h2]安装[/h2]\n[olist]\n[*]订阅，等 Steam 下载完成\n[*]退出游戏，打开 [i]<Steam 库>\\steamapps\\workshop\\content\\4246640\\<本条目编号>\\[/i]，双击 [b]install.bat[/b]\n[*]启动游戏\n[/olist]\n条目更新后游戏里会提示，退出游戏再运行一次 install.bat。\n\n[h2]卸载[/h2]\n运行同一文件夹里的 [b]uninstall.bat[/b]，再取消订阅。\n\n[h2]注意[/h2]\n[list]\n[*]按游戏作者的规则，装了 Mod 后成绩不会上传排行榜，其他功能不受影响。\n[*]游戏更新后如果不兼容，进游戏会提示，Mod 自动停用，游戏照常可玩。\n[*]BepInEx、Doorstop 为 LGPL-2.1，许可证和源码链接见条目里的 licenses 文件夹。\n[/list]",
+      "english": "[b]Required by all code mods.[/b]\n\nThe game's Workshop does not load code mods by itself. This item contains the BepInEx 5 mod loader and the shared library DBModKit; run the installer once after subscribing.\n\n[h2]Install[/h2]\n[olist]\n[*]Subscribe and wait for the download\n[*]Quit the game, open [i]<Steam library>\\steamapps\\workshop\\content\\4246640\\<this item id>\\[/i] and double-click [b]install.bat[/b]\n[*]Start the game\n[/olist]\nWhen this item updates the game will tell you; quit and run install.bat again.\n\n[h2]Uninstall[/h2]\nRun [b]uninstall.bat[/b] in the same folder, then unsubscribe.\n\n[h2]Notes[/h2]\n[list]\n[*]By the game author's rule, scores are not uploaded to the leaderboard while mods are installed.\n[*]If a game update breaks compatibility, you'll see a notice and the mods disable themselves; the game still works.\n[*]BepInEx and Doorstop are LGPL-2.1; licenses and source links are in the item's licenses folder.\n[/list]"
+    }
+  }
+}

@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- 创意工坊上传工具（开发者用，不随 Mod 分发）。借正在运行、已登录的 Steam 客户端上传，不需要账号密码 -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <PlatformTarget>x64</PlatformTarget>
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+    <SelfContained>false</SelfContained>
+    <Nullable>disable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <!-- 仓库根目录的 Directory.Build.targets 会把编译结果部署进游戏，这个工具不要 -->
+    <DeployToGame>false</DeployToGame>
+    <GameDir Condition="'$(GameDir)' == ''">D:\Steam\steamapps\common\地下城竞技场</GameDir>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Steamworks.NET" Version="20.2.0" />
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+  </ItemGroup>
+  <!-- 用游戏自带的 steam_api64.dll（版本和游戏的 Steamworks.NET 20.2.0 对应） -->
+  <ItemGroup>
+    <None Include="$(GameDir)\DungeonBrawl_Data\Plugins\x86_64\steam_api64.dll" CopyToOutputDirectory="PreserveNewest" Link="steam_api64.dll" />
+  </ItemGroup>
+</Project>

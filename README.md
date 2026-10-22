@@ -127,6 +127,17 @@ pwsh ./pack.ps1                                 # 生成 dist/ 下的发布包�
 - 上传前测试：把条目文件夹复制到 `BepInEx/workshop-dev/`，并把 `plugins`/`scripts` 里同名的插件挪走（本地已装的优先）。
 - 条目里不要放 `manifest.json`：那是游戏自己的格式（英雄模型等），游戏会去读它。
 
+### 上传
+- 条目的标题、说明（按语言）、可见性、预览图在 `workshop/items.json`；第一次上传后条目编号会写回这个文件，要提交。
+- `Runtime` 条目（BepInEx + DBModKit）：游戏工坊不加载 dll，玩家订阅后运行条目里的 `install.bat` 把文件复制进游戏目录，`uninstall.bat` 卸载。
+  安装器模板在 `workshop/Runtime/`，`pack.ps1` 生成 `dist/workshop/Runtime/`。DBModKit 发现工坊里的运行环境比装的新时会在游戏里提示。
+- 上传（Steam 客户端要开着并登录拥有游戏的账号，不需要密码）：
+  ```powershell
+  pwsh ./pack.ps1
+  dotnet run -c Release --project tools/WorkshopUpload -- Runtime --dry-run   # 只检查
+  dotnet run -c Release --project tools/WorkshopUpload -- Runtime             # 上传或更新
+  ```
+
 ## 游戏更新后
 1. 进游戏看 `BepInEx/LogOutput.log`：DBModKit 会列出找不到的成员。
 2. 用 `../_DungeonBrawl_tools/` 里的工具重新解密字符串、反编译，对照 `../_DungeonBrawl_tools/NOTES.md` 找到新名字。注意混淆器会生成诱饵方法，要靠调用关系确认真方法。

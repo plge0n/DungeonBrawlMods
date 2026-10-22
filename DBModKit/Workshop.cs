@@ -18,7 +18,7 @@ namespace DBModKit
         public const int CurrentFormat = 1;
 
         public int Format = CurrentFormat;
-        /// <summary>目前只有 "plugin"（BepInEx 插件）。</summary>
+        /// <summary>"plugin"（BepInEx 插件，由加载器加载）或 "runtime"（BepInEx + DBModKit 安装包，只检查版本）。</summary>
         public string Type = "plugin";
         public string Name = "";
         public string Author = "";
@@ -161,6 +161,16 @@ namespace DBModKit
             Version++;
         }
 
+        private static void CheckRuntimeUpdate(WorkshopItem item)
+        {
+            if (!System.Version.TryParse(item.Manifest.Version, out var available) || !System.Version.TryParse(ModKit.Version, out var installed)) return;
+            if (available <= installed) return;
+            string bat = Path.Combine(item.Folder, "install.bat");
+            Log.Warning($"创意工坊里的运行环境是 {available}，游戏目录里装的是 {installed}。退出游戏后运行 {bat} 更新");
+            ScreenNotice.Show($"Mod 运行环境有新版本 {available}（当前 {installed}）：退出游戏后运行工坊文件夹里的 install.bat\n" +
+                $"Mod runtime {available} is available (installed {installed}): quit the game and run install.bat in the Workshop folder", 15f);
+        }
+
         private static WorkshopItem Read(string folder, bool dev)
         {
             var item = new WorkshopItem { Folder = folder, IsDev = dev, Id = (dev ? "dev:" : "") + Path.GetFileName(folder) };
@@ -178,6 +188,13 @@ namespace DBModKit
             {
                 item.Broken = true;
                 return Fail(item, $"dbmod.json 格式不对：{e.Message}");
+            }
+            if (item.Manifest.Type == "runtime")
+            {
+                // 运行环境条目（BepInEx + DBModKit）：游戏目录里装的才是在用的，工坊里的只是安装包。比这里新就提醒去运行安装器
+                item.Status = WorkshopStatus.Ignored;
+                if (!dev) Safe.Run("运行环境更新检查", () => CheckRuntimeUpdate(item));
+                return item;
             }
             if (item.Manifest.Type != "plugin")
             {

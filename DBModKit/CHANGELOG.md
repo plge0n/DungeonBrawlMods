@@ -9,6 +9,7 @@
   所有被拦下的异常；Debug 级：每个战斗事件、自动释放决策变化、输入屏蔽和暂停的获取/释放
 - `RunLog.Mark()` 插带编号的标记（默认 Ctrl+F10），`RunLog.ExportReport()` 导出诊断报告（版本、兼容、状态、全部记录）
 - 配置 `RunLog.FileLevel`（写文件的最低级别，测试时改 Debug）、`RunLog.MarkHotkey`
+- 工坊加载器识别运行环境条目（`dbmod.json` 的 `Type = "runtime"`）：工坊里的版本比装的新时在游戏里提示运行 install.bat
 - 多语言接口 `ModText`（`mod.Text["键", "中文原文"]`，翻译放在插件旁的 `lang/<语言>.json`）和 `Localization.Language` / `Changed`（跟随游戏语言）
 - `NativeUi.ListItemBackground`：列表项的方框背景（放在不参与布局的子物体上，列表项不再被贴图边框撑到至少 220 高）
 - 修复：克隆的原版按钮文字框比按钮宽，挨着放时会抢走旁边按钮的点击（点"导出"触发"清空"）
