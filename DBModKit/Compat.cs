@@ -22,7 +22,7 @@ namespace DBModKit
             ["cj"] = new[] { "boyb", "boyi", "boyj", "boyl", "boyn", "boyq", "boyt" },
             ["ez"] = new[] { "dxx", "dxy", "dyk", "dvm", "eaz", "ebc", "dzc", "dye", "dyf", "eax", "ebf", "dzo", "dxt", "dxq", "dxv", "dyl" },
             ["bfl"] = new[] { "mna" },
-            ["pj"] = new[] { "bcxi", "bcxj", "bcxk", "bcxu" },
+            ["pj"] = new[] { "bcxi", "bcxj", "bcxk", "bcxu", "gko" },
             ["bfe"] = new[] { "bgwf", "bgwg", "bgwi", "bgwe", "bgwj", "kea", "Clear" },
             // 伤害来自哪个被动 / 装备 / 遗物 / Buff
             ["qp"] = new[] { "gou", "gov" },
@@ -51,7 +51,7 @@ namespace DBModKit
                 "enemyDefeatedEvent", "activeSkillCastEvent", "criticalEvent", "dogeEvent",
                 "bphz", "bphq", "bphp", "bpho", "bphb", "bphl", "bphm", "bphk", "bphr", "bphv", "bpgy", "iwz", "iwh",
                 "localActiveSkillCastEvent", "iqz", "irv", "roleBuffManager", "iwk",
-                "ivb", "iva", "ixz", "izi", "iym",
+                "ivb", "iva", "ixz", "izi", "iym", "iyk", "ivi", "ivh", "ivl", "overrideAnimSkillId",
             },
             ["bbe"] = new[]
             {
@@ -96,6 +96,8 @@ namespace DBModKit
             ["PasssiveSkillEnum"] = new string[0],
             // Mod 资源
             ["m"] = new[] { "cyn", "zop", "zoq" },
+            // 施法动作
+            ["ns"] = new[] { "bcez" },
             // 自定义主动技能
             ["bff"] = new string[0],
             ["Mirror.NetworkManager"] = new[] { "bmxm" },
@@ -121,7 +123,7 @@ namespace DBModKit
             ["bkh"] = new[] { "bacf" },
             ["bka"] = new[] { "njb" },
             ["PlayerDamageFeedbackKind"] = new string[0],
-            ["RoleModeBase"] = new[] { "addRange", "ico" },
+            ["RoleModeBase"] = new[] { "addRange", "ico", "myAnim" },
             ["ActiveSkillData"] = new[]
             {
                 "tags", "indicator", "castingRange", "range", "cd", "canAuto", "icon",

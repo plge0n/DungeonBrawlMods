@@ -14,6 +14,9 @@
   `FormulaDamage`，以及走游戏伤害结算的 `DamageArea` / `Damage`、对象池特效 `Effect`。`ActiveSkills.Give` 直接发放
 - 联机：技能在每个装了这个 Mod 的客户端上都会创建（能看到效果），伤害只在施法者那边结算；没装的人只看到施法动作，不会出错。
   编号 2000000 起
+- 施法动作：`ActiveSkill.PlayAnimation(片段 / 游戏动作名, 速度, 时长)` 在技能持续期间把施法者的动作换掉（游戏旋风斩、鸡舞的同款做法：
+  换掉待机片段并锁住动画，结束时还原），每个装了 Mod 的客户端都能看到；`StopAnimation` 提前换回。片段可以来自 AssetBundle（Humanoid），
+  也可以用游戏自带的（`Frank_RPG_2Hand_Skill01_WhirlWind` 等）。和别的换动作技能重叠时会先结束对方，游戏的旋风斩叠在后面时结束后会自动还原
 - 新增变体英雄（`HeroVariants`）：`mod.RegisterHeroVariant(new HeroVariantDef { BaseHero = 英雄, … })`，底层仍是原英雄，
   出生时换属性（三维、成长、攻击、护甲、生命、法力、回复、移速、攻速）、专属技能（游戏的或自定义的主动/被动）、模型（Mod 自带的模型文件夹或工坊模型）和名字。
   属性和专属技能和玩法包一样只在单人时生效，联机时只换名字和模型（模型只在自己这边显示）。玩家在 DBStudio 的 Mod 页"英雄变体"里给每个英雄选，

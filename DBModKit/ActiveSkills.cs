@@ -171,6 +171,38 @@ namespace DBModKit
             => IsMine && target != null ? GameRaw.SkillDamage(Native, target.Native, damage) : 0;
 
         /// <summary>
+        /// 把施法者的动作换成 clip，直到技能结束（或调用 <see cref="StopAnimation"/>）。期间施法者停在施法状态，不能移动、普攻，
+        /// 结束后回到待机。和游戏的旋风斩、鸡舞是同一种做法；每个装了 Mod 的客户端都会执行，所以别人也能看到。
+        /// duration 为 null 时按片段长度 ÷ speed 延长技能的剩余时间（剩余时间本来更长时不变），传 0 表示不延长。
+        /// clip 要是 Humanoid 片段（英雄模型都是 Humanoid，工坊模型也是），可以用 <see cref="ModBundle.Clip"/> 从 AssetBundle 读。
+        /// 返回 false 表示没换成（施法者没有动画机等）。
+        /// </summary>
+        protected bool PlayAnimation(AnimationClip clip, float speed = 1f, float? duration = null)
+        {
+            if (Native == null || clip == null) return false;
+            bool ok = false;
+            Safe.Run($"{Info?.Key}.PlayAnimation({clip.name})", () => ok = GameRaw.PlaySkillAnimation(Native, clip, speed));
+            if (!ok) return false;
+            float time = duration ?? clip.length / Mathf.Max(0.01f, speed);
+            if (time > Remaining) Remaining = time;
+            return true;
+        }
+
+        /// <summary>
+        /// 用游戏自带的动作片段（Resources/Bundles/Animator/ 下的名字），例如 Frank_RPG_2Hand_Skill01_WhirlWind（旋风斩）、
+        /// GreatSword_Whirlwind_Loop_Root、core_main_riposte_01（处决）、ChickenDance、RasenganSkill、RachelSkill、yinduFlash、
+        /// GreatSword_FocusEnergy_R_Attack03_Root、Frank_RPG_2Hand_Combo03_All、Frank_RPG_Dual_Skill04_InfinitySlash。
+        /// </summary>
+        protected bool PlayAnimation(string gameClip, float speed = 1f, float? duration = null)
+            => PlayAnimation(GameRaw.GameAnimation(gameClip), speed, duration);
+
+        /// <summary>提前把动作换回来（技能本身不结束）。</summary>
+        protected void StopAnimation()
+        {
+            if (Native != null) Safe.Run($"{Info?.Key}.StopAnimation", () => GameRaw.StopSkillAnimation(Native));
+        }
+
+        /// <summary>
         /// 在 position 放一个游戏的特效（Resources 路径，不含 Bundles/，例如 Effect/SpellThunder、Effect/FireFlash），duration 秒后自动回收。
         /// 每个客户端各自生成，不需要同步。
         /// </summary>
@@ -243,6 +275,10 @@ namespace DBModKit
             if (hooked) return;
             hooked = true;
             ModEvents.Update += Tick;
+            ModEvents.Update += () =>
+            {
+                if (GameRaw.HasStrayAnimations) Safe.Run("施法动作（善后）", GameRaw.FixStrayAnimations);
+            };
         }
 
         // 表加载晚于 Mod 注册；游戏重建配置表后要补回来

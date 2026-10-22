@@ -1090,6 +1090,83 @@ namespace DBModKit
             s.Instance = ActiveSkills.Cast(id, s, position, rotation, target, caster.ixz(data.range));
         }
 
+        // ---- 施法动作：照游戏的 bfh（旋风斩、鸡舞、处决都用它）----
+        // 新建 AnimatorOverrideController，把待机片段 H_Idle2（ns.bcez）换成要播的片段，重新赋值控制器（动画机回到入口的待机状态，
+        // 于是播的就是新片段），再 yb.iyk() 锁住动画（bepi：ive 不再切别的动作，bbe.kqf 也不会把施法状态切回待机）。
+        // 结束时还原控制器、yb.ivi() 解锁、切回待机。overrideAnimSkillId 记着是哪个技能实例换的，变身（bgt）会先结束它
+        public static bool PlaySkillAnimation(object native, AnimationClip clip, float speed)
+        {
+            var s = (ModSkill)native;
+            var caster = s.bgwf;
+            var anim = caster?.bpia?.myAnim;
+            if (anim == null || clip == null) return false;
+            // 别的换动作技能还在生效（游戏的或者另一个 Mod 技能）：先结束它，免得两边互相把对方的控制器当成原版
+            if (caster.overrideAnimSkillId >= 0 && caster.overrideAnimSkillId != (int)s.bgwe && cj.boyn != null)
+                cj.boyn.gko((uint)caster.overrideAnimSkillId);
+            if (s.SavedController == null || s.SavedAnimator != anim)
+            {
+                s.SavedAnimator = anim;
+                s.SavedController = anim.runtimeAnimatorController;
+            }
+            var controller = new AnimatorOverrideController(s.SavedController);
+            controller[ns.bcez] = clip;
+            s.OurController = controller;
+            caster.ivh(speed);
+            anim.runtimeAnimatorController = null;
+            anim.runtimeAnimatorController = controller;
+            caster.iyk();
+            caster.overrideAnimSkillId = (int)s.bgwe;
+            return true;
+        }
+
+        public static void StopSkillAnimation(object native)
+        {
+            var s = (ModSkill)native;
+            var caster = s.bgwf;
+            if (s.SavedController == null || caster == null) return;
+            // 换了模型（皮肤）后 myAnim 是新的动画机，旧的已经不用了，只还原我们改过的那个
+            bool stacked = caster.overrideAnimSkillId != (int)s.bgwe;
+            if (s.SavedAnimator != null)
+            {
+                if (!stacked) s.SavedAnimator.runtimeAnimatorController = s.SavedController;
+                // 游戏自己的换动作技能（bfh，不检查别人）在我们之后开始了：它把我们的控制器当成原版存着，结束时会换回来。
+                // 现在不动它，记下来，等它还原之后再换回真正的原版（见 FixStrayAnimations）
+                else strayAnimations.Add((s.SavedAnimator, s.OurController, s.SavedController, caster));
+            }
+            s.SavedController = null;
+            s.SavedAnimator = null;
+            s.OurController = null;
+            if (stacked) return;
+            caster.ivi();
+            if (!caster.iym()) caster.ivl(RoleState.Idle);
+            caster.overrideAnimSkillId = -1;
+        }
+
+        private static readonly List<(Animator Anim, RuntimeAnimatorController Ours, RuntimeAnimatorController Original, yb Caster)> strayAnimations =
+            new List<(Animator, RuntimeAnimatorController, RuntimeAnimatorController, yb)>();
+
+        // 每帧：上面那种情况下，等叠在后面的换动作技能结束（overrideAnimSkillId 回到 -1）后，如果控制器又被换回成我们的，就还原成原版
+        public static void FixStrayAnimations()
+        {
+            for (int i = strayAnimations.Count - 1; i >= 0; i--)
+            {
+                var (anim, ours, original, caster) = strayAnimations[i];
+                if (anim == null || caster == null)
+                {
+                    strayAnimations.RemoveAt(i);
+                    continue;
+                }
+                if (caster.overrideAnimSkillId >= 0) continue;
+                if (anim.runtimeAnimatorController == ours) anim.runtimeAnimatorController = original;
+                strayAnimations.RemoveAt(i);
+            }
+        }
+
+        public static bool HasStrayAnimations => strayAnimations.Count > 0;
+
+        // 游戏自带的动作片段（Resources/Bundles/Animator/ 下），见 ActiveSkill.PlayAnimation
+        public static AnimationClip GameAnimation(string name) => Resources.Load<AnimationClip>("Bundles/Animator/" + name);
+
         public static Component SkillCaster(object native) => ((bfe)native).bgwf;
         // yb.bphc：本机的角色（bfe.mmm 也用它决定是否结算伤害 mmn）
         public static bool SkillIsMine(object native) => ((bfe)native).bgwf != null && ((bfe)native).bgwf.bphc;
@@ -1497,6 +1574,10 @@ namespace DBModKit
     {
         public readonly int DefId;
         public int Instance;
+        // 换动作前的控制器和动画机（游戏的 bfh 也存控制器字段）
+        public RuntimeAnimatorController SavedController;
+        public Animator SavedAnimator;
+        public RuntimeAnimatorController OurController;
 
         public ModSkill(int defId) => DefId = defId;
 
@@ -1504,8 +1585,16 @@ namespace DBModKit
 
         public override void Clear(int clearData)
         {
-            // 先通知 Mod（这时施法者还在），再让基类清字段
+            // 先通知 Mod（这时施法者还在），再还原动作，最后让基类清字段
             ActiveSkills.End(Instance);
+            try
+            {
+                GameRaw.StopSkillAnimation(this);
+            }
+            catch (Exception e)
+            {
+                Safe.Report("施法动作（还原）", e);
+            }
             base.Clear(clearData);
         }
     }
