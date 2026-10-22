@@ -201,7 +201,7 @@ namespace DBModKit
             var result = new List<Role>();
             foreach (var e in GameRaw.Enemies(Native))
             {
-                var role = Wrap(e);
+                var role = Role.Wrap(e);
                 if (role != null && role.IsAlive) result.Add(role);
             }
             return result;

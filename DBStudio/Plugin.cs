@@ -14,7 +14,7 @@ namespace DBStudio
         public const string Guid = "plge0n.dungeonbrawl.studio";
         public const string Name = "DBStudio";
         // 发布时同步修改 CHANGELOG.md；pack.ps1 从这里读取版本号
-        public const string Version = "0.7.0";
+        public const string Version = "0.7.1";
 
         internal static ManualLogSource Log;
 

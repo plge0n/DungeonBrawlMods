@@ -1,5 +1,9 @@
 # DBModKit 更新日志
 
+## 0.10.1
+- 修复：`Player.Enemies()` / `EnemiesWithin()` / `PickEnemy()` 始终返回空（误用了只认玩家的 `Player.Wrap`）。
+  受影响：SmartSkill 的选目标和按敌人判断的条件、SmartMove、DBStudio 的附近敌人和规则条件
+
 ## 0.10.0
 - Steam 联机时同步皮肤（`HeroSkins.SyncInLobby`、`ShowOtherPlayers`、`OtherPlayers`）：每个装了 Mod 的玩家把
   "角色 netId + 英雄 + 工坊皮肤"写进自己的大厅成员数据（`cft.tqj`），别人读到后，自己也订阅了就给对方换上，没订阅显示原版。
