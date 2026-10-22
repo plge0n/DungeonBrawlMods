@@ -1,6 +1,13 @@
-# 地下城竞技场 Mods 0.1
+# 地下城竞技场 Mods 0.1.1
 
-[English](#dungeonbrawl-mods-01)
+[English](#dungeonbrawl-mods-011)
+
+## 0.1.1 的改动
+
+- **SmartMove 0.3.0**：开关躲避的快捷键默认改成 **F8**（原来是 F9，和 DBStudio 打开工作台撞键）。自己改过快捷键的，会沿用你设的键
+- 创意工坊每次更新的说明现在同时有中文和英文
+
+## 0.1（第一个公开版本）
 
 第一个公开版本。所有功能都基于游戏 6.45 版本开发和测试，游戏更新后如果不兼容，会在进游戏时提示，Mod 自动停用，游戏照常可玩。
 
@@ -10,7 +17,7 @@
 |---|---|---|
 | DBModKit | 0.24.0 | 公共依赖库，其他 Mod 都需要它；主菜单"Mod"按钮、Mod 列表、联机握手、创意工坊加载器、内容包 |
 | SmartSkill | 0.7.0 | 自动释放技能时，给每个技能单独设条件（血量、敌人数量、Boss、斩杀……） |
-| SmartMove | 0.2.0 | 自动躲避地面红色预警（F9 开关） |
+| SmartMove | 0.3.0 | 自动躲避地面红色预警（F8 开关） |
 | AutoPickup | 0.1.0 | 战斗中自动捡身边的掉落物，可按类别开关 |
 | DamageMeter | 0.4.0 | 伤害统计：按普攻、技能、召唤物、装备等拆开；Steam 联机时显示队友的伤害 |
 | Hextech | 0.1.1 | 海克斯强化：每局 4 次三选一，强化英雄的专属技能（只在单人时生效） |
@@ -49,16 +56,22 @@
 
 ## 已知问题
 
-- SmartMove 的开关和 DBStudio 都默认用 F9：可以在 DBStudio 的 Mod 页里给其中一个改快捷键。
 - 自定义技能、遗物、装备在玩家信息面板和结算界面里看不到。
 - 没装 ModKit 的玩家收不到联机握手的提示。
 - 界面目前只有中文（Mod 内部已经预留多语言接口）。
 
 ---
 
-# DungeonBrawl Mods 0.1
+# DungeonBrawl Mods 0.1.1
 
-[中文](#地下城竞技场-mods-01)
+[中文](#地下城竞技场-mods-011)
+
+## Changes in 0.1.1
+
+- **SmartMove 0.3.0**: the dodge toggle now defaults to **F8** (it was F9, which also opens DBStudio). If you had changed the key yourself, it's kept
+- Steam Workshop update notes now include English as well as Chinese
+
+## 0.1 (first public release)
 
 First public release. Everything was built and tested against game version 6.45. If a game update breaks compatibility, you'll see a notice on start-up and the mods disable themselves; the game keeps working.
 
@@ -68,7 +81,7 @@ First public release. Everything was built and tested against game version 6.45.
 |---|---|---|
 | DBModKit | 0.24.0 | Shared library required by all other mods; main-menu "Mod" button, mod list, multiplayer handshake, Workshop loader, content packs |
 | SmartSkill | 0.7.0 | Per-skill conditions for auto-cast (HP, enemy count, bosses, execute thresholds, …) |
-| SmartMove | 0.2.0 | Automatically steps out of red ground telegraphs (toggle with F9) |
+| SmartMove | 0.3.0 | Automatically steps out of red ground telegraphs (toggle with F8) |
 | AutoPickup | 0.1.0 | Picks up nearby drops during combat, filterable by category |
 | DamageMeter | 0.4.0 | Damage breakdown by basic attacks, skills, summons, equipment…; shows teammates' damage in Steam lobbies |
 | Hextech | 0.1.1 | Hextech augments: 4 picks per run that upgrade your hero's signature skill (single-player only) |
@@ -107,7 +120,6 @@ These are implemented and compile, but haven't been fully verified in the game y
 
 ## Known issues
 
-- SmartMove's toggle and DBStudio both default to F9: change one of them in DBStudio's Mod page.
 - Custom skills, relics and equipment don't appear in the player info panel or the results screen.
 - Players without ModKit don't see the multiplayer handshake notice.
 - The in-game UI is Chinese only for now (the mods already have a localization API in place).

@@ -30,7 +30,7 @@ $plugins = @(dotnet sln $sln list | Where-Object { $_ -like "*.csproj" } |
     ForEach-Object { [IO.Path]::GetFileNameWithoutExtension($_) } | Sort-Object)
 if ($plugins -notcontains "DBModKit") { throw "解决方案里找不到 DBModKit" }
 
-# 每个插件的版本号是源码里的 Version 常量，更新日志在各自目录的 CHANGELOG.md
+# 每个插件的版本号是源码里的 Version 常量，更新日志在各自目录的 CHANGELOG.md（中文）和 CHANGELOG.en.md（英文）
 $versions = @{}
 foreach ($name in $plugins) {
     $source = Get-ChildItem (Join-Path $root $name) -Filter *.cs |
@@ -40,6 +40,9 @@ foreach ($name in $plugins) {
     if (-not $v) { throw "无法读取 $name 的版本号" }
     if (-not (Select-String -Path (Join-Path $root "$name\CHANGELOG.md") -Pattern "## $([regex]::Escape($v))" -Quiet)) {
         throw "$name/CHANGELOG.md 里还没有 $v 的条目"
+    }
+    if (-not (Select-String -Path (Join-Path $root "$name\CHANGELOG.en.md") -Pattern "## $([regex]::Escape($v))" -Quiet)) {
+        throw "$name/CHANGELOG.en.md 里还没有 $v 的英文条目（创意工坊的更新说明要用）"
     }
     $versions[$name] = $v
 }

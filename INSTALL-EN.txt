@@ -37,9 +37,9 @@ Settings are saved to BepInEx\config\SmartSkill.rules.json and shared by all her
 You can also review and switch every skill's mode outside combat in DBStudio (F9) -> Mod page.
 
 [SmartMove - auto-dodge]
-When you aren't pressing a direction key, it walks you out of red ground telegraphs (enemy skills, traps), with or without auto-battle. F9 toggles it.
+When you aren't pressing a direction key, it walks you out of red ground telegraphs (enemy skills, traps), with or without auto-battle. F8 toggles it.
 Enemy basic attacks always hit once started and can't be dodged; only skills with a red telegraph can.
-Note: DBStudio also uses F9. Change one of them in DBStudio's Mod page.
+You can change the hotkey in DBStudio's Mod page. Up to 0.2.0 it was F9, which clashed with DBStudio; since 0.3.0 it's F8, and a key you set yourself is kept.
 Settings: BepInEx\config\plge0n.dungeonbrawl.smartmove.cfg
 
 [AutoPickup]

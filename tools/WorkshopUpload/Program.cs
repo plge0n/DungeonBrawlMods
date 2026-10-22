@@ -44,12 +44,21 @@ internal static class Program
         if (!titles.ContainsKey("schinese")) problems.Add("Title 里缺少 schinese（主语言）");
         foreach (var t in titles) if (t.Value.Length > 128) problems.Add($"标题（{t.Key}）超过 128 字");
         foreach (var d in descriptions) if (d.Value.Length > 8000) problems.Add($"说明（{d.Key}）超过 8000 字");
+        // Requires：必需物品（Steam 页面上的"必需物品"，订阅时提示一起订阅），写 items.json 里别的条目名，那个条目要先上传过
+        var requires = new List<(string Name, ulong Id)>();
+        foreach (var r in item["Requires"]?.ToObject<List<string>>() ?? new List<string>())
+        {
+            ulong rid = (items[r] as JObject)?.Value<ulong>("Id") ?? 0;
+            if (rid == 0) problems.Add($"必需物品 {r} 不在 items.json 里或还没上传过");
+            else requires.Add((r, rid));
+        }
 
         long size = Directory.Exists(folder) ? Directory.EnumerateFiles(folder, "*", SearchOption.AllDirectories).Sum(f => new FileInfo(f).Length) : 0;
         Console.WriteLine($"条目 {name}  {(id == 0 ? "（新建）" : $"编号 {id}")}  可见性 {visibility}");
         Console.WriteLine($"内容 {folder}（{size / 1024} KB）");
         Console.WriteLine($"预览 {preview}");
         foreach (var t in titles) Console.WriteLine($"标题[{t.Key}] {t.Value}");
+        foreach (var r in requires) Console.WriteLine($"必需物品 {r.Name}（{r.Id}）");
         Console.WriteLine($"更新说明：{note}");
         if (problems.Count > 0)
         {
@@ -107,6 +116,17 @@ internal static class Program
                 if (titles.TryGetValue(lang, out var t)) SteamUGC.SetItemTitle(h, t);
                 if (descriptions.TryGetValue(lang, out var d)) SteamUGC.SetItemDescription(h, d);
                 if (!Submit(h, null, lang)) return 1;
+            }
+            // 必需物品：已经加过的再加一次 Steam 返回 DuplicateRequest，当成成功
+            foreach (var r in requires)
+            {
+                var dep = Wait<AddUGCDependencyResult_t>(SteamUGC.AddDependency(file, new PublishedFileId_t(r.Id)));
+                if (dep.m_eResult != EResult.k_EResultOK && dep.m_eResult != EResult.k_EResultDuplicateRequest)
+                {
+                    Console.WriteLine($"× 设置必需物品 {r.Name} 失败：{dep.m_eResult}");
+                    return 1;
+                }
+                Console.WriteLine($"已设置必需物品 {r.Name}");
             }
             Console.WriteLine($"完成：https://steamcommunity.com/sharedfiles/filedetails/?id={id}");
             return 0;
@@ -178,7 +198,7 @@ internal static class Program
         return $"首次发布 / First release {version}".Trim();
     }
 
-    // 更新说明：条目 dbmod.json 的版本 + 对应插件 CHANGELOG 里这一版的条目
+    // 更新说明：条目 dbmod.json 的版本 + 对应插件 CHANGELOG.md（中文）和 CHANGELOG.en.md（英文）里这一版的条目
     private static string ChangeNote(string root, string folder)
     {
         string manifest = Path.Combine(folder, "dbmod.json");
@@ -186,10 +206,20 @@ internal static class Program
         var m = JObject.Parse(File.ReadAllText(manifest));
         string version = m.Value<string>("Version");
         string plugin = m.Value<string>("Type") == "runtime" ? "DBModKit" : m.Value<string>("Name");
-        string log = Path.Combine(root, plugin, "CHANGELOG.md");
-        if (!File.Exists(log)) return version;
+        var entries = new[] { "CHANGELOG.md", "CHANGELOG.en.md" }
+            .Select(f => ChangelogEntry(Path.Combine(root, plugin, f), version))
+            .Where(e => e.Length > 0);
+        return $"{version}\n{string.Join("\n\n", entries)}".Trim();
+    }
+
+    private static string ChangelogEntry(string log, string version)
+    {
+        if (!File.Exists(log)) return "";
         var lines = File.ReadAllLines(log).SkipWhile(l => l.Trim() != "## " + version).Skip(1).TakeWhile(l => !l.StartsWith("## "));
-        return $"{version}\n{string.Join("\n", lines).Trim()}";
+        // 更新日志是 Markdown，Steam 的更新说明用 BBCode：粗体换成 [b]，去掉代码的反引号
+        string text = string.Join("\n", lines).Trim();
+        text = System.Text.RegularExpressions.Regex.Replace(text, @"\*\*(.+?)\*\*", "[b]$1[/b]");
+        return text.Replace("`", "");
     }
 
     private static string FindRepoRoot()
