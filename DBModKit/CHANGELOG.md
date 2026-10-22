@@ -1,5 +1,14 @@
 # DBModKit 更新日志
 
+## 0.23.1
+- 修复：全新安装的 BepInEx（`HideManagerGameObject` 默认关）下，游戏切场景会销毁 BepInEx 的管理对象，
+  plugins 目录里的所有 Mod 跟着被卸载，Mod 列表显示"已停用：DBModKit 和游戏版本不兼容"。
+  DBModKit 现在启动时就把管理对象设成 HideAndDontSave（等同于打开这个设置），不用玩家改 BepInEx.cfg
+- Mod 列表：被卸载的 Mod 显示"已卸载"，不用 ModKit 的插件不再显示成"不兼容"
+- 修复：没有数值的自定义被动（比如芙莉莲示例的"无限魔力"）发放时空引用。表里空的格子原来写成 null，游戏读表时是空字符串，
+  `bht.msz` 读到 null 就抛异常；作为变体的专属技能在出生时触发，联机时 Mirror 会因此断开连接、全房间掉线。
+  自定义主动技能的 `damageExValue`、自定义遗物的空格子同样改成空字符串
+
 ## 0.23.0
 - dbmod.json 新增 `Dependencies`（GUID 或内容包 Id、最低版本、工坊物品号）：工坊插件条目和内容包按依赖排序加载，缺依赖时不加载，
   在 Mod 设置里提示并给出"订阅"按钮（打开工坊页面）。内容包关掉时依赖它的包跟着停用，互相依赖时报循环

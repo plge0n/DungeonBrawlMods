@@ -12,13 +12,25 @@ namespace DBModKit
         public const string Guid = "plge0n.dungeonbrawl.modkit";
         public const string Name = "DBModKit";
         // 发布时同步修改 CHANGELOG.md；pack.ps1 从这里读取版本号
-        public const string Version = "0.23.0";
+        public const string Version = "0.23.1";
 
         private void Awake()
         {
             Log.Source ??= Logger;
             RunLog.Configure(Config);
+            ProtectManagerObject();
             ModKit.EnsureInitialized();
+        }
+
+        // 游戏切场景时会销毁所有能找到的对象，BepInEx 的管理对象也在其中：挂在上面的插件（plugins 目录里的 Mod）跟着被销毁，
+        // OnDestroy 里 ModContext.Dispose 把 Mod 全部卸载。BepInEx 的 HideManagerGameObject 设置就是把它设成 HideAndDontSave
+        // （游戏找不到它），但默认是关的。这里不管设置是什么都设上；DBModKit 是第一个加载的 Mod，这时还没切过场景
+        private void ProtectManagerObject()
+        {
+            var manager = BepInEx.Bootstrap.Chainloader.ManagerObject;
+            if (manager == null || (manager.hideFlags & HideFlags.HideAndDontSave) == HideFlags.HideAndDontSave) return;
+            manager.hideFlags = HideFlags.HideAndDontSave;
+            Logger.LogInfo("已保护 BepInEx 管理对象（等同于 BepInEx.cfg 里 HideManagerGameObject = true），切场景时 Mod 不会被卸载");
         }
     }
 

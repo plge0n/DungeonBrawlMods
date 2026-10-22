@@ -196,7 +196,9 @@ namespace DBModKit
             {
                 case ModState.Running: return Good("运行中");
                 case ModState.Failed: return Bad("启动出错，没有运行（详情见 BepInEx/LogOutput.log）");
-                default: return Bad("已停用：DBModKit 和游戏版本不兼容");
+                case ModState.Unloaded: return Bad("已卸载（热重载中，或被游戏销毁；重启游戏后恢复）");
+                case ModState.Disabled: return Bad("已停用：DBModKit 和游戏版本不兼容");
+                default: return Dim("不用 DBModKit 的插件");
             }
         }
 

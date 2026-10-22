@@ -17,6 +17,8 @@ namespace DBModKit
         Disabled,
         /// <summary>启动时出错（详情在 BepInEx/LogOutput.log）。</summary>
         Failed,
+        /// <summary>启动过，后来被卸载了（热重载中，或者插件对象被销毁）。</summary>
+        Unloaded,
     }
 
     /// <summary>一个已加载进 BepInEx 的插件。</summary>
@@ -94,7 +96,7 @@ namespace DBModKit
             else if (ModContext.All.TryGetValue(meta.GUID, out var ctx))
             {
                 info.UsesModKit = true;
-                info.State = ctx.Loaded ? ModState.Running : ctx.Failed ? ModState.Failed : ModState.Disabled;
+                info.State = ctx.Loaded ? ModState.Running : ctx.Failed ? ModState.Failed : ctx.Unloaded ? ModState.Unloaded : ModState.Disabled;
             }
             return info;
         }
