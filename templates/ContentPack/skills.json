@@ -51,6 +51,33 @@
       "onKill": [ { "mana": "{1}" } ]
     }
   ],
+  "equipEffects": [
+    {
+      "key": "static_edge",
+      "name": "静电",
+      "description": "命中时 {0}% 几率回复 {1} 点法力",
+      "values": [20, 5],
+      "attachTo": [2],
+      "onHit": [ { "mana": "{1}", "chance": "{0}", "cooldown": 0.5 } ]
+    },
+    {
+      "key": "storm_charge",
+      "name": "风暴充能",
+      "description": "击杀敌人回复 {0} 点生命",
+      "values": [30],
+      "onKill": [ { "heal": "{0}" } ]
+    }
+  ],
+  "equipment": [
+    {
+      "key": "storm_staff",
+      "name": "风暴法杖",
+      "description": "雷霆骑士的旧武器",
+      "icon": "equip_2",
+      "attributes": { "attack": 60, "hp": 200 },
+      "effects": ["storm_charge"]
+    }
+  ],
   "heroVariants": [
     {
       "key": "storm_knight",
