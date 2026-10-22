@@ -38,6 +38,25 @@ namespace DBModKit
         // 技能表被 GameData 改动后丢掉缓存
         internal static void Invalidate(int id) => cache.Remove(id);
 
+        /// <summary>按枚举名（<see cref="Key"/>）查找。</summary>
+        public static SkillInfo Find(string key)
+        {
+            if (!ModKit.Compatible || !GameData.Ready) return null;
+            return GameRaw.SkillIdOf(key) is int id ? Get(id) : null;
+        }
+
+        /// <summary>技能表里的所有技能（游戏表加载后才有）。</summary>
+        public static List<SkillInfo> All()
+        {
+            var list = new List<SkillInfo>();
+            foreach (var e in GameData.Entries(DataTable.Skill))
+            {
+                var info = Find(e.Key);
+                if (info != null) list.Add(info);
+            }
+            return list;
+        }
+
         public static SkillInfo Get(int id)
         {
             if (!ModKit.Compatible) return null;

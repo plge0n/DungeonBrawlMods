@@ -111,6 +111,21 @@ namespace DBModKit
             AddCleanup(() => ModEvents.Quitting -= handler);
         }
 
+        /// <summary>在设置界面（DBStudio 的 Mod 页）里加一块自定义设置，见 <see cref="ModSettings"/>。</summary>
+        public SettingsSection AddSettings(string title, Action<UnityEngine.RectTransform> build, Action refresh = null)
+        {
+            var section = ModSettings.Register(Metadata.GUID, title, build, refresh);
+            AddCleanup(() => ModSettings.Unregister(section));
+            return section;
+        }
+
+        /// <summary>订阅战斗事件（见 <see cref="GameEvents"/>）。</summary>
+        public void OnGameEvent(Action<GameEvent> handler)
+        {
+            GameEvents.Raised += handler;
+            AddCleanup(() => GameEvents.Raised -= handler);
+        }
+
         /// <summary>接管自动释放（见 <see cref="AutoCast"/>）。</summary>
         public void UseAutoCast(AutoCastHandler handler)
         {
