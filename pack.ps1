@@ -62,7 +62,9 @@ if (-not (Test-Path $bepinexZip)) {
 if (Test-Path $dist) { Remove-Item -Recurse -Force $dist }
 New-Item -ItemType Directory -Force $dist | Out-Null
 # 放进发布包根目录的说明
-$docs = "安装说明.txt", "INSTALL-EN.txt", "RELEASE_NOTES.md" | ForEach-Object { Join-Path $root $_ }
+$docs = "安装说明.txt", "INSTALL-EN.txt", "RELEASE_NOTES.md", "LICENSE" | ForEach-Object { Join-Path $root $_ }
+# BepInEx 等第三方组件的许可证（LGPL-2.1 要求随再分发的文件附上），完整包和运行环境条目共用
+$licenses = Join-Path $root "workshop\Runtime\licenses"
 
 # 插件项目里的 lang/（翻译）和 assets/（图片、AssetBundle）放在 dll 旁边，ModContext.Folder 从这里找
 function Copy-ModContent([string]$plugin, [string]$dest) {
@@ -75,7 +77,10 @@ function Copy-ModContent([string]$plugin, [string]$dest) {
 function New-Package([string]$name, [bool]$withBepInEx) {
     $stage = Join-Path $dist "_stage_$name"
     New-Item -ItemType Directory -Force $stage | Out-Null
-    if ($withBepInEx) { Expand-Archive $bepinexZip -DestinationPath $stage }
+    if ($withBepInEx) {
+        Expand-Archive $bepinexZip -DestinationPath $stage
+        Copy-Item -Recurse $licenses (Join-Path $stage "licenses")
+    }
     foreach ($plugin in $plugins) {
         $pluginDir = Join-Path $stage "BepInEx\plugins\$plugin"
         New-Item -ItemType Directory -Force $pluginDir | Out-Null
@@ -135,6 +140,7 @@ $runtime = Join-Path $workshop "Runtime"
 $template = Join-Path $root "workshop\Runtime"
 New-Item -ItemType Directory -Force $runtime | Out-Null
 Copy-Item -Recurse (Join-Path $template "*") $runtime -Exclude "preview.png"
+Copy-Item (Join-Path $root "LICENSE") (Join-Path $runtime "licenses\DBModKit-MIT.txt")
 $runtimeFiles = Join-Path $runtime "files"
 Expand-Archive $bepinexZip -DestinationPath $runtimeFiles
 # BepInEx 自己的更新日志不需要放进游戏目录

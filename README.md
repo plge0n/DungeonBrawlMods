@@ -134,3 +134,7 @@ dotnet $remap update --old ../_DungeonBrawl_backup/6.45 --notes ../_DungeonBrawl
 3. 把新版本号加进 `Compat.TestedVersions`，然后 `dotnet $remap snapshot --version <新版本>` 保存这一版，作为下次的 `--old`。
 
 **不要**把游戏的 dll、反编译出来的源码放进本仓库或发布包。
+
+## 许可证
+本仓库的代码和文档使用 [MIT 许可证](LICENSE)。完整包和运行环境条目里再分发的 BepInEx、Doorstop（LGPL-2.1）和 HarmonyX、MonoMod、Mono.Cecil（MIT）
+按各自的许可证分发，见 [workshop/Runtime/licenses](workshop/Runtime/licenses)。游戏本身的代码和资源不在本仓库里。

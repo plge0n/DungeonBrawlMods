@@ -23,6 +23,7 @@
 - **装了 Mod 不上传排行榜**（游戏作者的规则）。结算成绩不会上传，其他功能不受影响。想冲榜请先卸载。
 - **联机**：装了 Mod 的玩家之间会自动比对"改玩法的内容"（自定义技能、遗物、装备、内容包、DBStudio 玩法包）。
   单人、房间里每个人装的都一样、或房主手动允许时才生效，否则本局只保留外观类功能（皮肤）。辅助类功能（自动释放、躲避、拾取、伤害统计）只影响你自己，不受影响。
+- 许可证：本套 Mod 使用 MIT 许可证（包里的 `LICENSE`）；完整包里的 BepInEx 等第三方组件的许可证在 `licenses/` 文件夹。
 - 遇到问题：在 DBStudio（F9）的调试页点"导出"，把生成的 `BepInEx/DBModKit/report-时间.txt` 发给作者。
 
 ## 未实测的功能
@@ -77,6 +78,7 @@ See `INSTALL-EN.txt` in the package for installation and usage. Per-mod change l
 - **No leaderboard uploads while mods are installed** (the game author's rule). Your run results are not uploaded; nothing else is affected. Uninstall the mods if you want to compete on the leaderboard.
 - **Multiplayer**: players with the mods compare their "gameplay-changing content" (custom skills, relics, equipment, content packs, DBStudio packs).
   It only takes effect when you're alone, when everyone in the room has exactly the same content, or when the host explicitly allows it; otherwise only cosmetics (skins) stay on for that run. Helper mods (auto-cast, dodging, pickup, damage meter) only affect yourself and always work.
+- License: these mods are MIT licensed (`LICENSE` in the package); licenses of BepInEx and other third-party components in the full package are in the `licenses/` folder.
 - Problems? In DBStudio (F9), Debug page → "导出" (Export), and send the generated `BepInEx/DBModKit/report-<time>.txt` to the author.
 
 ## Not yet tested in game
