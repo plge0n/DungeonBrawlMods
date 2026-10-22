@@ -10,6 +10,7 @@ BepInEx 5 插件，目标游戏：地下城竞技场（Steam 4246640，Unity 202
 | [SmartMove](SmartMove) | 自动躲避地面预警（F9 开关） |
 | [AutoPickup](AutoPickup) | 战斗中自动拾取身边能捡的掉落物（和按 C 一样），可按类别过滤 |
 | [DamageMeter](DamageMeter) | 伤害统计：按普攻、技能、召唤物分开统计本波和本局的伤害与 DPS；Steam 联机时显示装了它的队友的伤害 |
+| [Hextech](Hextech) | 海克斯强化：每局 4 次三选一，自动生成强化英雄专属技能的卡（只在单人时生效） |
 
 玩家说明见 [安装说明.txt](安装说明.txt)。
 
@@ -57,11 +58,13 @@ public class Plugin : BaseUnityPlugin
 | `Game` | 本地玩家、是否在战斗、房间状态（`IsSolo` 等）、本地化文本 |
 | `Role` / `Player` | 血量、属性、位置、Boss/精英、距离判定；玩家的蓝量、金币、范围内敌人、按评分选敌人；本地玩家回血/加蓝/加金币 |
 | `SkillInfo` | 技能表数据：名字、标签、指示器、施法范围、冷却 |
+| `HeroSkill` | 英雄的专属技能（主动或被动）和它的表数据 |
+| `SkillTuning` | 只对本地玩家生效的技能调整（伤害、冷却、蓝耗、持续时间、充能），用 `mod.TuneSkill` 设置 |
 | `SkillSlot` / `SkillBar` | 技能栏里的技能：自动释放开关、剩余冷却、消耗、图标 |
 | `AutoCast` | 接管自动释放：决定放不放、打谁；`Resolved` 事件报告结果 |
 | `MoveControl` | 接管没有方向键输入时的走位（等同按住方向键） |
 | `Arena` | 地面预警（形状、剩余时间）、场地边界 |
-| `Combat` | 命中事件：伤害、是否打死、来源技能、是不是普攻 |
+| `Combat` | 命中事件：伤害、是否打死、来源技能、是不是普攻；本地玩家放技能（`Cast`） |
 | `ModContext` | Mod 运行上下文：`OnUpdate`、`OnBattleStarted`、`UseAutoCast`、`LoadJson` 等，卸载时自动清理 |
 | `ModEvents` | 每帧、进入/离开战斗、退出游戏 |
 | `NativeUi` | 用游戏素材拼的面板、开关、滑条、下拉框、按钮，以及大窗口、页签、滚动列表、输入框 |

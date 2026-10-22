@@ -15,6 +15,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AutoPickup", "AutoPickup\Au
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DamageMeter", "DamageMeter\DamageMeter.csproj", "{126306B4-2E5A-4AE3-98C7-AEE5AE786A89}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Hextech", "Hextech\Hextech.csproj", "{1814EF0B-0A99-436F-94A2-D1B6191DF976}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -48,5 +50,9 @@ Global
 		{126306B4-2E5A-4AE3-98C7-AEE5AE786A89}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{126306B4-2E5A-4AE3-98C7-AEE5AE786A89}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{126306B4-2E5A-4AE3-98C7-AEE5AE786A89}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1814EF0B-0A99-436F-94A2-D1B6191DF976}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1814EF0B-0A99-436F-94A2-D1B6191DF976}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1814EF0B-0A99-436F-94A2-D1B6191DF976}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1814EF0B-0A99-436F-94A2-D1B6191DF976}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

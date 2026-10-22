@@ -168,6 +168,58 @@ namespace DBModKit
             AddCleanup(() => Combat.Hit -= handler);
         }
 
+        /// <summary>订阅本地玩家放技能（见 <see cref="Combat.Cast"/>）。</summary>
+        public void OnSkillCast(Action<SkillCast> handler)
+        {
+            Combat.Cast += handler;
+            AddCleanup(() => Combat.Cast -= handler);
+        }
+
+        /// <summary>重试波次的快照、还原（见 <see cref="ModEvents.CheckpointSaved"/>）。</summary>
+        public void OnCheckpointSaved(Action handler)
+        {
+            ModEvents.CheckpointSaved += handler;
+            AddCleanup(() => ModEvents.CheckpointSaved -= handler);
+        }
+
+        public void OnCheckpointRestored(Action handler)
+        {
+            ModEvents.CheckpointRestored += handler;
+            AddCleanup(() => ModEvents.CheckpointRestored -= handler);
+        }
+
+        private bool tuned;
+
+        /// <summary>
+        /// 调整本地玩家某个主动技能（见 <see cref="SkillTuning"/>），传 <see cref="SkillTune.None"/> 撤销。
+        /// 同一个 Mod 对同一个技能再次设置会覆盖上一次；卸载时自动撤销。
+        /// </summary>
+        public void TuneSkill(int skillId, SkillTune tune)
+        {
+            if (!tuned)
+            {
+                tuned = true;
+                AddCleanup(() => SkillTuning.ClearOwner(Metadata.Name));
+            }
+            SkillTuning.Set(Metadata.Name, skillId, tune);
+        }
+
+        private bool tooltips;
+
+        /// <summary>在本地玩家某个主动技能的悬停提示末尾追加文字（见 <see cref="SkillTooltips"/>），传 null 去掉；卸载时自动去掉。</summary>
+        public void SetSkillTooltip(int skillId, string text)
+        {
+            if (!tooltips)
+            {
+                tooltips = true;
+                AddCleanup(() => SkillTooltips.ClearOwner(Metadata.Name));
+            }
+            SkillTooltips.Set(Metadata.Name, skillId, text);
+        }
+
+        /// <summary>撤销这个 Mod 的所有技能调整。</summary>
+        public void ClearSkillTunes() => SkillTuning.ClearOwner(Metadata.Name);
+
         /// <summary>打开 BepInEx/config 下的 JSON 配置；卸载时自动保存并释放。</summary>
         public JsonConfig<T> LoadJson<T>(string fileName) where T : new()
         {
