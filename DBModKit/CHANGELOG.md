@@ -12,6 +12,7 @@
 - `NativeUi.ListItemBackground`：列表项用游戏方框贴图做背景时不再被撑到至少 220 高
 - 修复：定宽的 `NativeUi.Column` 仍会和旁边的栏平分剩余宽度；大窗口的标题和底部状态栏压在面板边框上；
   `GameData.Entries(Hero)` 的英雄名显示成编号
+
 ## 0.10.1
 - 修复：`Player.Enemies()` / `EnemiesWithin()` / `PickEnemy()` 始终返回空（误用了只认玩家的 `Player.Wrap`）。
   受影响：SmartSkill 的选目标和按敌人判断的条件、SmartMove、DBStudio 的附近敌人和规则条件
