@@ -318,8 +318,12 @@ namespace DBModKit
         // 调用 ModKit 的那个 Mod：沿调用栈找第一个不属于 ModKit（也不属于 Unity、BepInEx）的程序集
         private static readonly Dictionary<Assembly, string> assemblyNames = new Dictionary<Assembly, string>();
 
+        // 内容包的效果在 DBModKit 里执行，调用栈上找不到 Mod：执行时由 ContentEffects 设成内容包的名字
+        [ThreadStatic] internal static string CallerOverride;
+
         internal static string CallerMod()
         {
+            if (CallerOverride != null) return CallerOverride;
             var self = typeof(RunLog).Assembly;
             var frames = new StackTrace(2, false).GetFrames();
             if (frames == null) return "?";

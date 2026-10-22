@@ -236,8 +236,8 @@ namespace DBModKit
                 if (!File.Exists(full)) parsed.Errors.Add($"找不到 {file}");
                 else
                 {
-                    ContentReader.ReadFile(full, file, LoadIcon, parsed);
-                    fingerprint = Fnv(fingerprint, File.ReadAllText(full));
+                    ContentReader.ReadFile(full, file, LoadIcon, parsed, pack.DisplayName);
+                    fingerprint = Fnv(fingerprint, Normalized(File.ReadAllText(full)));
                 }
             }
 
@@ -318,6 +318,19 @@ namespace DBModKit
             pack.Loaded = true;
             RunLog.WriteCore(ModKitPlugin.Name, "内容包", RunLogLevel.Info, "已加载", new (string, object)[]
                 { ("包", pack.DisplayName), ("Id", pack.Guid), ("版本", m.Version), ("来源", pack.Source), ("内容", pack.Summary), ("错误", parsed.Errors.Count) }, mirror: false);
+        }
+
+        // 按解析后的内容算：同一份 JSON 换了换行符（Windows / git）、缩进也算一样；解析不了时按原文
+        private static string Normalized(string json)
+        {
+            try
+            {
+                return Newtonsoft.Json.Linq.JToken.Parse(json).ToString(Formatting.None);
+            }
+            catch (JsonException)
+            {
+                return json;
+            }
         }
 
         private static uint Fnv(uint hash, string text)

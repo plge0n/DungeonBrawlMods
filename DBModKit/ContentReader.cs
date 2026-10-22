@@ -23,7 +23,7 @@ namespace DBModKit
     internal static class ContentReader
     {
         // 图标：值是包里的图片（带扩展名）时由 loadIcon 读成图标名，否则当游戏图标名
-        public static void ReadFile(string path, string label, Func<string, string, string> loadIcon, ParsedContent output)
+        public static void ReadFile(string path, string label, Func<string, string, string> loadIcon, ParsedContent output, string source = null)
         {
             JObject root;
             try
@@ -35,7 +35,7 @@ namespace DBModKit
                 output.Errors.Add($"{label}：读不了（{e.Message}）");
                 return;
             }
-            var top = new Obj(root, label, output.Errors);
+            var top = new Obj(root, label, output.Errors) { Source = source };
             ReadList(top, "activeSkills", (o, where) => ReadActive(o, loadIcon), output.Actives.Add);
             ReadList(top, "passiveSkills", (o, where) => ReadPassive(o, loadIcon), output.Passives.Add);
             ReadList(top, "relics", (o, where) => ReadRelic(o, loadIcon), output.Relics.Add);
@@ -66,7 +66,7 @@ namespace DBModKit
                     continue;
                 }
                 int before = parent.Errors.Count;
-                var o = new Obj(jo, where, parent.Errors);
+                var o = new Obj(jo, where, parent.Errors) { Source = parent.Source };
                 try
                 {
                     var item = read(o, where);
@@ -302,7 +302,7 @@ namespace DBModKit
                     parent.Errors.Add($"{where}：效果应该是 {{ \"heal\": 100 }} 这样的对象");
                     continue;
                 }
-                var o = new Obj(jo, where, parent.Errors);
+                var o = new Obj(jo, where, parent.Errors) { Source = parent.Source };
                 try
                 {
                     var a = Action(o, inSkill);
@@ -335,7 +335,7 @@ namespace DBModKit
                 o.Error(k, $"{kind} 不认识这个字段（可以用：{string.Join("、", Kinds[kind].Concat(Conditions))}）");
             }
 
-            var a = new EffectAction { Where = o.Where };
+            var a = new EffectAction { Where = o.Where, Source = o.Source };
             if (o.Has("chance")) a.Chance = o.Expr("chance");
             if (o.Has("hpBelow")) a.HpBelow = o.Expr("hpBelow");
             if (o.Has("isBoss")) a.IsBoss = o.Bool("isBoss", false);
@@ -494,6 +494,7 @@ namespace DBModKit
             private readonly HashSet<string> used = new HashSet<string>();
             public readonly string Where;
             public readonly List<string> Errors;
+            public string Source;
 
             public Obj(JObject o, string where, List<string> errors)
             {
@@ -514,7 +515,7 @@ namespace DBModKit
 
             public Obj Child(JToken token, string key)
             {
-                if (token is JObject jo) return new Obj(jo, $"{Where}.{key}", Errors);
+                if (token is JObject jo) return new Obj(jo, $"{Where}.{key}", Errors) { Source = Source };
                 Error(key, "应该是 { … }");
                 throw new ContentError();
             }

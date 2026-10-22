@@ -187,7 +187,7 @@ namespace DBModKit
         public void Heal(double amount)
         {
             RequireLocal();
-            if (amount <= 0) return;
+            if (amount <= 0 || Hp >= MaxHp) return;
             long before = Hp;
             GameRaw.Heal(Native, amount);
             // 单人（主机）时立刻生效；在别人的房间里要等服务器回传，"之后"可能还是旧值
@@ -199,6 +199,7 @@ namespace DBModKit
         {
             RequireLocal();
             int before = Mana;
+            if (amount == 0 || amount > 0 && before >= MaxMana || amount < 0 && before <= 0) return;
             GameRaw.AddMana(Native, amount);
             RunLog.Info(RunLog.CallerMod(), "玩家", amount >= 0 ? "加蓝" : "扣蓝", ("请求", amount), ("蓝", $"{before}→{Mana}/{MaxMana}"));
         }
