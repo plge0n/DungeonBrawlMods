@@ -34,6 +34,10 @@ namespace SmartSkill
         public bool UseHpBelow;
         public float HpBelowPercent = 50f;
 
+        // 献祭这类扣血的技能：血量充足才放
+        public bool UseHpAbove;
+        public float HpAbovePercent = 60f;
+
         public bool UseManaAfter;
         public float ManaAfterPercent = 30f;
 
@@ -41,6 +45,25 @@ namespace SmartSkill
         public int MinEnemies = 2;
 
         public bool UseBossOrElite;
+
+        // PayToWin 这类对 Boss 无效的技能
+        public bool UseNoBoss;
+
+        // 范围内有血量 ≤ X% 的敌人，并优先打它们
+        public bool UseTargetHpBelow;
+        public float TargetHpBelowPercent = 30f;
+
+        // 有斩杀奖励的技能：范围内能一击打死的敌人 ≥ MinKillable，并优先打它们。
+        // 预计伤害 × KillMarginPercent% ≥ 血量 + 护盾 才算能打死（留余量应对减伤和估算误差）
+        public bool UseKillable;
+        public int MinKillable = 1;
+        public float KillMarginPercent = 90f;
+
+        // 自己上一次放的效果（增益、变身、持续伤害）结束后再放
+        public bool UseEffectEnded;
+
+        // 充能技能至少留几层（留给手动放）
+        public int KeepCharges;
 
         // 0 表示用技能自身的施法范围
         public float Radius;
