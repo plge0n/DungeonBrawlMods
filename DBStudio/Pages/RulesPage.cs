@@ -119,9 +119,9 @@ namespace DBStudio.Pages
             h.childAlignment = TextAnchor.MiddleLeft;
             h.childControlWidth = h.childControlHeight = true;
             h.childForceExpandWidth = false;
+            h.childForceExpandHeight = false;
             var bg = go.GetComponent<Image>();
-            bg.sprite = NativeUi.BoxSprite;
-            bg.type = Image.Type.Sliced;
+            bg = NativeUi.ListItemBackground(bg);
             bg.color = rule == selected ? NativeUi.BoxColor : new Color(0f, 0f, 0f, 0f);
             var btn = go.GetComponent<Button>();
             btn.targetGraphic = bg;

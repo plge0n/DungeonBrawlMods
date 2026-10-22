@@ -218,7 +218,7 @@ namespace DBStudio
             var p = Game.LocalPlayer;
             if (p == null || !Packs.IsActive) return;
             picked.Add(a.Id);
-            foreach (var effect in a.Effects) RuleEngine.Run(effect, p);
+            foreach (var effect in a.Effects) RuleEngine.Run(effect, p, "强化：" + a.Name);
             EventLog.Add($"选择了强化「{a.Name}」");
             ScreenNotice.Show($"获得强化「{a.Name}」", 3f);
         }

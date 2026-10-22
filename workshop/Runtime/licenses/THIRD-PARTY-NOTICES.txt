@@ -1,0 +1,18 @@
+本条目包含以下第三方软件（未修改），按各自许可证再分发：
+This item redistributes the following third-party software, unmodified, under their licenses:
+
+- BepInEx 5.4.23.5 — LGPL-2.1 — https://github.com/BepInEx/BepInEx
+  (BepInEx/core/BepInEx*.dll, HarmonyXInterop.dll, 0Harmony20.dll)
+- UnityDoorstop — LGPL-2.1 — https://github.com/NeighTools/UnityDoorstop
+  (winhttp.dll, doorstop_config.ini, .doorstop_version)
+- HarmonyX / Harmony — MIT — https://github.com/BepInEx/HarmonyX  (BepInEx/core/0Harmony.dll)
+- MonoMod — MIT — https://github.com/MonoMod/MonoMod  (BepInEx/core/MonoMod.*.dll)
+- Mono.Cecil — MIT — https://github.com/jbevain/cecil  (BepInEx/core/Mono.Cecil*.dll)
+
+LGPL-2.1 全文见 LGPL-2.1.txt。以上组件的源代码可从对应链接获取，文件与官方发布包
+BepInEx_win_x64_5.4.23.5.zip（https://github.com/BepInEx/BepInEx/releases/tag/v5.4.23.5）一致。
+The full LGPL-2.1 text is in LGPL-2.1.txt. Source code is available at the links above; the files are identical to
+the official release BepInEx_win_x64_5.4.23.5.zip.
+
+DBModKit（BepInEx/plugins/DBModKit）由本条目作者编写。
+DBModKit (BepInEx/plugins/DBModKit) is written by the author of this item.

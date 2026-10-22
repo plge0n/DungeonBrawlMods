@@ -136,28 +136,41 @@ namespace DBModKit
         public void Heal(double amount)
         {
             RequireLocal();
-            if (amount > 0) GameRaw.Heal(Native, amount);
+            if (amount <= 0) return;
+            long before = Hp;
+            GameRaw.Heal(Native, amount);
+            // 单人（主机）时立刻生效；在别人的房间里要等服务器回传，"之后"可能还是旧值
+            RunLog.Info(RunLog.CallerMod(), "玩家", "回血", ("请求", Math.Round(amount)), ("生命", $"{before}→{Hp}/{MaxHp}"));
         }
 
         /// <summary>加蓝（负数为扣蓝），结果限制在 0~上限。</summary>
         public void AddMana(int amount)
         {
             RequireLocal();
+            int before = Mana;
             GameRaw.AddMana(Native, amount);
+            RunLog.Info(RunLog.CallerMod(), "玩家", amount >= 0 ? "加蓝" : "扣蓝", ("请求", amount), ("蓝", $"{before}→{Mana}/{MaxMana}"));
         }
 
         /// <summary>加金币（不吃金币加成和关卡倍率），返回实际到账数量。</summary>
         public int AddGold(int amount)
         {
             RequireLocal();
-            return amount > 0 ? GameRaw.AddGold(Native, amount) : 0;
+            if (amount <= 0) return 0;
+            int before = Gold;
+            int got = GameRaw.AddGold(Native, amount);
+            RunLog.Info(RunLog.CallerMod(), "玩家", "加金币", ("请求", amount), ("到账", got), ("金币", $"{before}→{Gold}"));
+            return got;
         }
 
         /// <summary>获得一个遗物（ItemType 编号，见 RelicInfo）。超过本局获取上限等情况下返回 false。</summary>
         public bool GiveRelic(int relicId)
         {
             RequireLocal();
-            return GameRaw.GiveRelic(Native, relicId);
+            bool ok = GameRaw.GiveRelic(Native, relicId);
+            RunLog.Write(RunLog.CallerMod(), "玩家", ok ? RunLogLevel.Info : RunLogLevel.Warning, ok ? "获得遗物" : "遗物没有发出（可能超过本局获取上限）",
+                ("遗物", RelicInfo.Get(relicId)?.Name ?? relicId.ToString()), ("编号", relicId));
+            return ok;
         }
 
         /// <summary>
@@ -167,7 +180,10 @@ namespace DBModKit
         public void AddStats(int strength, int agility, int stamina, long attack)
         {
             RequireLocal();
+            string before = $"{Strength}/{Agility}/{Stamina} 攻击 {Attack}";
             GameRaw.AddStats(Native, strength, agility, stamina, attack);
+            RunLog.Info(RunLog.CallerMod(), "玩家", "改属性", ("力/敏/体/攻", $"{strength:+0;-0;0}/{agility:+0;-0;0}/{stamina:+0;-0;0}/{attack:+0;-0;0}"),
+                ("之前", before), ("之后", $"{Strength}/{Agility}/{Stamina} 攻击 {Attack}"));
         }
 
         private void RequireLocal()
@@ -201,7 +217,7 @@ namespace DBModKit
             var result = new List<Role>();
             foreach (var e in GameRaw.Enemies(Native))
             {
-                var role = Wrap(e);
+                var role = Role.Wrap(e);
                 if (role != null && role.IsAlive) result.Add(role);
             }
             return result;

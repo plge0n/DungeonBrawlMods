@@ -18,6 +18,8 @@ namespace DBModKit
 
         // cj.boyi.dff：找不到 key 时返回默认值，不打警告
         public static string Localize(string key, string fallback) => cj.boyi.dff(key, fallback);
+        // cl.boyu：游戏设置里的语言（LanguageType）。不在兼容检查清单里：读不到时 Localization 退回中文，不必停用整个 ModKit
+        public static int LanguageIndex() => (int)cj.boyi.boyu;
 
         // ---- 角色 yb ----
         public static long Hp(Component r) => ((yb)r).hp;
@@ -341,7 +343,8 @@ namespace DBModKit
                         string id = Cell(row, "id");
                         if (id == null || !cj.boyl.bcru.ContainsKey(id) || !int.TryParse(id, out int n)) continue;
                         string head = ((HeroType)n).ToString().Split('_').Last();
-                        list.Add(new DataEntry(table, id, cj.boyi.dff(Cell(row, "name") ?? id, id), IconPath("HeadIcon/Player_", head)));
+                        // 英雄名的本地化 key 是 "hero_" + 编号（见 ez.dvm；不直接调 dvm，它会返回工坊模型的名字）
+                        list.Add(new DataEntry(table, id, cj.boyi.dff("hero_" + id, id), IconPath("HeadIcon/Player_", head)));
                     }
                     break;
                 case DataTable.Enemy:
@@ -350,7 +353,8 @@ namespace DBModKit
                     {
                         string id = Cell(row, "id");
                         if (id == null) continue;
-                        list.Add(new DataEntry(table, id, cj.boyi.dff(Cell(row, "name") ?? id, id), IconPath("HeadIcon/Enemy_", Cell(row, "model"))));
+                        // 怪物名的本地化 key 就是 id（EnemyType 名字，见 EnemyDragonBoss 的 Boss 提示）；没有翻译的（多半是没用到的怪）显示 id
+                        list.Add(new DataEntry(table, id, cj.boyi.dff(id, id), IconPath("HeadIcon/Enemy_", Cell(row, "model"))));
                     }
                     break;
             }

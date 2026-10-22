@@ -1,76 +1,53 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using DBModKit;
 
 namespace DBStudio
 {
-    // 调试页的事件日志：进出战斗、有人进出房间、自动释放的决策变化、测试操作
+    // 调试页的事件日志：显示 ModKit 运行记录（所有 Mod 共用，同时写进 BepInEx/DBModKit/trace.log）。
+    // 进出战斗、房间人数、改玩家数值、自动释放决策这些由 ModKit 自己记录；工作台的操作用 Add 记
     internal static class EventLog
     {
-        private const int Max = 200;
+        private const int MaxShown = 300;
 
-        private static readonly List<string> lines = new List<string>();
-        // 自动释放每帧都会询问，只在同一技能的结果变化时记一条
-        private static readonly Dictionary<string, string> lastAutoCast = new Dictionary<string, string>();
-        private static bool lastSolo = true;
-        private static int lastPlayers = 1;
+        private static ModRunLog log;
+        // "清空"只清这一页的显示，运行记录和 trace.log 保留（导出诊断时还用得到）
+        private static DateTime clearedAt = DateTime.MinValue;
+        private static int clearCount;
 
-        public static IReadOnlyList<string> Lines => lines;
+        // 显示 Debug 级别（每个战斗事件、自动释放的每次决策变化）
+        public static bool Verbose;
 
-        // 每次变化加 1，页面据此判断要不要重绘
-        public static int Version { get; private set; }
+        // 运行记录变化、清空或切换详细时都会变，页面据此判断要不要重绘
+        public static int Version => RunLog.Version * 4 + clearCount * 2 + (Verbose ? 1 : 0);
 
-        public static void Add(string message)
-        {
-            lines.Add($"<color=#8a8a8a>{DateTime.Now:HH:mm:ss}</color>  {message}");
-            if (lines.Count > Max) lines.RemoveRange(0, lines.Count - Max);
-            Version++;
-        }
+        public static void Attach(ModContext mod) => log = mod.RunLog;
+
+        public static void Add(string message) => log?.Info("工作台", message);
 
         public static void Clear()
         {
-            lines.Clear();
-            Version++;
+            clearedAt = DateTime.Now;
+            clearCount++;
         }
 
-        public static void Attach(ModContext mod)
+        public static List<string> Lines()
         {
-            lastSolo = Game.IsSolo;
-            lastPlayers = Game.PlayerCount;
-            mod.OnBattleStarted(() =>
-            {
-                lastAutoCast.Clear();
-                Add("进入战斗");
-            });
-            mod.OnBattleEnded(() => Add("离开战斗"));
-            mod.OnAutoCastResolved(OnAutoCast);
-            mod.OnUpdate(WatchRoom);
+            var min = Verbose ? RunLogLevel.Debug : RunLogLevel.Info;
+            return RunLog.Recent()
+                .Where(e => e.Level >= min && e.Time > clearedAt)
+                .Reverse().Take(MaxShown).Reverse()
+                .Select(Format).ToList();
         }
 
-        private static void OnAutoCast(AutoCastResult r)
+        private static string Format(RunLogEntry e)
         {
-            var info = r.Slot.Info;
-            if (info == null) return;
-            string result = r.Casted ? "已释放" : r.Verdict.Action == AutoCastAction.Skip ? "不放" : "没放出";
-            string reason = string.IsNullOrEmpty(r.Verdict.Reason) ? "" : $"（{r.Verdict.Reason}）";
-            string text = result + reason;
-            // 释放成功每次都记；没放的只在原因变化时记
-            if (!r.Casted && lastAutoCast.TryGetValue(info.Key, out var last) && last == text) return;
-            lastAutoCast[info.Key] = text;
-            Add($"自动释放 {info.Name}：{text}");
-        }
-
-        private static void WatchRoom()
-        {
-            bool solo = Game.IsSolo;
-            int players = Game.PlayerCount;
-            if (solo == lastSolo && players == lastPlayers) return;
-            if (players > 0 && lastPlayers > 0 && players != lastPlayers)
-                Add(players > lastPlayers ? $"有玩家加入，房间现在 {players} 人" : $"有玩家离开，房间现在 {players} 人");
-            else if (solo != lastSolo)
-                Add(solo ? "回到单人" : "进入联机房间");
-            lastSolo = solo;
-            lastPlayers = players;
+            string color = e.Level == RunLogLevel.Error ? "#e07a5f" : e.Level == RunLogLevel.Warning ? "#d6b67d" : e.Level == RunLogLevel.Debug ? "#7f8c99" : null;
+            string where = e.Source == Plugin.Name ? e.Category : string.IsNullOrEmpty(e.Category) ? e.Source : $"{e.Source}/{e.Category}";
+            string text = e.Message + (e.Data.Count > 0 ? $"  <color=#a6a6a6>{e.DataText()}</color>" : "");
+            if (color != null) text = $"<color={color}>{text}</color>";
+            return $"<color=#8a8a8a>{e.Time:HH:mm:ss}</color>  " + (string.IsNullOrEmpty(where) ? "" : $"<color=#9aa7b5>[{where}]</color> ") + text;
         }
     }
 }

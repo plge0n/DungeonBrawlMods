@@ -78,8 +78,7 @@ namespace DBStudio.Pages
                 go.transform.SetParent(listContent, false);
                 go.GetComponent<LayoutElement>().minHeight = 58f;
                 var bg = go.GetComponent<Image>();
-                bg.sprite = NativeUi.BoxSprite;
-                bg.type = Image.Type.Sliced;
+                bg = NativeUi.ListItemBackground(bg);
                 var btn = go.GetComponent<Button>();
                 btn.targetGraphic = bg;
                 btn.transition = Selectable.Transition.None;

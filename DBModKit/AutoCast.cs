@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 
 namespace DBModKit
 {
@@ -86,10 +87,24 @@ namespace DBModKit
             Handler = null;
         }
 
+        // 每个技能上一次的结果：每帧都会询问，只在结果变化或真正放出时记录
+        private static readonly Dictionary<string, string> lastResult = new Dictionary<string, string>();
+
         internal static void RaiseResolved(AutoCastResult result)
         {
+            Safe.Run("AutoCast 运行记录", () => LogResult(result));
             var evt = Resolved;
             if (evt != null) Safe.Run("AutoCast.Resolved", () => evt(result));
+        }
+
+        private static void LogResult(AutoCastResult r)
+        {
+            var info = r.Slot?.Info;
+            if (info == null) return;
+            string text = r.Casted ? "已释放" : r.Verdict.Action == AutoCastAction.Skip ? "不放" : "没放出";
+            if (!r.Casted && lastResult.TryGetValue(info.Key, out var last) && last == text + r.Verdict.Reason) return;
+            lastResult[info.Key] = text + r.Verdict.Reason;
+            RunLog.Debug(ModKitPlugin.Name, "自动释放", $"{info.Name}：{text}", ("原因", r.Verdict.Reason), ("决定", r.Verdict.Action.ToString()), ("处理器", owner));
         }
     }
 }
