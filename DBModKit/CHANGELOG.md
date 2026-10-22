@@ -14,6 +14,9 @@
   `FormulaDamage`，以及走游戏伤害结算的 `DamageArea` / `Damage`、对象池特效 `Effect`。`ActiveSkills.Give` 直接发放
 - 联机：技能在每个装了这个 Mod 的客户端上都会创建（能看到效果），伤害只在施法者那边结算；没装的人只看到施法动作，不会出错。
   编号 2000000 起
+- 施法动作：`ActiveSkill.PlayAnimation(片段 / 游戏动作名, 速度, 时长)` 在技能持续期间把施法者的动作换掉（游戏旋风斩、鸡舞的同款做法：
+  换掉待机片段并锁住动画，结束时还原），每个装了 Mod 的客户端都能看到；`StopAnimation` 提前换回。片段可以来自 AssetBundle（Humanoid），
+  也可以用游戏自带的（`Frank_RPG_2Hand_Skill01_WhirlWind` 等）。和别的换动作技能重叠时会先结束对方，游戏的旋风斩叠在后面时结束后会自动还原
 - 新增 Mod 资源（`ModAssets`）：`mod.LoadIcon(键, "图片.png")` / `mod.RegisterIcon(键, Sprite)` 返回图标名，填进技能的 `Icon`，
   技能栏、三选一、图鉴、构筑面板都会显示；`mod.RegisterEffect(键, 模板)` 返回特效路径，传给 `ActiveSkill.Effect`，走游戏的对象池；
   `mod.LoadBundle("xxx.bundle")` 打开 AssetBundle（`Sprite` / `Prefab` / `Clip` / `Load<T>`），卸载时自动关闭。`mod.Folder` 是插件所在文件夹
