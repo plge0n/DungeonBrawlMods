@@ -18,8 +18,13 @@ namespace DBModKit
         public const int CurrentFormat = 1;
 
         public int Format = CurrentFormat;
-        /// <summary>"plugin"（BepInEx 插件，由加载器加载）或 "runtime"（BepInEx + DBModKit 安装包，只检查版本）。</summary>
+        /// <summary>
+        /// "plugin"（BepInEx 插件，由加载器加载）、"runtime"（BepInEx + DBModKit 安装包，只检查版本）
+        /// 或 "content"（内容包：JSON + 图片，不含代码，见 <see cref="ContentPacks"/>）。
+        /// </summary>
         public string Type = "plugin";
+        /// <summary>内容包的标识（只用字母、数字和 . _ - +）。技能编号由它和技能的 key 算出，联机时按它比对；不写时用文件夹名。</summary>
+        public string Id = "";
         public string Name = "";
         public string Author = "";
         public string Version = "";
@@ -28,6 +33,10 @@ namespace DBModKit
         public string MinModKit = "";
         /// <summary>要加载的 dll（相对条目根目录）；为空时加载根目录下所有 dll。</summary>
         public List<string> Assemblies = new List<string>();
+        /// <summary>内容包的 JSON 文件（相对条目根目录）。</summary>
+        public List<string> Content = new List<string>();
+        /// <summary>内容包的翻译文件夹（相对条目根目录，格式见 <see cref="ModText"/>）。</summary>
+        public string Lang = "lang";
     }
 
     public enum WorkshopStatus
@@ -198,7 +207,7 @@ namespace DBModKit
             }
             if (item.Manifest.Type != "plugin")
             {
-                item.Status = WorkshopStatus.Ignored; // 以后的玩法包等由各自的 Mod 读取
+                item.Status = WorkshopStatus.Ignored; // 内容包由 ContentPacks 读取，其他类型由各自的 Mod 读取
                 return item;
             }
             if (item.Manifest.Format > WorkshopManifest.CurrentFormat)

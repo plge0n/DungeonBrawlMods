@@ -1,0 +1,8 @@
+{
+  "skill.nova.name": "Thunderstorm",
+  "skill.nova.desc": "Deals {0} damage to enemies in the area, then again every 0.5s for 2s",
+  "passive.blade.name": "Bloodthirsty Blade",
+  "passive.blade.desc": "Strength +{0}; heal {1}% of damage dealt on hit",
+  "hero.storm_knight.name": "Storm Knight",
+  "hero.storm_knight.desc": "More strength; signature skill becomes Thunderstorm"
+}

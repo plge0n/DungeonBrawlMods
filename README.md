@@ -81,6 +81,7 @@ public class Plugin : BaseUnityPlugin
 | `HeroSkins` | 给每个英雄选一套工坊或本地的模型（或原版），可以只换本地玩家；Steam 联机时通过大厅成员数据同步 |
 | `LobbySync` | 通过 Steam 大厅成员数据和其他装了 Mod 的玩家交换少量文字数据（局域网不可用） |
 | `Multiplayer` | 联机握手：公布各自改玩法的内容，`Policy` = 单人 / 每个人装的一样 / 房主允许 / 停用，改玩法的功能看 `GameplayAllowed`；自定义技能和变体自动计入，其他 Mod 用 `mod.DeclareGameplay(指纹)` 声明 |
+| `ContentPacks` | 内容包：JSON + 图片做的技能、被动、变体英雄，不写代码（写法见 [docs/内容包.md](docs/内容包.md)，示例 `templates/ContentPack/`） |
 | `JsonConfig<T>` | `BepInEx/config` 下的 JSON 配置，自动延迟保存 |
 | `ScreenNotice` | 屏幕顶部临时提示 |
 | `ModText` / `Localization` | 多语言文本：代码里写中文原文，翻译放在插件旁的 `lang/<语言>.json`，跟随游戏语言（见下） |

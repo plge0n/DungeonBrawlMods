@@ -1,5 +1,18 @@
 # DBModKit 更新日志
 
+## 0.21.0
+- 新增内容包（`ContentPacks`）：不写代码的 Mod。文件夹里放 `dbmod.json`（`"Type": "content"`）、JSON、图片和翻译，
+  ModKit 从创意工坊、`BepInEx/workshop-dev/`、`BepInEx/content/` 读取，注册主动技能、被动和变体英雄，不用逐个确认。
+  写法见 `docs/内容包.md`，示例在 `templates/ContentPack/`
+- 内置效果库：伤害（范围 / 锁定目标）、治疗、回蓝、金币（只在单人时给）、加属性 / 攻速 / 护甲（可限时，否则跟着技能走）、特效、换动作、屏幕提示；
+  触发器 onCast / onTick / onEnd（主动），onAdded / onRemoved / onHit / onKill / onCrit / onHurt / onWaveStart / onCast / onTick（被动）；
+  条件 chance / hpBelow / isBoss / cooldown；数值可以写表达式（`{n}`、damage、maxHp、str 等和四则运算）
+- JSON 写错时只跳过写错的条目，错误带文件和位置，显示在 Mod 设置 → DBModKit → 内容包，也写进运行记录；不认识的字段也算错
+- 内容包可以在 Mod 设置里关掉、重新启用（重新读文件）；战斗中不能切换
+- 联机：内容包里的技能和改了属性的变体算改玩法的内容，按包的 Id、版本和 JSON 内容的哈希参与联机握手
+- `dbmod.json` 新增 `Id`、`Content`、`Lang` 字段；`pack.ps1 -Content <文件夹>` 和仓库 `content/` 下的内容包会做成工坊条目
+- 联机握手：签名里不合格的字符换成下划线，不再整条丢掉（丢掉会把装的不一样当成一样）
+
 ## 0.20.0
 （0.19.0 留给 feat/mod-menu）
 - 新增联机握手（`Multiplayer`）：装了 ModKit 的玩家通过 Steam 大厅成员数据（键 `dbmods.mods`）公布 ModKit 版本和自己改玩法的内容，

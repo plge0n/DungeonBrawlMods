@@ -240,7 +240,8 @@ namespace DBModKit
                 string version = mods.TryGetValue(guid, out var m) ? m.version : "?";
                 string entry = guid + "@" + version;
                 if (declared.TryGetValue(guid, out var fp) && fp != "") entry += "#" + fp;
-                if (entry.All(IsSafeEntry)) list.Add(entry);
+                // 不合格的字符换掉而不是丢掉整条：丢掉的话装的不一样也会被当成一样
+                list.Add(new string(entry.Select(c => IsSafeEntry(c) ? c : '_').ToArray()));
             }
             list.Sort(StringComparer.Ordinal);
             return list;
