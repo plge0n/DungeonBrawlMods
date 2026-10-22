@@ -31,7 +31,7 @@ namespace DBStudio
         private void OnLoad(ModContext mod)
         {
             Log = Logger;
-            Hotkey = Config.Bind("General", "Hotkey", new KeyboardShortcut(KeyCode.F10), "打开/关闭工作台（F9 是 SmartMove 的开关）");
+            Hotkey = Config.Bind("General", "Hotkey", new KeyboardShortcut(KeyCode.F9), "打开/关闭工作台");
             PauseWhenSolo = Config.Bind("General", "PauseWhenSolo", true, "单人战斗中打开工作台时暂停游戏（联机时不会暂停）");
 
             Studio.Init(new Pages.DebugPage(), new Pages.RulesPage(), new Pages.AugmentsPage(), new Pages.ValuesPage(), new Pages.SkinsPage(), new Pages.ModsPage());
