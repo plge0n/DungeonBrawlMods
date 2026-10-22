@@ -28,6 +28,7 @@ namespace DBStudio
         private static NativeWindow window;
         private static RectTransform pageRoot;
         private static IStudioPage current;
+        private static NativeTabs tabs;
         private static int lastTab;
         private static float nextRefresh;
         private static IDisposable inputBlock;
@@ -87,7 +88,7 @@ namespace DBStudio
             body.childForceExpandWidth = true;
             body.childForceExpandHeight = false;
 
-            var tabs = NativeUi.Tabs(window.Body, pages.Select(p => p.Title).ToList(), ShowPage);
+            tabs = NativeUi.Tabs(window.Body, pages.Select(p => p.Title).ToList(), ShowPage);
             var page = new GameObject("page", typeof(RectTransform), typeof(LayoutElement));
             page.transform.SetParent(window.Body, false);
             var le = page.GetComponent<LayoutElement>();
@@ -99,12 +100,24 @@ namespace DBStudio
             UpdatePause();
         }
 
+        // 打开并切到某一页（主菜单的 Mod 列表跳过来时用）；已经在这一页时重建它
+        public static void Open(IStudioPage page)
+        {
+            int index = Array.IndexOf(pages, page);
+            if (index < 0) return;
+            lastTab = index;
+            if (!IsOpen) Open();
+            else if (tabs.Selected == index) ShowPage(index);
+            else tabs.Select(index);
+        }
+
         public static void Close()
         {
             KeyCapture.Cancel();
             Picker.Close();
             window?.Destroy();
             window = null;
+            tabs = null;
             pageRoot = null;
             current = null;
             if (inputBlock != null)

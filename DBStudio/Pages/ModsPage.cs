@@ -2,9 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using BepInEx;
-using BepInEx.Bootstrap;
-using BepInEx.Configuration;
 using DBModKit;
 using UnityEngine;
 using UnityEngine.UI;
@@ -14,13 +11,6 @@ namespace DBStudio.Pages
     // Mod：运行环境、已加载的插件；选一个插件改它的设置（.cfg 里的项 + Mod 自己登记的设置区块）
     internal sealed class ModsPage : IStudioPage
     {
-        private sealed class PluginEntry
-        {
-            public string Guid, Name, Version;
-            public bool HotReload;
-            public ConfigFile Config;
-        }
-
         private static string selectedGuid;
 
         private Text environment;
@@ -31,6 +21,12 @@ namespace DBStudio.Pages
         private bool rebuild;
 
         public string Title => "Mod";
+
+        // 下次显示这一页时选中这个插件（null 时不变）
+        public static void Select(string guid)
+        {
+            if (guid != null) selectedGuid = guid;
+        }
 
         public void Build(RectTransform body)
         {
@@ -46,7 +42,7 @@ namespace DBStudio.Pages
             var right = NativeUi.Column(columns);
             settingsContent = NativeUi.ScrollView(right, out _, 8f, boxed: false);
 
-            var plugins = Plugins();
+            var plugins = ModList.Plugins();
             if (selectedGuid == null || plugins.All(p => p.Guid != selectedGuid))
                 selectedGuid = plugins.FirstOrDefault(p => p.Guid == Plugin.Guid)?.Guid ?? plugins.FirstOrDefault()?.Guid;
             BuildList(plugins);
@@ -60,7 +56,7 @@ namespace DBStudio.Pages
             if (rebuild || sectionsVersion != ModSettings.Version)
             {
                 rebuild = false;
-                BuildList(Plugins());
+                BuildList(ModList.Plugins());
                 BuildSettings();
                 return;
             }
@@ -68,7 +64,7 @@ namespace DBStudio.Pages
                 if (s.Refresh != null) Safe(s, s.Refresh);
         }
 
-        private void BuildList(List<PluginEntry> plugins)
+        private void BuildList(List<ModInfo> plugins)
         {
             Widgets.Clear(listContent);
             listBackgrounds.Clear();
@@ -93,8 +89,10 @@ namespace DBStudio.Pages
                 });
                 int custom = ModSettings.Sections.Count(s => s.OwnerGuid == p.Guid);
                 string hot = p.HotReload ? "  <color=#d6b67d>[热重载]</color>" : "";
+                string state = p.State == ModState.Failed ? "  <color=#e07a5f>[启动出错]</color>"
+                    : p.State == ModState.Disabled ? "  <color=#e07a5f>[已停用]</color>" : "";
                 string extra = custom > 0 ? "  <color=#d6b67d>有自定义设置</color>" : "";
-                var label = NativeUi.Label(go.transform, $"{p.Name}  <size=16><color=#a6a6a6>{p.Version}</color></size>{hot}\n<size=15><color=#a6a6a6>{p.Guid}</color>{extra}</size>", 20);
+                var label = NativeUi.Label(go.transform, $"{p.Name}  <size=16><color=#a6a6a6>{p.Version}</color></size>{hot}{state}\n<size=15><color=#a6a6a6>{p.Guid}</color>{extra}</size>", 20);
                 var rt = label.rectTransform;
                 NativeUi.Stretch(rt);
                 rt.offsetMin = new Vector2(12f, 4f);
@@ -111,7 +109,7 @@ namespace DBStudio.Pages
             Widgets.Clear(settingsContent);
             shownSections.Clear();
             sectionsVersion = ModSettings.Version;
-            var p = Plugins().FirstOrDefault(x => x.Guid == selectedGuid);
+            var p = ModList.Plugins().FirstOrDefault(x => x.Guid == selectedGuid);
             if (p == null)
             {
                 Studio.Block(settingsContent).text = "在左边选一个插件";
@@ -152,55 +150,6 @@ namespace DBStudio.Pages
             catch (Exception e)
             {
                 Plugin.Log.LogError($"设置区块「{section.Title}」（{section.OwnerGuid}）出错：{e}");
-                return false;
-            }
-        }
-
-        // ScriptEngine 热重载的插件不在 Chainloader 里，从场景里找；
-        // Chainloader 里的插件对象可能已被切场景销毁，但它的 Config 还能用，所以不用 Unity 的 == null 判断
-        private static List<PluginEntry> Plugins()
-        {
-            var list = new Dictionary<string, PluginEntry>();
-            foreach (var info in Chainloader.PluginInfos.Values)
-            {
-                var instance = info.Instance;
-                list[info.Metadata.GUID] = new PluginEntry
-                {
-                    Guid = info.Metadata.GUID,
-                    Name = info.Metadata.Name,
-                    Version = info.Metadata.Version.ToString(),
-                    HotReload = IsHotReloaded(info),
-                    Config = ReferenceEquals(instance, null) ? null : instance.Config,
-                };
-            }
-            foreach (var plugin in UnityEngine.Object.FindObjectsOfType<BaseUnityPlugin>())
-            {
-                var meta = MetadataHelper.GetMetadata(plugin);
-                if (meta == null) continue;
-                if (list.TryGetValue(meta.GUID, out var e) && e.Config != null) continue;
-                list[meta.GUID] = new PluginEntry
-                {
-                    Guid = meta.GUID,
-                    Name = meta.Name,
-                    Version = meta.Version.ToString(),
-                    HotReload = true,
-                    Config = plugin.Config,
-                };
-            }
-            return list.Values.OrderBy(p => p.Name).ToList();
-        }
-
-        // ScriptEngine 也会把插件登记进 Chainloader，只能看 dll 是不是从 BepInEx/scripts 加载的
-        private static bool IsHotReloaded(PluginInfo info)
-        {
-            if (string.IsNullOrEmpty(info.Location)) return false;
-            try
-            {
-                string scripts = System.IO.Path.GetFullPath(System.IO.Path.Combine(Paths.BepInExRootPath, "scripts"));
-                return System.IO.Path.GetFullPath(info.Location).StartsWith(scripts, StringComparison.OrdinalIgnoreCase);
-            }
-            catch (Exception)
-            {
                 return false;
             }
         }

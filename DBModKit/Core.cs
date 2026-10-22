@@ -107,6 +107,8 @@ namespace DBModKit
         {
             GamePause.Tick();
             RunLog.Tick();
+            // 主菜单的 Mod 按钮不碰混淆代码，不兼容时也要显示出来告诉玩家
+            Safe.Run("主菜单 Mod 按钮", ModMenu.Tick);
             if (!ModKit.Compatible) return;
             // 第一帧：Chainloader 已经加载完 plugins 目录，再加载工坊插件（依赖检查才准）
             Workshop.Start();

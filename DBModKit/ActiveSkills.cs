@@ -210,7 +210,11 @@ namespace DBModKit
         /// 每个客户端各自生成，不需要同步。
         /// </summary>
         protected void Effect(string path, Vector3 position, float duration, float scale = 1f)
-            => Safe.Run($"{Info?.Key}.Effect({path})", () => GameRaw.SpawnEffect(path, position, duration, scale));
+        {
+            // Mod 的特效模板没了时不交给游戏（对象池会缓存空模板并在 Instantiate 时抛异常）
+            if (ModAssets.IsOurs(path) && ModAssets.EffectFor(path) == null) return;
+            Safe.Run($"{Info?.Key}.Effect({path})", () => GameRaw.SpawnEffect(path, position, duration, scale));
+        }
     }
 
     /// <summary>自定义主动技能的注册表。</summary>

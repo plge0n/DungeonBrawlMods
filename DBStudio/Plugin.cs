@@ -37,7 +37,14 @@ namespace DBStudio
             Hotkey = Config.Bind("General", "Hotkey", new KeyboardShortcut(KeyCode.F9), "打开/关闭工作台");
             PauseWhenSolo = Config.Bind("General", "PauseWhenSolo", true, "单人战斗中打开工作台时暂停游戏（联机时不会暂停）");
 
-            Studio.Init(new Pages.DebugPage(), new Pages.RulesPage(), new Pages.AugmentsPage(), new Pages.ValuesPage(), new Pages.SkinsPage(), new Pages.ModsPage());
+            var modsPage = new Pages.ModsPage();
+            Studio.Init(new Pages.DebugPage(), new Pages.RulesPage(), new Pages.AugmentsPage(), new Pages.ValuesPage(), new Pages.SkinsPage(), modsPage);
+            // 主菜单 Mod 列表里的"设置"按钮跳到 Mod 页
+            mod.AddCleanup(ModSettings.SetOpener(guid =>
+            {
+                Pages.ModsPage.Select(guid);
+                Studio.Open(modsPage);
+            }).Dispose);
             EventLog.Attach(mod);
             Packs.Init(mod);
             RuleEngine.Attach(mod);

@@ -41,6 +41,21 @@
 - 自定义被动、主动技能在 `GameplayAllowed` 为 false 时不进技能书三选一，`Give` 也不给；变体英雄的属性和专属技能改为看 `GameplayAllowed`（原来只看单人）
 - 房主可以在 DBStudio 的 Mod 页 → DBModKit → 联机 里勾选"在这个房间里允许"，换房间自动取消；装了 ModKit 的人都会收到提示。
   进入战斗时策略为 Blocked 而自己有改玩法的内容，屏幕上会说明原因
+## 0.19.1
+- 修复：代码搭的 Mod 特效（`mod.RegisterEffect` 传自己建的对象）切场景后就失效，`ActiveSkill.Effect` 报空引用。
+  原来用 `scene.IsValid()` 区分"代码搭的对象"和"AssetBundle 预制体"，但插件 Awake 时（游戏启动早期）新建的对象 scene 也无效，
+  被当成预制体留在启动场景里。现在按"是不是从 `ModBundle` 读出来的"区分；模板根节点也改为 HideAndDontSave。
+  模板被销毁时 `Effect` 不再交给游戏，并在日志里说明原因
+- 实测（0.19.1 之前的 0.15~0.18 功能）：被动、主动（自动释放、伤害统计、持续伤害）、图标（技能栏、三选一）、施法动作、变体英雄（属性、成长、专属技能、名字）、构筑过滤、Mod 卸载清理都正常
+
+## 0.19.0
+- 主菜单"创意工坊"下面加了"Mod"按钮（照抄原版按钮的样式和悬停效果），后面显示正在运行的 Mod 数，有要处理的问题时显示红色"!"。
+  点开是 Mod 列表：游戏版本和兼容状态、排行榜规则、已安装的 Mod 和运行状态、BepInEx 没能加载的插件（缺前置、版本旧）、
+  创意工坊插件（有等确认的可以直接去确认）、其他插件；"打开 Mod 文件夹"打开 BepInEx/plugins。
+  ModKit 和游戏版本不兼容时照样显示，告诉玩家 Mod 已停用；没装 DBStudio 也能用
+- `ModList.Plugins()`：已加载的插件和状态（`ModInfo.State` 运行中 / 已停用 / 启动出错 / 不用 ModKit）、是否热重载、来自哪个工坊条目；
+  `ModList.LoadErrors`、`ModList.ProblemCount()`；`ModContext.Failed`
+- `ModSettings.SetOpener` / `Open(guid)` / `CanOpen`：设置界面登记打开方法，Mod 列表的"设置"按钮跳过去
 
 ## 0.18.0
 - 新增自定义被动技能（`PassiveSkills`）：`mod.RegisterPassive(new PassiveSkillDef { … })` 注册后和游戏的被动一样，

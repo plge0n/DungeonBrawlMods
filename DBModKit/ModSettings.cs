@@ -53,5 +53,23 @@ namespace DBModKit
         {
             if (sections.Remove(section)) Version++;
         }
+
+        private static Action<string> opener;
+
+        /// <summary>有设置界面（装了 DBStudio）。</summary>
+        public static bool CanOpen => opener != null;
+
+        /// <summary>打开设置界面并选中 guid 这个插件；guid 为 null 时只打开。没有设置界面时什么也不做。</summary>
+        public static void Open(string guid) => opener?.Invoke(guid);
+
+        /// <summary>设置界面登记自己的打开方法（主菜单的 Mod 列表用它跳过去），Dispose 时撤下。</summary>
+        public static IDisposable SetOpener(Action<string> open)
+        {
+            opener = open ?? throw new ArgumentNullException(nameof(open));
+            return new Disposable(() =>
+            {
+                if (opener == open) opener = null;
+            });
+        }
     }
 }
