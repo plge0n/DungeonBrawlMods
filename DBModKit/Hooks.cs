@@ -9,7 +9,7 @@ namespace DBModKit
     // Harmony 补丁统一在这里按签名查找并安装；找不到或安装失败只停用对应功能，不影响其他部分
     internal static class Hooks
     {
-        /// <summary>安装补丁。排行榜拦截装不上时返回 false，ModKit 整体停用。</summary>
+        /// <summary>安装补丁。排行榜拦截（上传、国王快照）装不上时返回 false，ModKit 整体停用。</summary>
         public static bool Install(Harmony harmony)
         {
             if (!TryPatch(harmony, typeof(LeaderboardHooks), "排行榜上传拦截",
@@ -19,6 +19,11 @@ namespace DBModKit
                         typeof(Action<LeaderboardUploadStage>), typeof(string),
                     }),
                     prefix: nameof(LeaderboardHooks.UploadPrefix)))
+                return false;
+            // 在别人的房间里：不把自己的构筑快照发给房主（房主没装 Mod 时会替我们上传）
+            if (!TryPatch(harmony, typeof(LeaderboardHooks), "国王快照拦截",
+                    AccessTools.Method(typeof(bbe), "ktb", new[] { typeof(int), typeof(int) }),
+                    prefix: nameof(LeaderboardHooks.KingSnapshotPrefix)))
                 return false;
 
             AutoCast.Available =
@@ -116,6 +121,47 @@ namespace DBModKit
                     AccessTools.Method(typeof(wb), "gym", Type.EmptyTypes),
                     postfix: nameof(CheckpointHooks.RestoredPostfix));
 
+            // 先装构筑数据的过滤（保证自定义被动不会传给没装 Mod 的人），都装上了才接管被动的创建
+            PassiveSkills.Available =
+                TryPatch(harmony, typeof(PassiveHooks), "自定义被动（构筑数据过滤）",
+                    AccessTools.Method(typeof(ez), "ebf", Type.EmptyTypes),
+                    postfix: nameof(PassiveHooks.KingSkillsPostfix))
+                && TryPatch(harmony, typeof(PassiveHooks), "自定义被动（镜像 Boss 过滤）",
+                    AccessTools.Method(typeof(bax), "ker", Type.EmptyTypes),
+                    postfix: nameof(PassiveHooks.MirrorSnapshotPostfix))
+                && TryPatch(harmony, typeof(PassiveHooks), "自定义被动（文本）",
+                    AccessTools.Method(typeof(cl), "dfg", new[] { typeof(string), typeof(string), typeof(bool) }),
+                    prefix: nameof(PassiveHooks.TextPrefix))
+                && TryPatch(harmony, typeof(PassiveHooks), "自定义被动（创建）",
+                    AccessTools.Method(typeof(ez), "eax", new[] { typeof(string) }),
+                    postfix: nameof(PassiveHooks.CreatePostfix));
+            // 主动技能和被动共用文本、构筑过滤；另外接管技能实例的创建（和上面的技能调整挂在同一个 ez.dzc 上，互不影响）
+            ActiveSkills.Available = PassiveSkills.Available
+                && TryPatch(harmony, typeof(PassiveHooks), "自定义主动技能（创建）",
+                    AccessTools.Method(typeof(ez), "dzc", new[]
+                    {
+                        typeof(uint), typeof(ActiveSkillEnum), typeof(Vector3), typeof(yb), typeof(int), typeof(float), typeof(int), typeof(int), typeof(bff),
+                    }),
+                    postfix: nameof(PassiveHooks.SkillCreatedPostfix));
+
+            // Mod 的特效：m.cyn(路径) 是对象池第一次用到某个路径时加载模板的地方（m.cyp 等取对象的方法都经过它）
+            ModAssets.EffectsAvailable = TryPatch(harmony, typeof(AssetHooks), "Mod 特效",
+                AccessTools.Method(typeof(m), "cyn", new[] { typeof(string) }),
+                postfix: nameof(AssetHooks.PrefabPostfix));
+            // Mod 的图标：游戏到处用 Resources.Load<Sprite>("Bundles/UI/Icon/Skill/" + 名字)（技能栏、三选一、图鉴、构筑面板…），
+            // 泛型 Load<T> 内部调用 Load(string, Type)。它是 Unity 的 extern 方法，HarmonyX 用原生跳转打补丁；装不上时技能栏单独补
+            ModAssets.IconsAvailable = TryPatch(harmony, typeof(AssetHooks), "Mod 图标",
+                AccessTools.Method(typeof(Resources), nameof(Resources.Load), new[] { typeof(string), typeof(Type) }),
+                prefix: nameof(AssetHooks.ResourcesPrefix));
+            TryPatch(harmony, typeof(AssetHooks), "Mod 图标（技能栏）",
+                AccessTools.Method(typeof(bpf), "opi"),
+                postfix: nameof(AssetHooks.SkillButtonPostfix));
+
+            // 变体英雄：出生时临时换属性表和专属技能，结束后换回；名字在出生后改
+            HeroVariants.Available = TryPatch(harmony, typeof(VariantHooks), "变体英雄（出生）",
+                AccessTools.Method(typeof(bbe), "kzz", new[] { typeof(Vector3), typeof(uint), typeof(HeroType), typeof(string) }),
+                prefix: nameof(VariantHooks.SpawnPrefix), postfix: nameof(VariantHooks.SpawnPostfix), finalizer: nameof(VariantHooks.SpawnFinalizer));
+
             try
             {
                 Combat.Install();
@@ -152,6 +198,7 @@ namespace DBModKit
     }
 
     // 游戏作者的规则：装了 Mod 不能上传排行榜（违规可能被拉进按 Steam 账号判定的黑名单，连累整队）。
+    // 两道拦截：自己上传（bwu.quj），以及在别人房间里把构筑快照交给房主上传（bbe.ktb）。
     // bwu.quj 是排行榜上传入口（由主机 MyServerNetworkManager 调用；bwu.nlq 是同签名的诱饵）。
     // 强制拦截，不提供开关；按游戏自己的失败流程回调，结算界面会显示上传失败。
     internal static class LeaderboardHooks
@@ -166,6 +213,19 @@ namespace DBModKit
             if (__3 != null)
                 Safe.Run("排行榜拦截回调", () =>
                     __3((bws)makeFailure.Invoke(null, new object[] { LeaderboardUploadFailure.InvalidData, "Mods installed: leaderboard upload disabled." })));
+            return false;
+        }
+
+        // bbe.ktb(局, 回合)：国王对决结算时把本地玩家的构筑快照（ez.ebj）用 CmdUploadLocalKingData 发给房主（ody/gif/hjf 是诱饵副本）。
+        // 房主（MyServerNetworkManager.qiy）把各人的快照汇总进队伍数据，再用 bwu.quj 一起上传排行榜，只要求有房主自己的快照
+        // （qlk），别人的可以缺。房主装了 ModKit 时 quj 已被拦截；房主没装时我们拦不住它的上传，所以在这里不发，
+        // 队伍照常上传，只是不带我们。自己当房主时照常发给自己（最后的上传会被 quj 拦截，提示和原来一样）
+        internal static bool KingSnapshotPrefix()
+        {
+            if (GameRaw.ServerActive()) return true;
+            Log.Warning("已安装 Mod：按游戏作者的规则，本局构筑不提交给房主上传排行榜");
+            ScreenNotice.Show("已安装 Mod：按游戏作者的规则，本局构筑不提交排行榜（队友的成绩照常上传）。", 8f);
+            RunLog.WriteCore(ModKitPlugin.Name, "排行榜", RunLogLevel.Info, "不发送国王快照", new (string, object)[0], mirror: false);
             return false;
         }
     }
@@ -276,6 +336,149 @@ namespace DBModKit
         internal static void TogglePostfix(bool __result, State? __state)
         {
             if (__state is State s) AutoCast.RaiseResolved(new AutoCastResult(s.Slot, s.Verdict, __result));
+        }
+    }
+
+    // 自定义被动、主动技能（见 PassiveSkills、ActiveSkills）：
+    // ez.dzc(实例编号, 技能, 位置, 施法者, _, 朝向, 目标, 技能书, 工厂)：每个客户端收到技能释放后创建技能实例（ez 里另有一个同签名、没有调用者的诱饵副本）
+    // ez.eax(类名)：被动表 class 列 → qp 实例的大 switch，未知类名返回 null。学技能（yb.ivb / iuz）、镜像 Boss（zr.jzy 兜底）都经过它
+    // cl.dfg(键, 默认值, 找不到时返回键)：dfe / dff 的真正实现（mee 是同签名的诱饵）
+    // ez.ebf()：构筑里的技能列表（"p_" / "a_" + 编号），ez.ebj 用它生成同步给队友、上传国王对决的数据
+    // bax.ker()：镜像 Boss 用的本地玩家快照（jwm 是没有调用者的副本）
+    internal static class PassiveHooks
+    {
+        internal static void CreatePostfix(string __0, ref qp __result)
+        {
+            if (__result != null) return;
+            try
+            {
+                __result = GameRaw.CreateModPassive(__0);
+            }
+            catch (Exception e)
+            {
+                Safe.Report("自定义被动（创建）", e);
+            }
+        }
+
+        internal static void SkillCreatedPostfix(uint __0, ActiveSkillEnum __1, Vector3 __2, yb __3, float __5, int __6)
+        {
+            try
+            {
+                GameRaw.CreateModSkill(__0, __1, __2, __3, __5, __6);
+            }
+            catch (Exception e)
+            {
+                Safe.Report("自定义主动技能（创建）", e);
+            }
+        }
+
+        internal static bool TextPrefix(string __0, ref string __result)
+        {
+            string text = GameRaw.SkillText(__0);
+            if (text == null) return true;
+            __result = text;
+            return false;
+        }
+
+        internal static void KingSkillsPostfix(ref de.PlayerKingSkillData[] __result)
+        {
+            try
+            {
+                __result = GameRaw.FilterKingSkills(__result);
+            }
+            catch (Exception e)
+            {
+                Safe.Report("自定义被动（构筑数据过滤）", e);
+            }
+        }
+
+        internal static void MirrorSnapshotPostfix(MirrorBossPlayerSnapshot __result)
+        {
+            try
+            {
+                GameRaw.FilterMirrorSnapshot(__result);
+            }
+            catch (Exception e)
+            {
+                Safe.Report("自定义被动（镜像 Boss 过滤）", e);
+            }
+        }
+    }
+
+    // Mod 的图标和特效（见 ModAssets）：名字都以 "DBMod/" 开头，原版的路径一律放行
+    internal static class AssetHooks
+    {
+        internal static void PrefabPostfix(string __0, ref GameObject __result)
+        {
+            if (__result == null && ModAssets.IsOurs(__0)) __result = ModAssets.EffectFor(__0);
+        }
+
+        internal static bool ResourcesPrefix(string __0, Type __1, ref UnityEngine.Object __result)
+        {
+            if (!ModAssets.IsOurs(__0)) return true;
+            var sprite = ModAssets.IconFor(__0);
+            if (sprite == null) return true;
+            if (__1 == null || __1.IsAssignableFrom(typeof(Sprite))) __result = sprite;
+            else if (__1.IsAssignableFrom(typeof(Texture2D))) __result = sprite.texture;
+            else return true;
+            return false;
+        }
+
+        internal static void SkillButtonPostfix(object __instance, object __0)
+        {
+            try
+            {
+                GameRaw.FixSkillButtonIcon(__instance, __0);
+            }
+            catch (Exception e)
+            {
+                Safe.Report("Mod 图标（技能栏）", e);
+            }
+        }
+    }
+
+    // 变体英雄（见 HeroVariants）：bbe.kzz(位置, 编号, 英雄, Steam 名)，每个客户端对每个玩家都会调用，只处理本地玩家
+    internal static class VariantHooks
+    {
+        internal static void SpawnPrefix(bbe __instance, HeroType __2, out object __state)
+        {
+            __state = null;
+            if (!GameRaw.IsLocalSpawn(__instance)) return;
+            try
+            {
+                __state = HeroVariants.BeforeSpawn((int)__2);
+            }
+            catch (Exception e)
+            {
+                Safe.Report("变体英雄（出生前）", e);
+            }
+        }
+
+        internal static void SpawnPostfix(bbe __instance)
+        {
+            if (!GameRaw.IsLocalSpawn(__instance)) return;
+            try
+            {
+                GameRaw.ApplyVariantName(__instance);
+            }
+            catch (Exception e)
+            {
+                Safe.Report("变体英雄（名字）", e);
+            }
+        }
+
+        // 原方法抛异常时也要把表换回去
+        internal static void SpawnFinalizer(object __state)
+        {
+            if (__state == null) return;
+            try
+            {
+                HeroVariants.AfterSpawn(__state);
+            }
+            catch (Exception e)
+            {
+                Safe.Report("变体英雄（还原表）", e);
+            }
         }
     }
 

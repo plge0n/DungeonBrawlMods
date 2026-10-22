@@ -57,6 +57,14 @@ if (Test-Path $dist) { Remove-Item -Recurse -Force $dist }
 New-Item -ItemType Directory -Force $dist | Out-Null
 $readme = Join-Path $root "安装说明.txt"
 
+# 插件项目里的 lang/（翻译）和 assets/（图片、AssetBundle）放在 dll 旁边，ModContext.Folder 从这里找
+function Copy-ModContent([string]$plugin, [string]$dest) {
+    foreach ($sub in "lang", "assets") {
+        $src = Join-Path $root "$plugin\$sub"
+        if (Test-Path $src) { Copy-Item -Recurse $src (Join-Path $dest $sub) }
+    }
+}
+
 function New-Package([string]$name, [bool]$withBepInEx) {
     $stage = Join-Path $dist "_stage_$name"
     New-Item -ItemType Directory -Force $stage | Out-Null
@@ -65,6 +73,7 @@ function New-Package([string]$name, [bool]$withBepInEx) {
         $pluginDir = Join-Path $stage "BepInEx\plugins\$plugin"
         New-Item -ItemType Directory -Force $pluginDir | Out-Null
         Copy-Item (Join-Path $root "$plugin\bin\Release\netstandard2.1\$plugin.dll") $pluginDir
+        Copy-ModContent $plugin $pluginDir
     }
     Copy-Item $readme $stage
     $zip = Join-Path $dist "SmartSkill-$version-$name.zip"
@@ -82,6 +91,7 @@ foreach ($plugin in $plugins | Where-Object { $_ -ne "DBModKit" }) {
     $itemDir = Join-Path $workshop $plugin
     New-Item -ItemType Directory -Force $itemDir | Out-Null
     Copy-Item (Join-Path $root "$plugin\bin\Release\netstandard2.1\$plugin.dll") $itemDir
+    Copy-ModContent $plugin $itemDir
     [ordered]@{
         Format      = 1
         Type        = "plugin"

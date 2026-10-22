@@ -17,15 +17,15 @@ namespace DBModKit
         // 类型名 → Mod 用到的成员（字段/属性/方法，含继承自基类的）
         private static readonly Dictionary<string, string[]> Required = new Dictionary<string, string[]>
         {
-            ["nn"] = new[] { "bpbu", "bbsr", "bbst", "bbtv", "bbtm", "bbth", "bbtz", "fqr", "frk" },
+            ["nn"] = new[] { "bpbu", "bbsr", "bbst", "bbtv", "bbtm", "bbth", "bbtz", "fqr", "frk", "MaxSkillNum" },
             ["os"] = new[] { "gba", "bctl", "bctm" },
             ["cj"] = new[] { "boyb", "boyi", "boyj", "boyl", "boyn", "boyq", "boyt" },
-            ["ez"] = new[] { "dxx", "dxy", "dyk", "dvm", "eaz", "ebc", "dzc", "dye", "dyf" },
+            ["ez"] = new[] { "dxx", "dxy", "dyk", "dvm", "eaz", "ebc", "dzc", "dye", "dyf", "eax", "ebf", "dzo", "dxt", "dxq", "dxv", "dyl" },
             ["bfl"] = new[] { "mna" },
-            ["pj"] = new[] { "bcxi" },
-            ["bfe"] = new[] { "bgwf", "bgwg", "bgwi" },
+            ["pj"] = new[] { "bcxi", "bcxj", "bcxk", "bcxu", "gko" },
+            ["bfe"] = new[] { "bgwf", "bgwg", "bgwi", "bgwe", "bgwj", "kea", "Clear" },
             // 伤害来自哪个被动 / 装备 / 遗物 / Buff
-            ["qp"] = new string[0],
+            ["qp"] = new[] { "gou", "gov" },
             ["ke"] = new string[0],
             ["lm"] = new string[0],
             ["rn"] = new[] { "bdgp" },
@@ -33,7 +33,7 @@ namespace DBModKit
             ["jy"] = new[] { "baxw", "etb" },
             ["AttackType"] = new[] { "Normal", "Skill", "Buff", "AttackEffect", "TrueDamage" },
             ["DamageSourceKind"] = new[] { "Default", "ActiveSkill", "Aura", "Status", "Reflect", "PassiveProc", "IllusoryWeapon" },
-            ["oj"] = new[] { "bcqp" },
+            ["oj"] = new[] { "bcqp", "fuv" },
             ["ok"] = new[] { "bcqs", "bcqt", "bcqv", "bcqw", "bcqx", "bcqy" },
             ["nw"] = new[] { "bcmf" },
             ["bdc"] = new[] { "bgfu" },
@@ -51,15 +51,16 @@ namespace DBModKit
                 "enemyDefeatedEvent", "activeSkillCastEvent", "criticalEvent", "dogeEvent",
                 "bphz", "bphq", "bphp", "bpho", "bphb", "bphl", "bphm", "bphk", "bphr", "bphv", "bpgy", "iwz", "iwh",
                 "localActiveSkillCastEvent", "iqz", "irv", "roleBuffManager", "iwk",
+                "ivb", "iva", "ixz", "izi", "iym", "iyk", "ivi", "ivh", "ivl", "overrideAnimSkillId",
             },
             ["bbe"] = new[]
             {
                 "heroType", "kzz", "bpnc", "bfru", "bfrv", "kqi", "kqh", "addDamagePercent", "addBossEnemy", "addEliteEnemy", "addNormalEnemy",
                 "ksd", "k4a25de8c63fe4a7192613346ae51af4e", "kfd63a19d353a42878846361e6af4f637",
-                "kqk", "kkl", "CmdPickItem", "playerAttribute", "roleSkillList", "onPlayerLevelUp", "onPlayerRelife", "addBagItemEvent",
+                "kqk", "kkl", "CmdPickItem", "playerAttribute", "roleSkillList", "ktb", "onPlayerLevelUp", "onPlayerRelife", "addBagItemEvent",
             },
             ["EnemyDefeatContext"] = new[] { "IsBoss", "IsElite" },
-            ["MyServerNetworkManager"] = new[] { "qhu" },
+            ["MyServerNetworkManager"] = new[] { "qhu", "bpue" },
             ["ClientNetMessage"] = new[] { "clientNetOperation" },
             ["ClientNetOperation"] = new[] { "OnStartGame", "OnStartRest", "EnemyEnterTip", "OnGameOver" },
             ["RemainsData"] = new[] { "grade" },
@@ -73,9 +74,9 @@ namespace DBModKit
             ["RoguelikeUIData"] = new[] { "name", "dec", "icon", "quality", "data" },
             ["GoldIncomeSource"] = new[] { "Gameplay" },
             ["ciy"] = new[] { "bmyj", "bmyc" },
-            ["cik"] = new[] { "bqcb" },
+            ["cik"] = new[] { "bqcb", "bmvl" },
             ["xo"] = new[] { "isBoss", "isElite" },
-            ["oo"] = new[] { "bcry", "bcrw", "bcru", "bcrv", "gaf", "gad" },
+            ["oo"] = new[] { "bcry", "bcrw", "bcru", "bcrv", "gaf", "gad", "fzn" },
             ["nr"] = new[] { "bcec" },
             ["cx"] = new[] { "zyc" },
             ["HeroType"] = new string[0],
@@ -87,17 +88,33 @@ namespace DBModKit
                 "attackSpeed", "moveSpeed", "hpRecover", "mpRecover", "shiled",
             },
             ["du"] = new[] { "dqr", "bact" },
-            ["cl"] = new[] { "dff" },
+            ["cl"] = new[] { "dff", "dfg" },
+            // 自定义被动
+            ["bax"] = new[] { "ker" },
+            ["MirrorBossPlayerSnapshot"] = new[] { "skills", "player" },
+            ["MirrorBossSkillSource"] = new[] { "activeSkill", "skillName" },
+            ["PasssiveSkillEnum"] = new string[0],
+            // Mod 资源
+            ["m"] = new[] { "cyn", "zop", "zoq" },
+            // 施法动作
+            ["ns"] = new[] { "bcez" },
+            // 自定义主动技能
+            ["bff"] = new string[0],
+            ["Mirror.NetworkManager"] = new[] { "bmxm" },
+            ["bhu"] = new[] { "mty" },
+            // 嵌套类型 de.PlayerKingData / PlayerKingSkillData 的名字没混淆，按成员检查（映射重建工具不认 "de+X" 这种写法）
+            ["de"] = new[] { "PlayerKingData", "PlayerKingSkillData" },
             ["bpe"] = new[] { "bjes", "bprr" },
-            ["bpf"] = new[] { "bjgk", "bjgm" },
+            ["bpf"] = new[] { "bjgk", "bjgm", "bjgj", "opi" },
             ["bht"] = new[]
             {
                 "bhne", "bhny", "bhnv", "bhng", "bhnd", "bpqi", "k896ff3548b31472b8b2cf8f649c25e65", "kacb7d091b5904139a602f04ed9552242",
                 "k4b2ca10ddec34cdb90bf84a3f664f727", "kbb80bea445ac47778d36b05d19be7f37", "kcac92c2266be41d3979b385715ce318e",
                 "kb7f88a1b0a6e4124b9b27921f2778742", "k443b7b692a1648099b5e5890ad35ed6d", "bhnj", "bhnp", "bhnq", "bhof",
+                "kb03f1a3bfdcd4ea8aecbd90f39216246", "gpc",
             },
-            // 英雄专属技能：被动技能基类、buff、重试波次、波次配置、开场界面
-            ["qp"] = new[] { "gou", "gov" },
+            // 英雄专属技能：buff、重试波次、波次配置、开场界面（被动基类 qp、bff、AttackType、DamageSourceKind 在上面，
+            // 字典初始化器里重复的键会让后一条覆盖前一条，这里不能再写一遍）
             ["beu"] = new[] { "mim" },
             ["Buff无敌"] = new string[0],
             ["wb"] = new[] { "gyk", "gym", "bpcw" },
@@ -105,11 +122,8 @@ namespace DBModKit
             ["RoguelikeEventType"] = new[] { "Roguelike" },
             ["bkh"] = new[] { "bacf" },
             ["bka"] = new[] { "njb" },
-            ["bff"] = new string[0],
-            ["AttackType"] = new string[0],
-            ["DamageSourceKind"] = new string[0],
             ["PlayerDamageFeedbackKind"] = new string[0],
-            ["RoleModeBase"] = new[] { "addRange", "ico" },
+            ["RoleModeBase"] = new[] { "addRange", "ico", "myAnim" },
             ["ActiveSkillData"] = new[]
             {
                 "tags", "indicator", "castingRange", "range", "cd", "canAuto", "icon",

@@ -8,7 +8,41 @@
 - `ModList.Plugins()`：已加载的插件和状态（`ModInfo.State` 运行中 / 已停用 / 启动出错 / 不用 ModKit）、是否热重载、来自哪个工坊条目；
   `ModList.LoadErrors`、`ModList.ProblemCount()`；`ModContext.Failed`
 - `ModSettings.SetOpener` / `Open(guid)` / `CanOpen`：设置界面登记打开方法，Mod 列表的"设置"按钮跳过去
-- 版本号跳过 0.18.0（PR #19 已占用）
+
+## 0.18.0
+- 新增自定义被动技能（`PassiveSkills`）：`mod.RegisterPassive(new PassiveSkillDef { … })` 注册后和游戏的被动一样，
+  会出现在技能书三选一里（按品级进池，可关）、占一个技能格、图鉴里能看到；名字和说明走 Mod 的 `Text`（键 `passive.<Key>.name/desc`），
+  说明里的 `{0}` 等换成数值（含等级成长）。行为继承 `PassiveSkill`，重写 `OnAdded` / `OnRemoved` / `OnUpdate` / `OnGameEvent` / `OnHit`，
+  只发给本地玩家技能栏里的被动。`PassiveSkills.Give` 直接发放，`OnLocalPlayer` 找到身上的实例。Mod 卸载时自动注销并从技能栏移除
+- 编号由 Mod 的 GUID 和 Key 算出（1000000 起），每次启动都一样
+- 联机：被动只在自己的客户端生效，别人不用装。同步给队友、上传国王对决、镜像 Boss 的构筑数据会去掉自定义被动，
+  没装 Mod 的人不会因此出错（代价是这些地方也看不到它）
+- 新增自定义主动技能（`ActiveSkills`）：`mod.RegisterSkill(new ActiveSkillDef { … })`，蓝耗、冷却、充能、瞄准方式（None/Range/Vector/Target）、
+  施法距离、范围、伤害公式都按游戏的表填，扣蓝、冷却、瞄准、自动释放、施法动作走游戏原来的流程；技能书三选一、图鉴里也有。
+  技能生效时创建 `ActiveSkill` 行为对象（`OnCast` / `OnUpdate` / `OnEnd`），提供 `Position`、`Direction`、`Target`、`Radius`、
+  `FormulaDamage`，以及走游戏伤害结算的 `DamageArea` / `Damage`、对象池特效 `Effect`。`ActiveSkills.Give` 直接发放
+- 联机：技能在每个装了这个 Mod 的客户端上都会创建（能看到效果），伤害只在施法者那边结算；没装的人只看到施法动作，不会出错。
+  编号 2000000 起
+- 施法动作：`ActiveSkill.PlayAnimation(片段 / 游戏动作名, 速度, 时长)` 在技能持续期间把施法者的动作换掉（游戏旋风斩、鸡舞的同款做法：
+  换掉待机片段并锁住动画，结束时还原），每个装了 Mod 的客户端都能看到；`StopAnimation` 提前换回。片段可以来自 AssetBundle（Humanoid），
+  也可以用游戏自带的（`Frank_RPG_2Hand_Skill01_WhirlWind` 等）。和别的换动作技能重叠时会先结束对方，游戏的旋风斩叠在后面时结束后会自动还原
+- 新增变体英雄（`HeroVariants`）：`mod.RegisterHeroVariant(new HeroVariantDef { BaseHero = 英雄, … })`，底层仍是原英雄，
+  出生时换属性（三维、成长、攻击、护甲、生命、法力、回复、移速、攻速）、专属技能（游戏的或自定义的主动/被动）、模型（Mod 自带的模型文件夹或工坊模型）和名字。
+  属性和专属技能和玩法包一样只在单人时生效，联机时只换名字和模型（模型只在自己这边显示）。玩家在 DBStudio 的 Mod 页"英雄变体"里给每个英雄选，
+  也可以用 `HeroVariants.Select`；`HeroVariants.LocalVariant` / `LocalGameplayActive` 是这一局的情况
+- 新增 Mod 资源（`ModAssets`）：`mod.LoadIcon(键, "图片.png")` / `mod.RegisterIcon(键, Sprite)` 返回图标名，填进技能的 `Icon`，
+  技能栏、三选一、图鉴、构筑面板都会显示；`mod.RegisterEffect(键, 模板)` 返回特效路径，传给 `ActiveSkill.Effect`，走游戏的对象池；
+  `mod.LoadBundle("xxx.bundle")` 打开 AssetBundle（`Sprite` / `Prefab` / `Clip` / `Load<T>`），卸载时自动关闭。`mod.Folder` 是插件所在文件夹
+- 插件项目里的 `lang/`、`assets/` 编译时跟着 dll 部署（热重载时在 `BepInEx/scripts/<程序集名>/`，`mod.Folder` 会找到这里），`pack.ps1` 也会打进包和工坊条目；
+  原来 `lang/` 翻译文件不会被部署和打包
+- 图标靠 `Resources.Load` 补丁（`ModAssets.IconsAvailable`）；装不上时技能栏按钮单独补上
+- 映射重建工具：重写游戏虚方法的声明、带命名空间的类型名字符串也会跟着改；编译检查也读项目文件自己的引用
+- 修复：兼容检查清单里 `AttackType`、`DamageSourceKind`、`qp`、`bff` 写了两次，后写的空清单覆盖了前面的成员检查
+
+## 0.17.1
+- 排行榜规则补漏：在别人的房间里，国王对决结算时不再把自己的构筑快照发给房主（`bbe.ktb`）。房主没装 Mod 时，
+  原来会把我们（可能改过数值的）构筑和队伍一起上传；现在队伍照常上传，只是不带我们，并在屏幕上提示。
+  自己当房主时不变（最后的上传本来就会被拦截）。这道拦截装不上时 ModKit 整体停用，和上传拦截一样
 
 ## 0.17.0
 - 英雄专属技能 `HeroSkill`（`HeroSkill.Of(英雄)`、`Player.HeroSkill`）：hero 表里每个英雄出生时发放的那个技能，主动或被动；主动的带冷却、蓝耗、持续时间、充能、伤害参数，被动的带表里的数值
