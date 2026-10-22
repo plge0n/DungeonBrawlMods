@@ -113,7 +113,10 @@ namespace DBModKit
             h.childControlWidth = h.childControlHeight = true;
             h.childForceExpandWidth = false;
             h.childForceExpandHeight = true;
-            go.GetComponent<LayoutElement>().preferredHeight = height;
+            var le = go.GetComponent<LayoutElement>();
+            le.preferredHeight = height;
+            // childForceExpandHeight 会让这一行报告可拉伸（flexibleHeight = 1），在竖向布局里抢走剩余高度
+            le.flexibleHeight = 0f;
             return (RectTransform)go.transform;
         }
 
