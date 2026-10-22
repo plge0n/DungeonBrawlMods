@@ -6,7 +6,7 @@ using UnityEngine;
 namespace Hextech
 {
     // 海克斯强化：每局 4 次三选一（开局 + 约 25%/50%/75% 波次附近的遗物回合之后），强化英雄的专属技能。
-    // 强化由积木按品质点数自动生成，只在单人时生效。企划见 docs/海克斯企划.md
+    // 强化由积木按品质点数自动生成，只在单人时生效。企划见 docs/设计/海克斯企划.md
     [BepInPlugin(Guid, Name, Version)]
     [BepInDependency(ModKitPlugin.Guid, "0.17.0")]
     public class Plugin : BaseUnityPlugin
