@@ -42,6 +42,12 @@ namespace DBModKit
         /// <summary>Mod 已启动（ModKit 兼容且 onLoad 成功）。</summary>
         public bool Loaded { get; private set; }
 
+        /// <summary>onLoad 抛了异常，Mod 没有启动。</summary>
+        public bool Failed { get; private set; }
+
+        // 按 GUID 记下每个 Mod 最近一次启动的上下文，Mod 列表据此显示状态；热重载时新的替换旧的
+        internal static readonly Dictionary<string, ModContext> All = new Dictionary<string, ModContext>();
+
         private ModContext(BepInPlugin metadata, ManualLogSource logger, Action onUnload, string folder)
         {
             Metadata = metadata;
@@ -61,6 +67,7 @@ namespace DBModKit
             if (string.IsNullOrEmpty(location)) location = plugin.GetType().Assembly.Location;
             string folder = string.IsNullOrEmpty(location) ? null : System.IO.Path.GetDirectoryName(location);
             var ctx = new ModContext(MetadataHelper.GetMetadata(plugin), logger, onUnload, folder);
+            All[ctx.Metadata.GUID] = ctx;
             if (!ModKit.Compatible)
             {
                 // ModKit 不兼容时它自己会在屏幕上提示
@@ -77,6 +84,7 @@ namespace DBModKit
             catch (Exception e)
             {
                 logger.LogError($"{ctx.Metadata.Name} 启动失败：{e}");
+                ctx.Failed = true;
                 DBModKit.RunLog.WriteCore(ctx.Metadata.Name, "生命周期", RunLogLevel.Error, "启动失败", new (string, object)[] { ("异常", e.ToString()) }, mirror: false);
                 ctx.RunCleanups();
             }

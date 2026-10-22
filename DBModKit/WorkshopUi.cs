@@ -117,7 +117,7 @@ namespace DBModKit
             }
         }
 
-        private static string StatusText(WorkshopItem item)
+        internal static string StatusText(WorkshopItem item)
         {
             string status;
             switch (item.Status)

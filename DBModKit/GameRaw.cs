@@ -245,6 +245,13 @@ namespace DBModKit
         public static IDisposable BlockInput() => os.gba();
         // 游戏 UI 的 Canvas（UIRoot 第 0 个子节点）；主菜单之前可能还没创建
         public static Canvas UiCanvas() => cj.boyb?.bact != null ? cj.boyb.bact.GetComponent<Canvas>() : null;
+        // 主菜单（ui_startGame/trans_bg/trans_main，竖排布局）里的"创意工坊"按钮；主菜单没显示时为 null。
+        // 只用预制体里的对象名、不碰混淆代码，ModKit 不兼容时也能用
+        public static GameObject MainMenuWorkshopButton()
+        {
+            var go = GameObject.Find("btn_workShop");
+            return go != null && go.transform.parent != null && go.transform.parent.name == "trans_main" ? go : null;
+        }
 
         // 普攻、技能共用的增伤，以及对 Boss / 精英 / 普通敌人的额外增伤（见 yb.iwk）
         public static float DamageBonus(Component p, Component target)
