@@ -5,6 +5,12 @@
   "passive.blade.desc": "Strength +{0}; heal {1}% of damage dealt on hit",
   "relic.thunder_heart.name": "Heart of Thunder",
   "relic.thunder_heart.desc": "Attack +{0}; restore {1} mana on kill",
+  "equipEffect.static_edge.name": "Static",
+  "equipEffect.static_edge.desc": "{0}% chance on hit to restore {1} mana",
+  "equipEffect.storm_charge.name": "Storm Charge",
+  "equipEffect.storm_charge.desc": "Restore {0} HP on kill",
+  "equip.storm_staff.name": "Storm Staff",
+  "equip.storm_staff.desc": "The Storm Knight's old weapon",
   "hero.storm_knight.name": "Storm Knight",
   "hero.storm_knight.desc": "More strength; signature skill becomes Thunderstorm"
 }

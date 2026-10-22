@@ -269,6 +269,31 @@ namespace DBModKit
                     pack.Cleanups.Add(() => CustomRelics.Unregister(info));
                     relics++;
                 });
+            var equipEffects = new Dictionary<string, CustomEquipEffectInfo>();
+            foreach (var def in parsed.EquipEffects)
+                Register(pack, parsed, $"装备特效 {def.Key}", () =>
+                {
+                    var info = CustomEquipEffects.Register(pack.Guid, text, def);
+                    pack.Cleanups.Add(() => CustomEquipEffects.Unregister(info));
+                    equipEffects[def.Key] = info;
+                });
+            int equipment = 0;
+            foreach (var (def, effects, where) in parsed.Equipment)
+            {
+                string missing = effects.FirstOrDefault(k => !equipEffects.ContainsKey(k));
+                if (missing != null)
+                {
+                    parsed.Errors.Add($"{where}.effects：这个包里没有键为 \"{missing}\" 的装备特效");
+                    continue;
+                }
+                def.Effects = effects.Select(k => equipEffects[k]).ToList();
+                Register(pack, parsed, $"装备 {def.Key}", () =>
+                {
+                    var info = CustomEquipment.Register(pack.Guid, text, def);
+                    pack.Cleanups.Add(() => CustomEquipment.Unregister(info));
+                    equipment++;
+                });
+            }
             int variants = 0;
             foreach (var (def, active, passive, where) in parsed.Variants)
             {
@@ -303,7 +328,7 @@ namespace DBModKit
             }
 
             // 改玩法的包按 JSON 内容的哈希比对：同一个版本号、文件被改过的包联机时也算"装的不一样"
-            if (actives.Count > 0 || passives.Count > 0 || relics > 0 || HeroVariants.All.Any(v => v.Owner == pack.Guid && v.ChangesGameplay))
+            if (actives.Count > 0 || passives.Count > 0 || relics > 0 || equipEffects.Count > 0 || equipment > 0 || HeroVariants.All.Any(v => v.Owner == pack.Guid && v.ChangesGameplay))
                 Multiplayer.Declare(pack.Guid, fingerprint.ToString("x8"));
 
             pack.ErrorList.AddRange(parsed.Errors);
@@ -313,6 +338,8 @@ namespace DBModKit
             if (actives.Count > 0) parts.Add($"{actives.Count} 个主动技能");
             if (passives.Count > 0) parts.Add($"{passives.Count} 个被动");
             if (relics > 0) parts.Add($"{relics} 个遗物");
+            if (equipEffects.Count > 0) parts.Add($"{equipEffects.Count} 个装备特效");
+            if (equipment > 0) parts.Add($"{equipment} 件装备");
             if (variants > 0) parts.Add($"{variants} 个变体英雄");
             pack.Summary = parts.Count > 0 ? string.Join("、", parts) : "没有加载任何内容";
             pack.Loaded = true;

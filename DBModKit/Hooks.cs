@@ -154,6 +154,21 @@ namespace DBModKit
                 && TryPatch(harmony, typeof(RelicHooks), "自定义遗物（创建）",
                     AccessTools.Method(typeof(bbe), "kql", new[] { typeof(string) }),
                     postfix: nameof(RelicHooks.CreatePostfix));
+            // 自定义装备和特效：和被动共用文本；先装构筑数据和神器候选的过滤，都装上了才追加特效、接管特效的创建
+            CustomEquipEffects.Available = PassiveSkills.Available
+                && TryPatch(harmony, typeof(EquipmentHooks), "自定义装备（构筑数据过滤）",
+                    AccessTools.Method(typeof(ez), "ebg", Type.EmptyTypes),
+                    postfix: nameof(EquipmentHooks.KingEquipPostfix))
+                && TryPatch(harmony, typeof(EquipmentHooks), "自定义装备（神器候选）",
+                    AccessTools.Method(typeof(pi), "gho", new[] { typeof(int), typeof(object) }),
+                    postfix: nameof(EquipmentHooks.ArtifactPostfix))
+                && TryPatch(harmony, typeof(EquipmentHooks), "自定义装备特效（追加）",
+                    AccessTools.Method(typeof(jy), "Init", new[] { typeof(RoleType) }),
+                    postfix: nameof(EquipmentHooks.InitPostfix))
+                && TryPatch(harmony, typeof(EquipmentHooks), "自定义装备特效（创建）",
+                    AccessTools.Method(typeof(bba), "khf", new[] { typeof(EquipSkillType), typeof(lm).MakeByRefType(), typeof(ke).MakeByRefType() }),
+                    postfix: nameof(EquipmentHooks.CreatePostfix));
+            CustomEquipment.Available = CustomEquipEffects.Available;
 
             // Mod 的特效：m.cyn(路径) 是对象池第一次用到某个路径时加载模板的地方（m.cyp 等取对象的方法都经过它）
             ModAssets.EffectsAvailable = TryPatch(harmony, typeof(AssetHooks), "Mod 特效",
@@ -391,6 +406,63 @@ namespace DBModKit
             catch (Exception e)
             {
                 Safe.Report("自定义遗物（创建）", e);
+            }
+        }
+    }
+
+    // 自定义装备和特效（见 CustomEquipment、CustomEquipEffects）：
+    // ez.ebg()：本地玩家的装备构筑数据（PlayerKingEquipData[]，没有装备时 null），ez.ebj 和 bbe.kts（穿脱时 CmdUploadSyncSkillEquipData）都用它
+    // pi.gho(编号, 行)：神器三选一（pi.ghn）的候选条件，isArtifact 列或编号 101~999
+    // jy.Init(RoleType)：按装备表初始化装备实例（特效列表 bayo / bayp），商店、神器、发放（pi.ghl）、说明预览（jy.euk）都经过它
+    // bba.khf(特效, out lm, out ke)：特效类型 → lm / ke 子类的大 switch，未知类型两个都是 null（调用者 bba.kdc、镜像 Boss 的 bak.kdc）
+    internal static class EquipmentHooks
+    {
+        internal static void KingEquipPostfix(ref de.PlayerKingEquipData[] __result)
+        {
+            try
+            {
+                __result = GameRaw.FilterKingEquip(__result);
+            }
+            catch (Exception e)
+            {
+                Safe.Report("自定义装备（构筑数据过滤）", e);
+            }
+        }
+
+        internal static void ArtifactPostfix(int __0, ref bool __result)
+        {
+            try
+            {
+                if (__result && !GameRaw.ArtifactAllowed(__0)) __result = false;
+            }
+            catch (Exception e)
+            {
+                Safe.Report("自定义装备（神器候选）", e);
+            }
+        }
+
+        internal static void InitPostfix(jy __instance, RoleType __0)
+        {
+            try
+            {
+                GameRaw.AttachEquipEffects(__instance, __0);
+            }
+            catch (Exception e)
+            {
+                Safe.Report("自定义装备特效（追加）", e);
+            }
+        }
+
+        internal static void CreatePostfix(EquipSkillType __0, ref ke __2)
+        {
+            if (__2 != null) return;
+            try
+            {
+                __2 = GameRaw.CreateModEquipEffect(__0);
+            }
+            catch (Exception e)
+            {
+                Safe.Report("自定义装备特效（创建）", e);
             }
         }
     }

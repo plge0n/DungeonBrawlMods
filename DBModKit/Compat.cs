@@ -17,20 +17,20 @@ namespace DBModKit
         // 类型名 → Mod 用到的成员（字段/属性/方法，含继承自基类的）
         private static readonly Dictionary<string, string[]> Required = new Dictionary<string, string[]>
         {
-            ["nn"] = new[] { "bpbu", "bbsr", "bbst", "bbtv", "bbtm", "bbth", "bbtz", "fqr", "frk", "MaxSkillNum" },
+            ["nn"] = new[] { "bpbu", "bbsr", "bbst", "bbtv", "bbtm", "bbth", "bbtz", "fqr", "frk", "MaxSkillNum", "MaxEquipNum" },
             ["os"] = new[] { "gba", "bctl", "bctm" },
             ["cj"] = new[] { "boyb", "boyi", "boyj", "boyl", "boyn", "boyq", "boyt" },
-            ["ez"] = new[] { "dxx", "dxy", "dyk", "dvm", "eaz", "ebc", "dzc", "dye", "dyf", "eax", "ebf", "dzo", "dxt", "dxq", "dxv", "dyl", "ebj", "eae" },
+            ["ez"] = new[] { "dxx", "dxy", "dyk", "dvm", "eaz", "ebc", "dzc", "dye", "dyf", "eax", "ebf", "dzo", "dxt", "dxq", "dxv", "dyl", "ebj", "eae", "ebg" },
             ["bfl"] = new[] { "mna" },
             ["pj"] = new[] { "bcxi", "bcxj", "bcxk", "bcxu", "gko" },
             ["bfe"] = new[] { "bgwf", "bgwg", "bgwi", "bgwe", "bgwj", "kea", "Clear" },
             // 伤害来自哪个被动 / 装备 / 遗物 / Buff
             ["qp"] = new[] { "gou", "gov" },
-            ["ke"] = new string[0],
+            ["ke"] = new[] { "bbcl", "bbcm", "bbcn", "bbco", "bbcp", "Init", "Clear", "euv", "evl", "evm" },
             ["lm"] = new string[0],
             ["rn"] = new[] { "bdgp", "bdgr", "bdgv", "bdgw", "bdgy", "gtb", "gtc", "gtd", "gtf" },
             ["hm"] = new[] { "baqz" },
-            ["jy"] = new[] { "baxw", "etb" },
+            ["jy"] = new[] { "baxw", "etb", "baxt", "bayh", "erc", "erk", "Init", "k9326fabeadf343ea92814a2f3df04aac" },
             ["AttackType"] = new[] { "Normal", "Skill", "Buff", "AttackEffect", "TrueDamage" },
             ["DamageSourceKind"] = new[] { "Default", "ActiveSkill", "Aura", "Status", "Reflect", "PassiveProc", "IllusoryWeapon" },
             ["oj"] = new[] { "bcqp", "fuv" },
@@ -68,7 +68,7 @@ namespace DBModKit
             // 掉落物拾取
             ["ot"] = new[] { "bctu", "gdb" },
             ["ou"] = new[] { "bcty", "bctz", "bcua", "bcuc" },
-            ["bba"] = new[] { "kgw", "bfmz", "bfna", "bfnc" },
+            ["bba"] = new[] { "kgw", "bfmz", "bfna", "bfnc", "khf", "kb163cadd39ce47f38866dd8c2caf5f3c" },
             ["AudioManager"] = new[] { "daw" },
             ["ItemType"] = new[] { "Gold", "Gem", "STRBook", "Active_Book_D", "Passsive_Book_D", "GoldCoinBag_LV1", "Talisman_Roar", "Card_0" },
             ["bqa"] = new[] { "osj", "bacf" },
@@ -77,7 +77,7 @@ namespace DBModKit
             ["ciy"] = new[] { "bmyj", "bmyc" },
             ["cik"] = new[] { "bqcb", "bmvl" },
             ["xo"] = new[] { "isBoss", "isElite" },
-            ["oo"] = new[] { "bcry", "bcrw", "bcru", "bcrv", "gaf", "gad", "fzn", "bcrx" },
+            ["oo"] = new[] { "bcry", "bcrw", "bcru", "bcrv", "gaf", "gad", "fzn", "bcrx", "bcsl" },
             ["nr"] = new[] { "bcec" },
             ["cx"] = new[] { "zyc" },
             ["HeroType"] = new string[0],
@@ -89,7 +89,7 @@ namespace DBModKit
                 "attackSpeed", "moveSpeed", "hpRecover", "mpRecover", "shiled",
             },
             ["du"] = new[] { "dqr", "bact" },
-            ["cl"] = new[] { "dff", "dfg" },
+            ["cl"] = new[] { "dff", "dfg", "zuj" },
             // 自定义被动
             ["bax"] = new[] { "ker" },
             ["MirrorBossPlayerSnapshot"] = new[] { "skills", "player", "relics" },
@@ -101,6 +101,9 @@ namespace DBModKit
             ["ny"] = new[] { "bcmo" },
             ["MirrorBossSkillSource"] = new[] { "activeSkill", "skillName" },
             ["PasssiveSkillEnum"] = new string[0],
+            // 自定义装备（jy、ke、bba、oo、ez、de、cl、bpe、nn 在别的条目里）
+            ["pi"] = new[] { "ghk", "gho" },
+            ["EquipSkillType"] = new[] { "None" },
             // Mod 资源
             ["m"] = new[] { "cyn", "zop", "zoq" },
             // 施法动作
@@ -110,8 +113,8 @@ namespace DBModKit
             ["Mirror.NetworkManager"] = new[] { "bmxm" },
             ["bhu"] = new[] { "mty" },
             // 嵌套类型 de.PlayerKingData / PlayerKingSkillData 的名字没混淆，按成员检查（映射重建工具不认 "de+X" 这种写法）
-            ["de"] = new[] { "PlayerKingData", "PlayerKingSkillData", "PlayerKingRelicData" },
-            ["bpe"] = new[] { "bjes", "bprr" },
+            ["de"] = new[] { "PlayerKingData", "PlayerKingSkillData", "PlayerKingRelicData", "PlayerKingEquipData" },
+            ["bpe"] = new[] { "bjes", "bprr", "omt" },
             ["bpf"] = new[] { "bjgk", "bjgm", "bjgj", "opi" },
             ["bht"] = new[]
             {

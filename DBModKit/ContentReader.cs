@@ -15,6 +15,9 @@ namespace DBModKit
         public readonly List<(ActiveSkillDef def, ActiveSpec spec)> Actives = new List<(ActiveSkillDef, ActiveSpec)>();
         public readonly List<(PassiveSkillDef def, PassiveSpec spec)> Passives = new List<(PassiveSkillDef, PassiveSpec)>();
         public readonly List<RelicDef> Relics = new List<RelicDef>();
+        public readonly List<EquipEffectDef> EquipEffects = new List<EquipEffectDef>();
+        // 装备的 effects 写同一个包里装备特效的键，注册完特效后再接上
+        public readonly List<(EquipmentDef def, string[] effects, string where)> Equipment = new List<(EquipmentDef, string[], string)>();
         // 变体的专属技能可以写同一个包里的键，注册完技能后再接上
         public readonly List<(HeroVariantDef def, string active, string passive, string where)> Variants = new List<(HeroVariantDef, string, string, string)>();
         public readonly List<string> Errors = new List<string>();
@@ -39,6 +42,12 @@ namespace DBModKit
             ReadList(top, "activeSkills", (o, where) => ReadActive(o, loadIcon), output.Actives.Add);
             ReadList(top, "passiveSkills", (o, where) => ReadPassive(o, loadIcon), output.Passives.Add);
             ReadList(top, "relics", (o, where) => ReadRelic(o, loadIcon), output.Relics.Add);
+            ReadList(top, "equipEffects", (o, where) => ReadEquipEffect(o), output.EquipEffects.Add);
+            ReadList(top, "equipment", (o, where) =>
+            {
+                var d = ReadEquipment(o, loadIcon, out string[] effects);
+                return (d, effects, where);
+            }, output.Equipment.Add);
             ReadList(top, "heroVariants", (o, where) =>
             {
                 var v = ReadVariant(o, out string active, out string passive);
@@ -177,7 +186,7 @@ namespace DBModKit
             return (d, spec);
         }
 
-        // 被动和遗物共用的触发器：onAdded、onHit … onTick
+        // 被动、遗物、装备特效共用的触发器：onAdded、onHit … onTick
         private static PassiveSpec Triggers(Obj o)
         {
             var spec = new PassiveSpec();
@@ -226,6 +235,64 @@ namespace DBModKit
         }
 
         private static readonly string[] RelicValueTypes = { "Normal", "Percent", "PercentConst", "InversePercent" };
+
+        // ---- 装备特效、装备 ----
+
+        private static EquipEffectDef ReadEquipEffect(Obj o)
+        {
+            var d = new EquipEffectDef
+            {
+                Key = o.Key(),
+                Name = o.Str("name", ""),
+                Description = o.Str("description", ""),
+                Values = o.Nums("values"),
+                LevelUp = o.Nums("levelUp"),
+            };
+            if (d.Name == "") o.Error("name", "装备特效要有名字");
+            var attach = o.Take("attachTo");
+            if (attach != null)
+            {
+                if (attach is JArray a && a.All(x => x.Type == JTokenType.Integer && (long)x > 0 && (long)x < CustomEquipment.FirstId))
+                    d.AttachTo = a.Select(x => (int)x).ToArray();
+                else o.Error("attachTo", "应该是游戏装备编号的列表，比如 [2, 3]");
+            }
+            var spec = Triggers(o);
+            d.Create = () => new ContentEquipEffect(spec);
+            return d;
+        }
+
+        private static EquipmentDef ReadEquipment(Obj o, Func<string, string, string> loadIcon, out string[] effects)
+        {
+            var d = new EquipmentDef
+            {
+                Key = o.Key(),
+                Name = o.Str("name", ""),
+                Description = o.Str("description", ""),
+                Artifact = o.Bool("artifact", false),
+            };
+            string icon = o.Str("icon", null);
+            if (icon != null) d.Icon = o.Guard("icon", () => loadIcon(d.Key, icon));
+            if (d.Name == "") o.Error("name", "装备要有名字");
+            var attrs = o.Take("attributes");
+            if (attrs != null)
+            {
+                if (attrs is JObject ao)
+                {
+                    foreach (var p in ao.Properties())
+                    {
+                        if (p.Value.Type == JTokenType.Integer || p.Value.Type == JTokenType.Float) d.Attributes[p.Name] = (float)p.Value;
+                        else o.Error($"attributes.{p.Name}", "应该是数字");
+                    }
+                }
+                else o.Error("attributes", "应该是 { \"属性名\": 数值 }，比如 { \"attack\": 80 }");
+            }
+            effects = o.Strs("effects") ?? new string[0];
+            d.GameEffects = (o.Strs("gameEffects") ?? new string[0]).ToList();
+            // attributes 本身写错时已经报过，不再重复报
+            if ((attrs == null || attrs is JObject jo && !jo.HasValues) && effects.Length == 0 && d.GameEffects.Count == 0)
+                o.Error("attributes", "装备至少要有属性或特效");
+            return d;
+        }
 
         // ---- 变体英雄 ----
 
@@ -346,7 +413,7 @@ namespace DBModKit
             {
                 case "damage":
                 {
-                    if (!inSkill) o.Error(kind, "被动和遗物里暂时不能造成伤害");
+                    if (!inSkill) o.Error(kind, "被动和遗物里暂时不能造成伤害（装备特效同样）");
                     string mode = o.Str(kind, "area");
                     var scale = o.Has("scale") ? o.Expr("scale") : null;
                     var amount = o.Has("amount") ? o.Expr("amount") : null;

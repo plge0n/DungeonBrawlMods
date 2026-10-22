@@ -4,10 +4,11 @@ using UnityEngine;
 
 namespace SkillSample
 {
-    // 示例：一个自定义被动（饮血之刃）、一个自定义主动技能（雷暴）和一个自定义遗物（铁壁徽章）。
+    // 示例：一个自定义被动（饮血之刃）、一个自定义主动技能（雷暴）、一个自定义遗物（铁壁徽章），
+    // 以及装备：给游戏的 2 号装备挂一个特效（静电），再加一件新的神器（风暴法杖，带自己的特效）。
     // 和 templates/ContentPack 里的内容包是同一套技能，对照着看能知道 JSON 的每个字段对应什么。
     [BepInPlugin(Guid, Name, Version)]
-    [BepInDependency(ModKitPlugin.Guid, "0.22.0")]
+    [BepInDependency(ModKitPlugin.Guid, "0.24.0")]
     public class Plugin : BaseUnityPlugin
     {
         public const string Guid = "example.dungeonbrawl.skillsample";
@@ -68,6 +69,39 @@ namespace SkillSample
                 LevelUp = new[] { 10f },
                 Create = () => new IronBadge(),
             });
+
+            // 装备特效：AttachTo 写游戏装备编号，商店买到这件装备时特效一起生效，说明里也会多一行
+            mod.RegisterEquipEffect(new EquipEffectDef
+            {
+                Key = "static_edge",
+                Name = "静电",
+                Description = "命中时回复 {0} 点法力",
+                Values = new[] { 3f },
+                AttachTo = new[] { 2 },
+                Create = () => new StaticEdge(),
+            });
+
+            // 新装备：属性键名用 CustomEquipment.AttributeNames 里的（游戏的 jy.bayh），特效可以是
+            // 自己注册的，也可以写游戏已有的特效名（GameEffects，数值照抄游戏里第一件带它的装备）。
+            // Artifact = true 是神器；新装备不进商店，用 CustomEquipment.Give 发给本地玩家
+            var charge = mod.RegisterEquipEffect(new EquipEffectDef
+            {
+                Key = "storm_charge",
+                Name = "风暴充能",
+                Description = "击杀敌人回复 {0} 点生命",
+                Values = new[] { 30f },
+                Create = () => new StormCharge(),
+            });
+            mod.RegisterEquipment(new EquipmentDef
+            {
+                Key = "storm_staff",
+                Name = "风暴法杖",
+                Description = "雷霆骑士的旧武器",
+                Icon = "equip_2",
+                Attributes = { ["attack"] = 60, ["hp"] = 200 },
+                Effects = { charge },
+                Artifact = true,
+            });
         }
     }
 
@@ -114,6 +148,27 @@ namespace SkillSample
         {
             Owner?.AddArmor(armor - added);
             added = armor;
+        }
+    }
+
+    // 装备特效：每件装备一个实例，只在本地玩家身上运行。卖掉装备时 OnRemoved
+    internal sealed class StaticEdge : EquipEffectBehaviour
+    {
+        private float next;
+
+        protected override void OnHit(HitInfo hit)
+        {
+            if (Time.time < next) return;
+            next = Time.time + 0.5f;
+            Owner?.AddMana(Mathf.RoundToInt(Value(0)));
+        }
+    }
+
+    internal sealed class StormCharge : EquipEffectBehaviour
+    {
+        protected override void OnGameEvent(GameEvent e)
+        {
+            if (e.Kind == GameEventKind.EnemyKilled) Owner?.Heal(Value(0));
         }
     }
 
