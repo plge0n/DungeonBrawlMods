@@ -4,10 +4,10 @@ using UnityEngine;
 
 namespace SkillSample
 {
-    // 示例：一个自定义被动（饮血之刃）和一个自定义主动技能（雷暴）。
+    // 示例：一个自定义被动（饮血之刃）、一个自定义主动技能（雷暴）和一个自定义遗物（铁壁徽章）。
     // 和 templates/ContentPack 里的内容包是同一套技能，对照着看能知道 JSON 的每个字段对应什么。
     [BepInPlugin(Guid, Name, Version)]
-    [BepInDependency(ModKitPlugin.Guid, "0.21.0")]
+    [BepInDependency(ModKitPlugin.Guid, "0.22.0")]
     public class Plugin : BaseUnityPlugin
     {
         public const string Guid = "example.dungeonbrawl.skillsample";
@@ -55,6 +55,19 @@ namespace SkillSample
                 Tags = new[] { SkillTags.Area },
                 Create = () => new ThunderNova(),
             });
+
+            // 遗物：出现在遗物三选一里（按品级），显示在遗物栏。{0} 由游戏换成数值（含等级成长）
+            mod.RegisterRelic(new RelicDef
+            {
+                Key = "iron_badge",
+                Name = "铁壁徽章",
+                Description = "护甲 +{0}",
+                Icon = "remain_armor",
+                Quality = PassiveQuality.B,
+                Values = new[] { 15f },
+                LevelUp = new[] { 10f },
+                Create = () => new IronBadge(),
+            });
         }
     }
 
@@ -83,6 +96,24 @@ namespace SkillSample
             if (hit.Damage <= 0 || Time.time < nextHeal) return;
             nextHeal = Time.time + 0.2f;
             Owner?.Heal(hit.Damage * Value(1) / 100f);
+        }
+    }
+
+    // 遗物：每获得一次一个实例，只在本地玩家身上运行。升级时补上差值
+    internal sealed class IronBadge : RelicBehaviour
+    {
+        private int added;
+
+        protected override void OnAdded() => SetArmor(Mathf.RoundToInt(Value(0)));
+
+        protected override void OnLevelChanged(int oldLevel, int newLevel) => SetArmor(Mathf.RoundToInt(ValueAt(0, newLevel)));
+
+        protected override void OnRemoved() => SetArmor(0);
+
+        private void SetArmor(int armor)
+        {
+            Owner?.AddArmor(armor - added);
+            added = armor;
         }
     }
 

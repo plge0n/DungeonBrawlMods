@@ -5,8 +5,8 @@
   "Name": "示例：雷霆套装",
   "Author": "",
   "Version": "1.0.0",
-  "Description": "一个主动技能、一个被动和一个变体英雄，演示内容包的写法",
-  "MinModKit": "0.21.0",
+  "Description": "一个主动技能、一个被动、一个遗物和一个变体英雄，演示内容包的写法",
+  "MinModKit": "0.22.0",
   "Content": ["skills.json"],
   "Lang": "lang"
 }

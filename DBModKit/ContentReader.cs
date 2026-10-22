@@ -14,6 +14,7 @@ namespace DBModKit
     {
         public readonly List<(ActiveSkillDef def, ActiveSpec spec)> Actives = new List<(ActiveSkillDef, ActiveSpec)>();
         public readonly List<(PassiveSkillDef def, PassiveSpec spec)> Passives = new List<(PassiveSkillDef, PassiveSpec)>();
+        public readonly List<RelicDef> Relics = new List<RelicDef>();
         // 变体的专属技能可以写同一个包里的键，注册完技能后再接上
         public readonly List<(HeroVariantDef def, string active, string passive, string where)> Variants = new List<(HeroVariantDef, string, string, string)>();
         public readonly List<string> Errors = new List<string>();
@@ -37,6 +38,7 @@ namespace DBModKit
             var top = new Obj(root, label, output.Errors);
             ReadList(top, "activeSkills", (o, where) => ReadActive(o, loadIcon), output.Actives.Add);
             ReadList(top, "passiveSkills", (o, where) => ReadPassive(o, loadIcon), output.Passives.Add);
+            ReadList(top, "relics", (o, where) => ReadRelic(o, loadIcon), output.Relics.Add);
             ReadList(top, "heroVariants", (o, where) =>
             {
                 var v = ReadVariant(o, out string active, out string passive);
@@ -170,6 +172,14 @@ namespace DBModKit
             if (icon != null) d.Icon = o.Guard("icon", () => loadIcon(d.Key, icon));
             if (d.Name == "") o.Error("name", "被动要有名字");
 
+            var spec = Triggers(o);
+            d.Create = () => new ContentPassive(spec);
+            return (d, spec);
+        }
+
+        // 被动和遗物共用的触发器：onAdded、onHit … onTick
+        private static PassiveSpec Triggers(Obj o)
+        {
             var spec = new PassiveSpec();
             foreach (var kv in PassiveTriggers)
             {
@@ -185,9 +195,37 @@ namespace DBModKit
                 spec.On[PassiveTrigger.OnTick] = Actions(t, "do", false);
                 t.Done();
             }
-            d.Create = () => new ContentPassive(spec);
-            return (d, spec);
+            return spec;
         }
+
+        // ---- 遗物 ----
+
+        private static RelicDef ReadRelic(Obj o, Func<string, string, string> loadIcon)
+        {
+            var d = new RelicDef
+            {
+                Key = o.Key(),
+                Name = o.Str("name", ""),
+                Description = o.Str("description", ""),
+                Quality = o.Enum("quality", PassiveQuality.C),
+                Values = o.Nums("values"),
+                LevelUp = o.Nums("levelUp"),
+                ValueTypes = o.Strs("valueTypes") ?? new string[0],
+                MaxLevel = o.Int("maxLevel", -1),
+                Unique = o.Bool("unique", true),
+                InPool = o.Bool("inPool", true),
+            };
+            string icon = o.Str("icon", null);
+            if (icon != null) d.Icon = o.Guard("icon", () => loadIcon(d.Key, icon));
+            if (d.Name == "") o.Error("name", "遗物要有名字");
+            foreach (var t in d.ValueTypes.Where(t => !RelicValueTypes.Contains(t)))
+                o.Error("valueTypes", $"不认识 \"{t}\"（可以用：{string.Join("、", RelicValueTypes)}）");
+            var spec = Triggers(o);
+            d.Create = () => new ContentRelic(spec);
+            return d;
+        }
+
+        private static readonly string[] RelicValueTypes = { "Normal", "Percent", "PercentConst", "InversePercent" };
 
         // ---- 变体英雄 ----
 
@@ -308,7 +346,7 @@ namespace DBModKit
             {
                 case "damage":
                 {
-                    if (!inSkill) o.Error(kind, "被动里暂时不能造成伤害");
+                    if (!inSkill) o.Error(kind, "被动和遗物里暂时不能造成伤害");
                     string mode = o.Str(kind, "area");
                     var scale = o.Has("scale") ? o.Expr("scale") : null;
                     var amount = o.Has("amount") ? o.Expr("amount") : null;

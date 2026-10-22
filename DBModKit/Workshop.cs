@@ -37,6 +37,11 @@ namespace DBModKit
         public List<string> Content = new List<string>();
         /// <summary>内容包的翻译文件夹（相对条目根目录，格式见 <see cref="ModText"/>）。</summary>
         public string Lang = "lang";
+        /// <summary>
+        /// 依赖：缺了就不加载，并在 Mod 设置里提示（有工坊物品号时给打开页面的按钮）。插件条目只能依赖插件
+        /// （BepInDependency 也照常检查），内容包可以依赖插件和别的内容包，会排在依赖的后面加载。
+        /// </summary>
+        public List<ManifestDependency> Dependencies = new List<ManifestDependency>();
     }
 
     public enum WorkshopStatus
@@ -64,6 +69,8 @@ namespace DBModKit
         public string Message { get; internal set; } = "";
         /// <summary>加载出来的插件 GUID。</summary>
         public List<string> Plugins { get; } = new List<string>();
+        /// <summary>缺的依赖（dbmod.json 的 Dependencies 里没满足的）。</summary>
+        public List<ManifestDependency> MissingDependencies { get; } = new List<ManifestDependency>();
         /// <summary>dbmod.json 读不了或需要更新的 DBModKit：不能允许加载。</summary>
         public bool Broken { get; internal set; }
         // 因为缺依赖没加载：之后允许了别的条目时再试一次
@@ -153,6 +160,7 @@ namespace DBModKit
             item.Status = WorkshopStatus.Pending;
             item.Message = "";
             item.WaitingForDependency = false;
+            item.MissingDependencies.Clear();
         }
 
         private static void Scan()
@@ -343,6 +351,17 @@ namespace DBModKit
                 }
                 if (batch.Any(o => o != c && o.Metadata.GUID == dep.DependencyGUID)) return "";
                 return $"缺少依赖 {dep.DependencyGUID}";
+            }
+            // dbmod.json 的依赖：在同一批里就等它，否则查已经加载的插件
+            foreach (var dep in c.Item.Manifest.Dependencies)
+            {
+                if (string.IsNullOrEmpty(dep.Guid)) continue;
+                if (batch.Any(o => o != c && o.Metadata.GUID == dep.Guid)) return "";
+                string why = ModConflicts.Check(dep);
+                if (why == null) continue;
+                if (!c.Item.MissingDependencies.Contains(dep)) c.Item.MissingDependencies.Add(dep);
+                ModConflicts.Touch();
+                return why;
             }
             return null;
         }

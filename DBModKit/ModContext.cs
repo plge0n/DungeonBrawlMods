@@ -183,6 +183,17 @@ namespace DBModKit
             return info;
         }
 
+        /// <summary>
+        /// 注册一个自定义遗物（见 <see cref="CustomRelics"/>）。名字和说明按 Mod 的 <see cref="Text"/> 翻译
+        /// （键 relic.&lt;Key&gt;.name / relic.&lt;Key&gt;.desc）。卸载时自动注销，本地玩家身上的这个遗物也会被移除。
+        /// </summary>
+        public CustomRelicInfo RegisterRelic(RelicDef def)
+        {
+            var info = CustomRelics.Register(Metadata.GUID, Text, def);
+            AddCleanup(() => CustomRelics.Unregister(info));
+            return info;
+        }
+
         private string ResolveFile(string file)
         {
             if (string.IsNullOrEmpty(file)) throw new ArgumentException("文件名为空");

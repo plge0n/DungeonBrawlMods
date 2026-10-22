@@ -9,7 +9,7 @@ using UnityEngine.UI;
 
 namespace DBModKit
 {
-    /// <summary>一个内容包：JSON 定义的技能、被动、变体英雄，加上图片和翻译，不含代码。</summary>
+    /// <summary>一个内容包：JSON 定义的技能、被动、遗物、变体英雄，加上图片和翻译，不含代码。</summary>
     public sealed class ContentPack
     {
         internal readonly List<Action> Cleanups = new List<Action>();
@@ -29,6 +29,8 @@ namespace DBModKit
         public string Summary { get; internal set; } = "";
         /// <summary>写错的地方（文件和位置）；写错的条目没有加载，其他照常。</summary>
         public IReadOnlyList<string> Errors => ErrorList;
+        /// <summary>缺的依赖（dbmod.json 的 Dependencies 里没满足的）：有缺的时候整个包不加载。</summary>
+        public List<ManifestDependency> MissingDependencies { get; } = new List<ManifestDependency>();
 
         public string DisplayName => string.IsNullOrEmpty(Manifest?.Name) ? Path.GetFileName(Folder) : Manifest.Name;
     }
@@ -41,10 +43,15 @@ namespace DBModKit
     public static class ContentPacks
     {
         private static readonly List<ContentPack> packs = new List<ContentPack>();
+        // 实际加载的顺序（依赖在前），卸载时倒过来
+        private static readonly List<ContentPack> loadOrder = new List<ContentPack>();
         private static JsonConfig<Dictionary<string, bool>> enabled;
         private static bool started;
 
         public static IReadOnlyList<ContentPack> All => packs;
+
+        // Id 重复、没有用的包：(这个包, 用了的那个)，给 ModConflicts
+        internal static readonly List<(string pack, string used)> Duplicates = new List<(string, string)>();
 
         /// <summary>列表或状态变化时加 1。</summary>
         public static int Version { get; private set; }
@@ -64,7 +71,7 @@ namespace DBModKit
             {
                 enabled = new JsonConfig<Dictionary<string, bool>>("DBModKit.content.json");
                 Scan();
-                foreach (var pack in packs.Where(IsEnabled)) Load(pack);
+                LoadAll();
                 int broken = packs.Count(p => p.ErrorList.Count > 0);
                 Log.Info($"内容包：{packs.Count} 个，已加载 {packs.Count(p => p.Loaded)} 个，有错误的 {broken} 个");
                 if (broken > 0)
@@ -73,26 +80,67 @@ namespace DBModKit
             });
         }
 
-        /// <summary>打开或关掉一个内容包（记住选择）。战斗中不能切换：技能会从技能栏里消失。</summary>
+        /// <summary>
+        /// 打开或关掉一个内容包（记住选择）。战斗中不能切换：技能会从技能栏里消失。
+        /// 所有内容包会重新读一遍（作者可能刚改过文件），依赖它的包跟着加载或卸载。
+        /// </summary>
         public static bool SetEnabled(ContentPack pack, bool on)
         {
             if (enabled == null || Game.InBattle) return false;
             enabled.Data[pack.Guid] = on;
             enabled.MarkDirty();
-            if (on && !pack.Loaded)
-            {
-                // 重新读一遍：作者可能刚改过文件
-                pack.ErrorList.Clear();
-                Load(pack);
-            }
-            else if (!on && pack.Loaded) Unload(pack);
+            for (int i = loadOrder.Count - 1; i >= 0; i--) Unload(loadOrder[i]);
+            loadOrder.Clear();
+            LoadAll();
             Version++;
             return true;
+        }
+
+        // 按依赖排序加载打开的包：依赖的包还没加载就等它；依赖不满足的整个包不加载；剩下互相等的是循环依赖
+        private static void LoadAll()
+        {
+            foreach (var p in packs)
+            {
+                p.ErrorList.Clear();
+                p.MissingDependencies.Clear();
+            }
+            var pending = packs.Where(IsEnabled).ToList();
+            while (pending.Count > 0)
+            {
+                bool progress = false;
+                foreach (var pack in pending.ToList())
+                {
+                    var deps = pack.Manifest.Dependencies.Where(d => !string.IsNullOrEmpty(d.Guid)).ToList();
+                    if (deps.Any(d => pending.Any(o => o != pack && o.Guid == ModConflicts.ContentGuid(d.Guid)))) continue;
+                    pending.Remove(pack);
+                    progress = true;
+                    foreach (var dep in deps)
+                    {
+                        string why = ModConflicts.Check(dep);
+                        if (why == null) continue;
+                        pack.ErrorList.Add(why);
+                        pack.MissingDependencies.Add(dep);
+                    }
+                    if (pack.MissingDependencies.Count > 0)
+                    {
+                        RunLog.WriteCore(ModKitPlugin.Name, "内容包", RunLogLevel.Warning, "缺依赖，没有加载",
+                            new (string, object)[] { ("包", pack.DisplayName), ("原因", string.Join("；", pack.ErrorList)) }, mirror: false);
+                        continue;
+                    }
+                    Load(pack);
+                    loadOrder.Add(pack);
+                }
+                if (progress) continue;
+                foreach (var pack in pending) pack.ErrorList.Add("依赖之间有循环");
+                break;
+            }
+            ModConflicts.Touch();
         }
 
         private static void Scan()
         {
             packs.Clear();
+            Duplicates.Clear();
             foreach (var (root, source) in new[] { (Workshop.ContentFolder, "创意工坊"), (Workshop.DevFolder, "工坊测试"), (LocalFolder, "本地") })
             {
                 if (!Directory.Exists(root)) continue;
@@ -104,6 +152,7 @@ namespace DBModKit
                     if (same != null)
                     {
                         Log.Warning($"内容包 {pack.Folder} 和 {same.Folder} 的 Id 都是 {pack.Guid}，只用前一个");
+                        Duplicates.Add(($"{pack.DisplayName}（{pack.Source} {Path.GetFileName(pack.Folder)}）", $"{same.DisplayName}（{same.Source} {Path.GetFileName(same.Folder)}）"));
                         continue;
                     }
                     packs.Add(pack);
@@ -212,6 +261,14 @@ namespace DBModKit
                     pack.Cleanups.Add(() => PassiveSkills.Unregister(info));
                     passives[def.Key] = info;
                 });
+            int relics = 0;
+            foreach (var def in parsed.Relics)
+                Register(pack, parsed, $"遗物 {def.Key}", () =>
+                {
+                    var info = CustomRelics.Register(pack.Guid, text, def);
+                    pack.Cleanups.Add(() => CustomRelics.Unregister(info));
+                    relics++;
+                });
             int variants = 0;
             foreach (var (def, active, passive, where) in parsed.Variants)
             {
@@ -246,7 +303,7 @@ namespace DBModKit
             }
 
             // 改玩法的包按 JSON 内容的哈希比对：同一个版本号、文件被改过的包联机时也算"装的不一样"
-            if (actives.Count > 0 || passives.Count > 0 || HeroVariants.All.Any(v => v.Owner == pack.Guid && v.ChangesGameplay))
+            if (actives.Count > 0 || passives.Count > 0 || relics > 0 || HeroVariants.All.Any(v => v.Owner == pack.Guid && v.ChangesGameplay))
                 Multiplayer.Declare(pack.Guid, fingerprint.ToString("x8"));
 
             pack.ErrorList.AddRange(parsed.Errors);
@@ -255,6 +312,7 @@ namespace DBModKit
             var parts = new List<string>();
             if (actives.Count > 0) parts.Add($"{actives.Count} 个主动技能");
             if (passives.Count > 0) parts.Add($"{passives.Count} 个被动");
+            if (relics > 0) parts.Add($"{relics} 个遗物");
             if (variants > 0) parts.Add($"{variants} 个变体英雄");
             pack.Summary = parts.Count > 0 ? string.Join("、", parts) : "没有加载任何内容";
             pack.Loaded = true;
@@ -333,6 +391,11 @@ namespace DBModKit
                 foreach (string e in pack.Errors.Take(6))
                     NativeUi.Label(texts, $"<color=#e07a5f>{WorkshopPrompt.Plain(e)}</color>", 15);
                 if (pack.Errors.Count > 6) NativeUi.Label(texts, $"<color=#e07a5f>还有 {pack.Errors.Count - 6} 处，见 trace.log</color>", 15);
+                foreach (var dep in pack.MissingDependencies.Where(d => d.Workshop != 0))
+                {
+                    ulong id = dep.Workshop;
+                    NativeUi.Button(row, $"订阅 {WorkshopPrompt.Plain(dep.DisplayName)}", false, 220f, () => HeroSkins.OpenWorkshopPage(id));
+                }
                 bool on = ContentPacks.IsEnabled(pack);
                 var target = pack;
                 var button = NativeUi.Button(row, on ? "关闭" : "启用", !on, 150f, () => ContentPacks.SetEnabled(target, !on));
