@@ -1,0 +1,30 @@
+{
+  "passiveSkills": [
+    {
+      "key": "ex", "name": "表达式", "values": [10, 20],
+      "onHit": [
+        { "heal": "" },
+        { "heal": "   " },
+        { "heal": "damage * {1} / 100" },
+        { "heal": "Damage + MAXHP" },
+        { "heal": "foo * 2" },
+        { "heal": "1 +" },
+        { "heal": "(1 + 2" },
+        { "heal": "1 2" },
+        { "heal": "{a}" },
+        { "heal": "{}" },
+        { "heal": "{1" },
+        { "heal": "1.2.3" },
+        { "heal": "." },
+        { "heal": "3 % 2" },
+        { "heal": "-(-{0}) * +2" },
+        { "heal": "hp_max" },
+        { "heal": "攻击 * 2" },
+        { "heal": "1.5e3" },
+        { "heal": [1] },
+        { "heal": { "a": 1 } },
+        { "heal": null }
+      ]
+    }
+  ]
+}

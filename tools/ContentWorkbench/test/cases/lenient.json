@@ -1,0 +1,9 @@
+{
+  // Newtonsoft 认单引号、不加引号的字段名；20.0 / 1e3 算小数
+  activeSkills: [
+    { 'key': 'q1', name: '单引号', "cost": 20.0, "damageBase": 1e3, "cooldown": 8.0, "description": "转义\t中 \"引号\"" },
+    { "key": "q2", "name": "整数", "cost": 20, "charges": -1 }
+  ],
+  "heroVariants": [ { "key": "v", "name": "v", "baseHero": 1.0, "hp": 500.5, "workshopModel": 1E2 } ],
+  "equipEffects": [ { "key": "e", "name": "e", "attachTo": [2, 3.0] } ]
+}

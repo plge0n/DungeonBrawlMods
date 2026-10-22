@@ -1,0 +1,8 @@
+// Newtonsoft 认注释和末尾多余的逗号
+{
+  /* 列表写成了对象 */
+  "activeSkills": { "key": "a" },
+  "passiveSkills": null,
+  "relics": [ 1, null, [], ],
+  "equipment": "x",
+}
