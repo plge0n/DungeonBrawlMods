@@ -1,0 +1,9 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <AssemblyName>SkillSample</AssemblyName>
+  </PropertyGroup>
+  <ItemGroup>
+    <!-- DeployToGame=false：编译示例时不要顺带把 DBModKit 部署进游戏，覆盖别人正在测的版本 -->
+    <ProjectReference Include="..\..\DBModKit\DBModKit.csproj" Private="false" AdditionalProperties="DeployToGame=false" />
+  </ItemGroup>
+</Project>
