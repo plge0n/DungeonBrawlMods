@@ -34,6 +34,24 @@ namespace DBModKit
             TryPatch(harmony, typeof(GameDataHooks), "怪物倍率（表加载）",
                 AccessTools.Method(typeof(oo), "gad", Type.EmptyTypes),
                 postfix: nameof(GameDataHooks.EnemyTablePostfix));
+
+            HeroSkins.Available = TryPatch(harmony, typeof(HeroSkinHooks), "英雄皮肤（查找模型）",
+                AccessTools.Method(typeof(buj), "pwu", new[] { typeof(int), typeof(string).MakeByRefType(), typeof(LocalWorkshopManifest).MakeByRefType() }),
+                prefix: nameof(HeroSkinHooks.ResolvePrefix));
+            // 变身时记下是谁在变身；这两个装不上时变身按英雄判断（同英雄的其他玩家变身也会换模型）
+            TryPatch(harmony, typeof(HeroSkinHooks), "英雄皮肤（变身技能）",
+                AccessTools.Method(typeof(bgt), "mqp", new[] { typeof(string) }),
+                prefix: nameof(HeroSkinHooks.SkillTransformPrefix));
+            TryPatch(harmony, typeof(HeroSkinHooks), "英雄皮肤（变身恢复）",
+                AccessTools.Method(typeof(bbp), "lob", new[] { typeof(bbe) }),
+                prefix: nameof(HeroSkinHooks.CheckpointTransformPrefix));
+            HeroSkins.OnlyLocalPlayerAvailable =
+                TryPatch(harmony, typeof(HeroSkinHooks), "英雄皮肤（只换本地玩家）",
+                    AccessTools.Method(typeof(buj), "pwh", new[] { typeof(bbe) }),
+                    prefix: nameof(HeroSkinHooks.SpawnPrefix))
+                && TryPatch(harmony, typeof(HeroSkinHooks), "英雄皮肤（变身只换本地玩家）",
+                    AccessTools.Method(typeof(buj), "pwj", new[] { typeof(HeroType), typeof(string), typeof(RoleModeBase) }),
+                    prefix: nameof(HeroSkinHooks.TransformPrefix));
             return true;
         }
 
@@ -180,5 +198,59 @@ namespace DBModKit
         }
 
         private static int ScaleInt(int v, double scale) => (int)Math.Round(Math.Min(int.MaxValue, v * scale));
+    }
+
+    // buj.pwu(英雄编号, out 文件夹, out manifest)：查找英雄模型文件夹的唯一入口，出生、选英雄预览、变身、名字和头像覆盖都经过它
+    //   （wy 是同签名的诱饵）。原版顺序：PlayerPrefs Workshop.LocalHeroModel.<编号> → 设置里的本地文件 Mod → 工坊绑定
+    // buj.pwh(bbe)：出生时（bbe.kzz）给角色换模型。每个客户端对每个玩家都会调用，只按英雄查本机设置
+    // buj.pwj(HeroType, prefab, RoleModeBase)：变身时给新模型换上 additionalModels；调用方是 bgt.mqp（变身技能）和 bbp.lob（变身状态恢复）
+    internal static class HeroSkinHooks
+    {
+        // 正在变身的角色；pwj 读取后清空
+        private static yb transformOwner;
+
+        internal static bool ResolvePrefix(int __0, ref string __1, ref LocalWorkshopManifest __2, ref bool __result)
+        {
+            if (GameRaw.ModsDisabled()) return true;
+            string folder;
+            try
+            {
+                if (!HeroSkins.TryResolve(__0, out folder)) return true;
+            }
+            catch (Exception e)
+            {
+                Safe.Report("英雄皮肤（查找模型）", e);
+                return true;
+            }
+            LocalWorkshopManifest manifest = null;
+            if (folder != null && !bup.pyx(folder, out manifest)) return true;
+            __1 = folder ?? string.Empty;
+            __2 = manifest;
+            __result = folder != null;
+            return false;
+        }
+
+        internal static void SkillTransformPrefix(bgt __instance) => transformOwner = __instance.bgwf;
+
+        internal static void CheckpointTransformPrefix(bbe __0) => transformOwner = __0;
+
+        // yb.bphc：Mirror 的 isLocalPlayer（kzz 里 pwh 之后紧接着用它设置本地玩家，这时已经有值）
+        internal static bool SpawnPrefix(bbe __0, ref bool __result)
+        {
+            if (!HeroSkins.OnlyLocalPlayer || __0 == null || __0.bphc) return true;
+            __result = false;
+            return false;
+        }
+
+        internal static bool TransformPrefix(HeroType __0, ref bool __result)
+        {
+            var owner = transformOwner;
+            transformOwner = null;
+            if (!HeroSkins.OnlyLocalPlayer) return true;
+            bool local = owner != null ? owner.bphc : GameRaw.LocalHeroId() == (int)__0;
+            if (local) return true;
+            __result = false;
+            return false;
+        }
     }
 }

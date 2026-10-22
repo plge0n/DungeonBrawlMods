@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Reflection;
 using UnityEngine;
@@ -208,6 +209,66 @@ namespace DBModKit
             => row.TryGetValue(column, out var v) && v != null && v.ToString() != "" ? v.ToString() : null;
 
         private static string IconPath(string folder, string name) => string.IsNullOrEmpty(name) ? null : "Bundles/UI/Icon/" + folder + name;
+
+        // ---- 创意工坊英雄模型（buj 换模型，bup 读 manifest.json，buu 工坊服务）----
+        // 启动参数 -disable-mods 时为 true，游戏不加载任何工坊内容
+        public static bool ModsDisabled() => buo.bkkn;
+
+        // 同 buj.pwv：manifest 的英雄编号对得上，模型包文件存在
+        public static bool IsValidSkinFolder(string dir, int heroId) => ReadSkinManifest(dir, out var m) && m.heroId == heroId;
+
+        private static bool ReadSkinManifest(string dir, out LocalWorkshopManifest m)
+        {
+            m = null;
+            if (string.IsNullOrEmpty(dir) || !Directory.Exists(dir)) return false;
+            if (!bup.pyx(dir, out m) || m == null || m.heroId <= 0) return false;
+            if (string.IsNullOrEmpty(m.bundleRelativePath) || string.IsNullOrEmpty(m.bundleAssetName)) return false;
+            try
+            {
+                return File.Exists(Path.Combine(dir, m.bundleRelativePath));
+            }
+            catch (ArgumentException)
+            {
+                return false;
+            }
+        }
+
+        // 召唤物模型（bum.pyi）也带 manifest，但不是英雄模型
+        public static HeroSkin ReadSkin(string id, string dir)
+        {
+            if (!ReadSkinManifest(dir, out var m) || bum.pyi(m.contentType)) return null;
+            string title = !string.IsNullOrWhiteSpace(m.title) ? m.title.Trim()
+                : !string.IsNullOrWhiteSpace(m.heroName) ? m.heroName.Trim()
+                : Path.GetFileName(dir);
+            return new HeroSkin(id, m.heroId, title, m.author?.Trim() ?? "", dir);
+        }
+
+        // buu.qaq()：已订阅的物品和状态（游戏自己每秒也调用一次）；bptc：Steam 可用
+        public static List<HeroSkin> ReadWorkshopSkins()
+        {
+            var list = new List<HeroSkin>();
+            var service = cj.boyt;
+            if (service == null || !service.bptc) return list;
+            foreach (var item in service.qaq())
+            {
+                if (item == null || !item.installed || item.heroId <= 0) continue;
+                var skin = ReadSkin(HeroSkins.WorkshopId(item.publishedFileId), item.installFolder);
+                if (skin != null) list.Add(skin);
+            }
+            return list;
+        }
+
+        // buu.qar：已安装物品的文件夹
+        public static string WorkshopFolder(ulong id)
+            => cj.boyt != null && cj.boyt.qar(id, out var item) && item != null ? item.installFolder : null;
+
+        // buj.pwf(文件夹, manifest, out 图)：manifest.previewImage，游戏的工坊列表也用它
+        public static Sprite SkinPreview(string dir) => bup.pyx(dir, out var m) && buj.pwf(dir, m, out var sprite) ? sprite : null;
+
+        public static int LocalHeroId() => nn.bpbu is bbe p ? (int)p.heroType : 0;
+
+        // buj.pwm：本地玩家正在用这个英雄时，撤掉当前模型（buj.pwn）再按 buj.pwu 的结果重新换（buj.pwh）
+        public static void ReapplyLocalHeroModel(int heroId) => buj.pwm(heroId);
 
         // ---- 技能实例 bht ----
         public static int SkillId(object s) => (int)((bht)s).bhne;

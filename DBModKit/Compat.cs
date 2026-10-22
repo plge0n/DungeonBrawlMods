@@ -18,7 +18,7 @@ namespace DBModKit
         private static readonly Dictionary<string, string[]> Required = new Dictionary<string, string[]>
         {
             ["nn"] = new[] { "bpbu" },
-            ["cj"] = new[] { "boyb", "boyi", "boyl" },
+            ["cj"] = new[] { "boyb", "boyi", "boyl", "boyt" },
             ["ez"] = new[] { "dxx", "dxy" },
             ["bwu"] = new[] { "quj", "qut" },
             ["bws"] = new string[0],
@@ -26,10 +26,10 @@ namespace DBModKit
             ["LeaderboardUploadStage"] = new string[0],
             ["yb"] = new[]
             {
-                "hp", "maxHp", "izk", "iyn", "ivj", "bphx", "bpia",
+                "hp", "maxHp", "izk", "iyn", "ivj", "bphx", "bpia", "bphc",
                 "bphz", "bphq", "bphp", "bpho", "bphb", "bphl", "bphm", "bphk", "bphr", "bphv", "bpgy", "iwz", "iwh",
             },
-            ["bbe"] = new[] { "bfru", "bfrv", "ksd", "k4a25de8c63fe4a7192613346ae51af4e", "kfd63a19d353a42878846361e6af4f637" },
+            ["bbe"] = new[] { "heroType", "bfru", "bfrv", "ksd", "k4a25de8c63fe4a7192613346ae51af4e", "kfd63a19d353a42878846361e6af4f637" },
             ["GoldIncomeSource"] = new[] { "Gameplay" },
             ["os"] = new[] { "gba" },
             ["ciy"] = new[] { "bmyj", "bmyc" },
@@ -59,6 +59,16 @@ namespace DBModKit
             },
             ["ActiveSkillEnum"] = new[] { "None" },
             ["SkillTag"] = new[] { "Heal", "Revive", "Shield", "Defense", "Buff", "Summon", "Aura", "Area", "Move", "Control" },
+            // 英雄皮肤
+            ["buj"] = new[] { "pwu", "pwh", "pwj", "pwm", "pwf" },
+            ["bup"] = new[] { "pyx" },
+            ["buu"] = new[] { "qaq", "qar", "bptc" },
+            ["buo"] = new[] { "bkkn" },
+            ["bum"] = new[] { "pyi" },
+            ["bgt"] = new[] { "mqp", "bgwf" },
+            ["bbp"] = new[] { "lob" },
+            ["WorkshopItemStatus"] = new[] { "publishedFileId", "installed", "heroId", "installFolder" },
+            ["LocalWorkshopManifest"] = new[] { "heroId", "title", "heroName", "author", "contentType", "bundleRelativePath", "bundleAssetName" },
         };
 
         public static string GameVersion => Application.version;
