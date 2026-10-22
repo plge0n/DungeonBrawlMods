@@ -7,3 +7,5 @@ dist/
 # 游戏和 BepInEx 的程序集只在编译时从游戏目录引用，不能提交
 *.dll
 *.pdb
+# 映射重建工具的运行输出（报告、对应表）
+tools/Remap/out/
