@@ -1,5 +1,9 @@
 # DBModKit 更新日志
 
+## 0.13.0
+- `HitInfo.IsNormalAttack`：这一下是普攻（游戏命中记录的 `Normal`）
+- `Role.IsSummon`、`Role.IsSummonOf(Player)`：召唤物和它的主人（`roleType = Summon`，`authorityId` = 主人的 netId）
+
 ## 0.12.0
 - 新增 `Loot`：读地上的掉落物（编号、`LootKind` 类别、位置、能不能捡、占不占背包格子、名字），
   `Loot.TryPick` 替本地玩家拾取（游戏的 `CmdPickItem`）。服务器不检查拾取距离，所以 ModKit 限制在按 C 的 5 米内；

@@ -80,6 +80,12 @@ namespace DBModKit
         public float HitRadius => GameRaw.HitRadius(Native);
         public bool IsBoss => GameRaw.IsBoss(Native);
         public bool IsElite => GameRaw.IsElite(Native);
+        /// <summary>召唤物（玩家召唤出来的单位）。</summary>
+        public bool IsSummon => GameRaw.IsSummon(Native);
+
+        /// <summary>是 owner 的召唤物。</summary>
+        public bool IsSummonOf(Player owner)
+            => owner != null && IsSummon && GameRaw.AuthorityId(Native) == GameRaw.NetId(owner.Native);
         public long Shield => GameRaw.Shield(Native);
         /// <summary>血量 + 护盾：伤害要达到这个值才能击杀。</summary>
         public long EffectiveHp => Hp + Shield;

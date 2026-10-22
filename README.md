@@ -9,6 +9,7 @@ BepInEx 5 插件，目标游戏：地下城竞技场（Steam 4246640，Unity 202
 | [DBStudio](DBStudio) | 游戏内的 Mod 工作台（F9）：调试面板、规则、强化（海克斯式三选一）、数值编辑器、英雄皮肤 |
 | [SmartMove](SmartMove) | 自动躲避地面预警（F9 开关） |
 | [AutoPickup](AutoPickup) | 战斗中自动拾取身边能捡的掉落物（和按 C 一样），可按类别过滤 |
+| [DamageMeter](DamageMeter) | 伤害统计：按普攻、技能、召唤物分开统计本波和本局的伤害与 DPS |
 
 玩家说明见 [安装说明.txt](安装说明.txt)。
 
@@ -60,7 +61,7 @@ public class Plugin : BaseUnityPlugin
 | `AutoCast` | 接管自动释放：决定放不放、打谁；`Resolved` 事件报告结果 |
 | `MoveControl` | 接管没有方向键输入时的走位（等同按住方向键） |
 | `Arena` | 地面预警（形状、剩余时间）、场地边界 |
-| `Combat` | 命中事件：伤害、是否打死、来源技能 |
+| `Combat` | 命中事件：伤害、是否打死、来源技能、是不是普攻 |
 | `ModContext` | Mod 运行上下文：`OnUpdate`、`OnBattleStarted`、`UseAutoCast`、`LoadJson` 等，卸载时自动清理 |
 | `ModEvents` | 每帧、进入/离开战斗、退出游戏 |
 | `NativeUi` | 用游戏素材拼的面板、开关、滑条、下拉框、按钮，以及大窗口、页签、滚动列表、输入框 |
