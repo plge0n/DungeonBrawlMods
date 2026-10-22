@@ -775,7 +775,8 @@ namespace DBModKit
                 }
                 row[column] = value;
             }
-            string Join(float[] values) => values == null || values.Length == 0 ? null
+            // 空的写 ""，和游戏读表的结果一致：bht.msz 用 dwb<string>("value") 直接 ToString，null 会空引用
+            string Join(float[] values) => values == null || values.Length == 0 ? ""
                 : string.Join("|", values.Select(v => v.ToString(System.Globalization.CultureInfo.InvariantCulture)));
             Set("id", info.Id.ToString());
             Set("class", ModPassiveClassPrefix + info.Id);
@@ -906,7 +907,8 @@ namespace DBModKit
             var def = info.Def;
             var template = table.Values.OfType<Dictionary<string, object>>().FirstOrDefault();
             var row = template != null ? new Dictionary<string, object>(template) : new Dictionary<string, object>();
-            string Join<T>(IEnumerable<T> values) => values == null || !values.Any() ? null
+            // 空格子写 ""（游戏读表的结果就是 ""，按 dwb<string> 读的地方遇到 null 会空引用）
+            string Join<T>(IEnumerable<T> values) => values == null || !values.Any() ? ""
                 : string.Join("|", values.Select(v => Convert.ToString(v, System.Globalization.CultureInfo.InvariantCulture)));
             string grade = def.Quality.ToString();
             row["id"] = info.Id;
@@ -918,14 +920,14 @@ namespace DBModKit
             // 国王对决里的拟人玩家不会拿到（构筑数据本来也会去掉自定义遗物）
             row["kingLock"] = true;
             row["info"] = def.Description;
-            row["condition"] = null;
+            row["condition"] = "";
             // values / levelup / valueTypes 都是 "|" 分隔的字符串（rn.gui → ez.dwe，rn.guj）
             row["values"] = Join(def.Values);
             row["levelup"] = Join(def.LevelUp);
             row["valueTypes"] = Join(def.ValueTypes);
             row["maxLevel"] = def.MaxLevel;
             row["isUnique"] = def.Unique;
-            row["mapTypes"] = null;
+            row["mapTypes"] = "";
             row["runAcquireLimit"] = 0;
 
             EjectRelic(info.Id);
@@ -1118,7 +1120,7 @@ namespace DBModKit
             row["damageValue"] = Num(def.DamageValue);
             row["interval"] = Num(def.Interval);
             row["duration"] = Num(def.Duration);
-            row["damageExValue"] = values;
+            row["damageExValue"] = values ?? "";
 
             // 和 oo 的转换一致
             var data = new ActiveSkillData
