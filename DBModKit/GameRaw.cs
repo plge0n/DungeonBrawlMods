@@ -670,7 +670,7 @@ namespace DBModKit
         {
             buj.pwm(heroId);
             if (nn.bpbu is bbe p && (int)p.heroType == heroId && p.roleType == RoleType.Player)
-                p.roleName = ez.dvm(p.heroType);
+                p.roleName = HeroVariants.LocalName(heroId) ?? ez.dvm(p.heroType);
         }
 
         // 在 HeroSkinHooks 的角色上下文里撤掉模型（buj.pwn）再换（buj.pwh），名字（roleName）也按这个角色重新算
@@ -682,7 +682,8 @@ namespace DBModKit
             {
                 buj.pwn(player.bpia);
                 buj.pwh(player);
-                if (player.roleType == RoleType.Player) player.roleName = ez.dvm(player.heroType);
+                if (player.roleType == RoleType.Player)
+                    player.roleName = (player.bphc ? HeroVariants.LocalName((int)player.heroType) : null) ?? ez.dvm(player.heroType);
             });
         }
 
@@ -1157,6 +1158,79 @@ namespace DBModKit
             if (s == null || !ModAssets.IsOurs(s.bhnf)) return;
             var sprite = ModAssets.IconFor(s.bhnf);
             if (sprite != null) ((bpf)button).bjgj.sprite = sprite;
+        }
+
+        // ---- 变体英雄（HeroVariants）----
+        // 出生 bbe.kzz：属性取 cj.boyl.bcru[英雄编号] 传给 yb.iuh（成长值在这里拷进角色字段，之后不再读表），
+        // 本地玩家再读原始表 cx.zyc["hero"][编号] 的 skill / zhuDong 列发专属技能（iuz 被动 / iuy 主动）。
+        // kzz 期间把这两行临时换成改过的副本，结束后换回原版，所以别的玩家、下一次出生都不受影响。
+        // 防篡改的影子副本（nn.fsq）在 iuh 之后才建立，改过的值和影子一致
+        private sealed class VariantRestore
+        {
+            public string Key;
+            public RoleAttribute Attribute;
+            public bool HasAttribute;
+            public Dictionary<string, object> HeroTable;
+            public object HeroRow;
+        }
+
+        public static object ApplyVariantTables(int heroId, HeroVariantInfo variant)
+        {
+            string key = heroId.ToString();
+            var r = new VariantRestore { Key = key };
+            var d = variant.Def;
+            if (cj.boyl != null && cj.boyl.bcru.TryGetValue(key, out var attr))
+            {
+                r.Attribute = attr;
+                r.HasAttribute = true;
+                if (d.Strength.HasValue) attr.STR = d.Strength.Value;
+                if (d.Agility.HasValue) attr.AGI = d.Agility.Value;
+                if (d.Stamina.HasValue) attr.STA = d.Stamina.Value;
+                if (d.StrengthGrowth.HasValue) attr.STRadd = d.StrengthGrowth.Value;
+                if (d.AgilityGrowth.HasValue) attr.AGIadd = d.AgilityGrowth.Value;
+                if (d.StaminaGrowth.HasValue) attr.STAadd = d.StaminaGrowth.Value;
+                if (d.Attack.HasValue) attr.attackPower = d.Attack.Value;
+                if (d.Armor.HasValue) attr.armor = d.Armor.Value;
+                if (d.Hp.HasValue) attr.hp = d.Hp.Value;
+                if (d.Mp.HasValue) attr.mp = d.Mp.Value;
+                if (d.HpRecover.HasValue) attr.hpRecover = d.HpRecover.Value;
+                if (d.MpRecover.HasValue) attr.mpRecover = d.MpRecover.Value;
+                if (d.MoveSpeed.HasValue) attr.moveSpeed = d.MoveSpeed.Value;
+                if (d.AttackSpeed.HasValue) attr.attackSpeed = d.AttackSpeed.Value;
+                cj.boyl.bcru[key] = attr;
+            }
+            if (variant.SkillOverride(out int skill, out bool active)
+                && cx.zyc.TryGetValue("hero", out var t) && t is Dictionary<string, object> heroes
+                && heroes.TryGetValue(key, out var row) && row is Dictionary<string, object> original)
+            {
+                // 整行换成副本，原来的行对象不动
+                var copy = new Dictionary<string, object>(original)
+                {
+                    ["skill"] = skill.ToString(),
+                    ["zhuDong"] = active,
+                };
+                r.HeroTable = heroes;
+                r.HeroRow = original;
+                heroes[key] = copy;
+            }
+            return r;
+        }
+
+        public static void RestoreVariantTables(object restore)
+        {
+            if (!(restore is VariantRestore r)) return;
+            if (r.HasAttribute && cj.boyl != null) cj.boyl.bcru[r.Key] = r.Attribute;
+            if (r.HeroTable != null) r.HeroTable[r.Key] = r.HeroRow;
+        }
+
+        public static bool IsLocalSpawn(Component player) => player is bbe p && p.bphc;
+
+        // 出生结束后：血条上的名字（yb.iuh 里按 ez.dvm 算过一次，之后每帧读 roleName）
+        public static void ApplyVariantName(Component player)
+        {
+            var p = (bbe)player;
+            string name = HeroVariants.LocalName((int)p.heroType);
+            if (name != null && p.roleType == RoleType.Player) p.roleName = name;
         }
 
         // ---- 技能实例 bht ----

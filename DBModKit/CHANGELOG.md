@@ -14,6 +14,10 @@
   `FormulaDamage`，以及走游戏伤害结算的 `DamageArea` / `Damage`、对象池特效 `Effect`。`ActiveSkills.Give` 直接发放
 - 联机：技能在每个装了这个 Mod 的客户端上都会创建（能看到效果），伤害只在施法者那边结算；没装的人只看到施法动作，不会出错。
   编号 2000000 起
+- 新增变体英雄（`HeroVariants`）：`mod.RegisterHeroVariant(new HeroVariantDef { BaseHero = 英雄, … })`，底层仍是原英雄，
+  出生时换属性（三维、成长、攻击、护甲、生命、法力、回复、移速、攻速）、专属技能（游戏的或自定义的主动/被动）、模型（Mod 自带的模型文件夹或工坊模型）和名字。
+  属性和专属技能和玩法包一样只在单人时生效，联机时只换名字和模型（模型只在自己这边显示）。玩家在 DBStudio 的 Mod 页"英雄变体"里给每个英雄选，
+  也可以用 `HeroVariants.Select`；`HeroVariants.LocalVariant` / `LocalGameplayActive` 是这一局的情况
 - 新增 Mod 资源（`ModAssets`）：`mod.LoadIcon(键, "图片.png")` / `mod.RegisterIcon(键, Sprite)` 返回图标名，填进技能的 `Icon`，
   技能栏、三选一、图鉴、构筑面板都会显示；`mod.RegisterEffect(键, 模板)` 返回特效路径，传给 `ActiveSkill.Effect`，走游戏的对象池；
   `mod.LoadBundle("xxx.bundle")` 打开 AssetBundle（`Sprite` / `Prefab` / `Clip` / `Load<T>`），卸载时自动关闭。`mod.Folder` 是插件所在文件夹

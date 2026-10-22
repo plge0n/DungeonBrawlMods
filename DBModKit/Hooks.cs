@@ -152,6 +152,11 @@ namespace DBModKit
                 AccessTools.Method(typeof(bpf), "opi"),
                 postfix: nameof(AssetHooks.SkillButtonPostfix));
 
+            // 变体英雄：出生时临时换属性表和专属技能，结束后换回；名字在出生后改
+            HeroVariants.Available = TryPatch(harmony, typeof(VariantHooks), "变体英雄（出生）",
+                AccessTools.Method(typeof(bbe), "kzz", new[] { typeof(Vector3), typeof(uint), typeof(HeroType), typeof(string) }),
+                prefix: nameof(VariantHooks.SpawnPrefix), postfix: nameof(VariantHooks.SpawnPostfix), finalizer: nameof(VariantHooks.SpawnFinalizer));
+
             try
             {
                 Combat.Install();
@@ -409,6 +414,51 @@ namespace DBModKit
             catch (Exception e)
             {
                 Safe.Report("Mod 图标（技能栏）", e);
+            }
+        }
+    }
+
+    // 变体英雄（见 HeroVariants）：bbe.kzz(位置, 编号, 英雄, Steam 名)，每个客户端对每个玩家都会调用，只处理本地玩家
+    internal static class VariantHooks
+    {
+        internal static void SpawnPrefix(bbe __instance, HeroType __2, out object __state)
+        {
+            __state = null;
+            if (!GameRaw.IsLocalSpawn(__instance)) return;
+            try
+            {
+                __state = HeroVariants.BeforeSpawn((int)__2);
+            }
+            catch (Exception e)
+            {
+                Safe.Report("变体英雄（出生前）", e);
+            }
+        }
+
+        internal static void SpawnPostfix(bbe __instance)
+        {
+            if (!GameRaw.IsLocalSpawn(__instance)) return;
+            try
+            {
+                GameRaw.ApplyVariantName(__instance);
+            }
+            catch (Exception e)
+            {
+                Safe.Report("变体英雄（名字）", e);
+            }
+        }
+
+        // 原方法抛异常时也要把表换回去
+        internal static void SpawnFinalizer(object __state)
+        {
+            if (__state == null) return;
+            try
+            {
+                HeroVariants.AfterSpawn(__state);
+            }
+            catch (Exception e)
+            {
+                Safe.Report("变体英雄（还原表）", e);
             }
         }
     }
