@@ -92,6 +92,18 @@ pwsh ./pack.ps1                                 # 生成 dist/ 下的发布包�
 - 公共构建配置在 `Directory.Build.props/.targets`：Mod 项目只需写 `AssemblyName` 和对 DBModKit 的 `ProjectReference`（`Private="false"`）。模板在 `templates/DBMod`。
 - 发布新版本：改源码里的 `Version` 常量 → 在对应目录的 `CHANGELOG.md` 加条目 → `pack.ps1`（缺少更新日志条目时会报错）。
 
+## 创意工坊
+游戏的工坊不加载 dll。DBModKit 自带加载器：订阅的条目里有 `dbmod.json`（`"Type": "plugin"`）就当成 BepInEx 插件加载，
+第一次加载前会弹窗让玩家确认。BepInEx 和 DBModKit 本身仍要装进游戏目录（Doorstop 的 `winhttp.dll` 只能放在那里）。
+
+```json
+{ "Format": 1, "Type": "plugin", "Name": "SmartSkill", "Author": "…", "Version": "0.7.0",
+  "Description": "…", "MinModKit": "0.9.0", "Assemblies": ["SmartSkill.dll"] }
+```
+- `pack.ps1` 会在 `dist/workshop/<插件>/` 生成条目文件夹（dll + dbmod.json）。
+- 上传前测试：把条目文件夹复制到 `BepInEx/workshop-dev/`，并把 `plugins`/`scripts` 里同名的插件挪走（本地已装的优先）。
+- 条目里不要放 `manifest.json`：那是游戏自己的格式（英雄模型等），游戏会去读它。
+
 ## 游戏更新后
 1. 进游戏看 `BepInEx/LogOutput.log`：DBModKit 会列出找不到的成员。
 2. 用 `../_DungeonBrawl_tools/` 里的工具重新解密字符串、反编译，对照 `../_DungeonBrawl_tools/NOTES.md` 找到新名字。注意混淆器会生成诱饵方法，要靠调用关系确认真方法。
