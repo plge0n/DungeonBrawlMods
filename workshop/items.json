@@ -1,6 +1,6 @@
 {
   "Runtime": {
-    "Id": 0,
+    "Id": 3824690979,
     "Visibility": "private",
     "Folder": "dist/workshop/Runtime",
     "Preview": "workshop/Runtime/preview.png",
@@ -12,6 +12,96 @@
     "Description": {
       "schinese": "[b]其他代码 Mod 都需要先装这个。[/b]\n\n游戏的创意工坊不会自动加载代码 Mod。本条目包含 Mod 加载器 BepInEx 5 和公共依赖库 DBModKit，订阅后需要运行一次安装器。\n\n[h2]安装[/h2]\n[olist]\n[*]订阅，等 Steam 下载完成\n[*]退出游戏，打开 [i]<Steam 库>\\steamapps\\workshop\\content\\4246640\\<本条目编号>\\[/i]，双击 [b]install.bat[/b]\n[*]启动游戏\n[/olist]\n条目更新后游戏里会提示，退出游戏再运行一次 install.bat。\n\n[h2]卸载[/h2]\n运行同一文件夹里的 [b]uninstall.bat[/b]，再取消订阅。\n\n[h2]注意[/h2]\n[list]\n[*]按游戏作者的规则，装了 Mod 后成绩不会上传排行榜，其他功能不受影响。\n[*]游戏更新后如果不兼容，进游戏会提示，Mod 自动停用，游戏照常可玩。\n[*]BepInEx、Doorstop 为 LGPL-2.1，许可证和源码链接见条目里的 licenses 文件夹。\n[/list]",
       "english": "[b]Required by all code mods.[/b]\n\nThe game's Workshop does not load code mods by itself. This item contains the BepInEx 5 mod loader and the shared library DBModKit; run the installer once after subscribing.\n\n[h2]Install[/h2]\n[olist]\n[*]Subscribe and wait for the download\n[*]Quit the game, open [i]<Steam library>\\steamapps\\workshop\\content\\4246640\\<this item id>\\[/i] and double-click [b]install.bat[/b]\n[*]Start the game\n[/olist]\nWhen this item updates the game will tell you; quit and run install.bat again.\n\n[h2]Uninstall[/h2]\nRun [b]uninstall.bat[/b] in the same folder, then unsubscribe.\n\n[h2]Notes[/h2]\n[list]\n[*]By the game author's rule, scores are not uploaded to the leaderboard while mods are installed.\n[*]If a game update breaks compatibility, you'll see a notice and the mods disable themselves; the game still works.\n[*]BepInEx and Doorstop are LGPL-2.1; licenses and source links are in the item's licenses folder.\n[/list]"
+    }
+  },
+  "SmartSkill": {
+    "Id": 3824691150,
+    "Visibility": "private",
+    "Folder": "dist/workshop/SmartSkill",
+    "Preview": "workshop/SmartSkill/preview.png",
+    "Tags": [],
+    "Title": {
+      "schinese": "SmartSkill：技能自动释放条件",
+      "english": "SmartSkill: smarter auto-cast"
+    },
+    "Description": {
+      "schinese": "[b]需要先订阅并安装 [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3824690979]Mod 运行环境（BepInEx + DBModKit）[/url][/b]（游戏的创意工坊不会自动加载代码 Mod）。装好运行环境后，订阅本条目即可，第一次加载时游戏里会让你确认。\n\n游戏里右键技能图标可以开启自动释放，但原版只要冷却好、蓝够、附近有敌人就会放。SmartSkill 让你给每个技能单独设定释放条件。\n\n[list]\n[*]条件：自身血量、敌人数量、有没有 Boss、敌人血量、能斩杀的敌人数（处决、点金术、撕咬）、上一次效果结束后再放、保留充能……\n[*]开关技能（献祭等）条件满足时保持开启，不满足时自动关闭\n[*]不知道怎么设就点\"按标签推荐\"\n[/list]\n\n[h2]用法[/h2]\n战斗中右键技能图标开启自动释放，点图标右上角的齿轮设置条件。装了 DBStudio 时也可以在 F9 → Mod 页里统一管理。\n\n[h2]注意[/h2]\n[list]\n[*]按游戏作者的规则，装了 Mod 后成绩不会上传排行榜。\n[*]界面目前只有中文。\n[*]源码（MIT）和问题反馈：https://github.com/plge0n/DungeonBrawlMods\n[/list]",
+      "english": "[b]Requires [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3824690979]Mod Runtime (BepInEx + DBModKit)[/url] to be subscribed and installed first[/b] (the game's Workshop doesn't load code mods by itself). Once the runtime is installed, just subscribe; you'll be asked to confirm the first time it loads.\n\nRight-clicking a skill icon turns on auto-cast, but vanilla fires whenever the skill is ready and an enemy is nearby. SmartSkill lets you set conditions per skill.\n\n[list]\n[*]Conditions: your HP, enemy count, bosses, enemy HP, number of killable enemies (execute-type skills), wait until the previous effect ends, keep charges, ...\n[*]Toggle skills stay on while the conditions hold and turn off when they don't\n[*]\"Recommend by tags\" fills in sensible defaults\n[/list]\n\n[h2]Usage[/h2]\nIn combat, right-click a skill icon to enable auto-cast, then click the gear at its corner. With DBStudio installed you can also manage all skills under F9 → Mod page.\n\n[h2]Notes[/h2]\n[list]\n[*]By the game author's rule, scores aren't uploaded to the leaderboard while mods are installed.\n[*]The in-game UI is Chinese only for now.\n[*]Source code (MIT) and issues: https://github.com/plge0n/DungeonBrawlMods\n[/list]"
+    }
+  },
+  "SmartMove": {
+    "Id": 3824691259,
+    "Visibility": "private",
+    "Folder": "dist/workshop/SmartMove",
+    "Preview": "workshop/SmartMove/preview.png",
+    "Tags": [],
+    "Title": {
+      "schinese": "SmartMove：自动躲避地面预警",
+      "english": "SmartMove: auto-dodge ground telegraphs"
+    },
+    "Description": {
+      "schinese": "[b]需要先订阅并安装 [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3824690979]Mod 运行环境（BepInEx + DBModKit）[/url][/b]（游戏的创意工坊不会自动加载代码 Mod）。装好运行环境后，订阅本条目即可，第一次加载时游戏里会让你确认。\n\n没按方向键时，地面出现红色预警（敌人技能、陷阱）会自动走出去，开不开自动战斗都生效。\n\n[list]\n[*]优先选离场地边缘和障碍物远的落脚点，避免被堵进墙角\n[*]F9 开关（和 DBStudio 撞键，可以在 DBStudio 的 Mod 页里改）\n[*]敌人的普通攻击出手必中，躲不掉；能躲的是带红色预警的技能\n[/list]\n\n[h2]注意[/h2]\n[list]\n[*]按游戏作者的规则，装了 Mod 后成绩不会上传排行榜。\n[*]界面目前只有中文。\n[*]源码（MIT）和问题反馈：https://github.com/plge0n/DungeonBrawlMods\n[/list]",
+      "english": "[b]Requires [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3824690979]Mod Runtime (BepInEx + DBModKit)[/url] to be subscribed and installed first[/b] (the game's Workshop doesn't load code mods by itself). Once the runtime is installed, just subscribe; you'll be asked to confirm the first time it loads.\n\nWhen you're not pressing a direction key, it walks you out of red ground telegraphs (enemy skills, traps), with or without auto-battle.\n\n[list]\n[*]Prefers spots away from the arena edge and obstacles so you don't get cornered\n[*]Toggle with F9 (clashes with DBStudio; change it in DBStudio's Mod page)\n[*]Enemy basic attacks always hit once started; only telegraphed skills can be dodged\n[/list]\n\n[h2]Notes[/h2]\n[list]\n[*]By the game author's rule, scores aren't uploaded to the leaderboard while mods are installed.\n[*]The in-game UI is Chinese only for now.\n[*]Source code (MIT) and issues: https://github.com/plge0n/DungeonBrawlMods\n[/list]"
+    }
+  },
+  "AutoPickup": {
+    "Id": 3824691366,
+    "Visibility": "private",
+    "Folder": "dist/workshop/AutoPickup",
+    "Preview": "workshop/AutoPickup/preview.png",
+    "Tags": [],
+    "Title": {
+      "schinese": "AutoPickup：自动拾取",
+      "english": "AutoPickup: automatic pickup"
+    },
+    "Description": {
+      "schinese": "[b]需要先订阅并安装 [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3824690979]Mod 运行环境（BepInEx + DBModKit）[/url][/b]（游戏的创意工坊不会自动加载代码 Mod）。装好运行环境后，订阅本条目即可，第一次加载时游戏里会让你确认。\n\n战斗中自动捡起身边 5 米内能捡的掉落物（自己的、公共的、队友设了共享的），相当于替你按 C，不会隔空拾取。\n\n[list]\n[*]按类别开关：金币、属性书、技能书、遗物、卡牌、药剂、强化材料默认捡；神符、剧情道具默认不捡\n[*]背包满时占格子的物品先不捡\n[*]设置在 DBStudio（F9）的 Mod 页里改，或编辑 BepInEx\\config\\plge0n.dungeonbrawl.autopickup.cfg\n[/list]\n\n[h2]注意[/h2]\n[list]\n[*]按游戏作者的规则，装了 Mod 后成绩不会上传排行榜。\n[*]界面目前只有中文。\n[*]源码（MIT）和问题反馈：https://github.com/plge0n/DungeonBrawlMods\n[/list]",
+      "english": "[b]Requires [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3824690979]Mod Runtime (BepInEx + DBModKit)[/url] to be subscribed and installed first[/b] (the game's Workshop doesn't load code mods by itself). Once the runtime is installed, just subscribe; you'll be asked to confirm the first time it loads.\n\nPicks up drops within 5 m during combat (yours, shared ones, and teammates' shared drops) - the same as pressing C for you, no pickup from afar.\n\n[list]\n[*]Per-category switches: gold, attribute books, skill books, relics, cards, potions and materials on by default; runes and story items off\n[*]Items that take a bag slot are skipped when the bag is full\n[*]Settings in DBStudio (F9) → Mod page, or BepInEx\\config\\plge0n.dungeonbrawl.autopickup.cfg\n[/list]\n\n[h2]Notes[/h2]\n[list]\n[*]By the game author's rule, scores aren't uploaded to the leaderboard while mods are installed.\n[*]The in-game UI is Chinese only for now.\n[*]Source code (MIT) and issues: https://github.com/plge0n/DungeonBrawlMods\n[/list]"
+    }
+  },
+  "DamageMeter": {
+    "Id": 3824691468,
+    "Visibility": "private",
+    "Folder": "dist/workshop/DamageMeter",
+    "Preview": "workshop/DamageMeter/preview.png",
+    "Tags": [],
+    "Title": {
+      "schinese": "DamageMeter：伤害统计",
+      "english": "DamageMeter: damage meter"
+    },
+    "Description": {
+      "schinese": "[b]需要先订阅并安装 [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3824690979]Mod 运行环境（BepInEx + DBModKit）[/url][/b]（游戏的创意工坊不会自动加载代码 Mod）。装好运行环境后，订阅本条目即可，第一次加载时游戏里会让你确认。\n\n战斗中屏幕右侧显示你打出的伤害。\n\n[list]\n[*]按普攻、每个技能、召唤物，以及具体的装备、被动、遗物、持续伤害等分开，显示伤害、占比、暴击率\n[*]总计、DPS、用时、最高一击、承受伤害、击杀数；本波 / 本局切换\n[*]Steam 联机时显示队友的伤害（队友也装了才有数据）；局域网不支持\n[*]只读不改，不影响游戏\n[/list]\n\n[h2]注意[/h2]\n[list]\n[*]按游戏作者的规则，装了 Mod 后成绩不会上传排行榜。\n[*]界面目前只有中文。\n[*]源码（MIT）和问题反馈：https://github.com/plge0n/DungeonBrawlMods\n[/list]",
+      "english": "[b]Requires [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3824690979]Mod Runtime (BepInEx + DBModKit)[/url] to be subscribed and installed first[/b] (the game's Workshop doesn't load code mods by itself). Once the runtime is installed, just subscribe; you'll be asked to confirm the first time it loads.\n\nShows your damage on the right side of the screen during combat.\n\n[list]\n[*]Split by basic attacks, each skill, summons, and specific equipment, passives, relics, damage over time, ... with share and crit rate\n[*]Total, DPS, time, biggest hit, damage taken, kills; switch between this wave and this run\n[*]Shows teammates' damage in Steam lobbies (if they have it too); not on LAN\n[*]Read-only, doesn't change the game\n[/list]\n\n[h2]Notes[/h2]\n[list]\n[*]By the game author's rule, scores aren't uploaded to the leaderboard while mods are installed.\n[*]The in-game UI is Chinese only for now.\n[*]Source code (MIT) and issues: https://github.com/plge0n/DungeonBrawlMods\n[/list]"
+    }
+  },
+  "Hextech": {
+    "Id": 3824691564,
+    "Visibility": "private",
+    "Folder": "dist/workshop/Hextech",
+    "Preview": "workshop/Hextech/preview.png",
+    "Tags": [],
+    "Title": {
+      "schinese": "Hextech：海克斯强化",
+      "english": "Hextech: augments for your signature skill"
+    },
+    "Description": {
+      "schinese": "[b]需要先订阅并安装 [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3824690979]Mod 运行环境（BepInEx + DBModKit）[/url][/b]（游戏的创意工坊不会自动加载代码 Mod）。装好运行环境后，订阅本条目即可，第一次加载时游戏里会让你确认。\n\n每局 4 次三选一（开局一次，之后在约 1/4、1/2、3/4 处的遗物回合后各一次），每张卡强化你英雄的专属技能。\n\n[list]\n[*]伤害、冷却、蓝耗、持续时间、充能，或\"释放时加攻速/护甲/无敌/回血\"\"技能击杀返还冷却\"\"免费再放一次\"等效果\n[*]银、金、棱彩三档，一局最多 2 个棱彩；每局 2 次刷新\n[*]已选强化显示在头像下面，F7 列出\n[*][b]只在单人时生效[/b]，房间里有其他玩家时本局停用\n[*]没有参数的 10 个被动英雄暂不支持\n[/list]\n\n[h2]注意[/h2]\n[list]\n[*]按游戏作者的规则，装了 Mod 后成绩不会上传排行榜。\n[*]界面目前只有中文。\n[*]源码（MIT）和问题反馈：https://github.com/plge0n/DungeonBrawlMods\n[/list]",
+      "english": "[b]Requires [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3824690979]Mod Runtime (BepInEx + DBModKit)[/url] to be subscribed and installed first[/b] (the game's Workshop doesn't load code mods by itself). Once the runtime is installed, just subscribe; you'll be asked to confirm the first time it loads.\n\n4 picks per run (one at the start, then after the relic pick at about 1/4, 1/2 and 3/4 of the waves). Every card upgrades your hero's signature skill.\n\n[list]\n[*]Damage, cooldown, mana cost, duration, charges, or on-cast effects like attack speed / armor / invulnerability / heal, cooldown refund on kills, a free extra cast\n[*]Silver, gold and prismatic tiers, max 2 prismatic per run; 2 rerolls per run\n[*]Chosen augments are shown under your portrait; F7 lists them\n[*][b]Single-player only[/b]: disabled for the run when anyone else is in the room\n[*]The 10 passive heroes without parameters aren't supported yet\n[/list]\n\n[h2]Notes[/h2]\n[list]\n[*]By the game author's rule, scores aren't uploaded to the leaderboard while mods are installed.\n[*]The in-game UI is Chinese only for now.\n[*]Source code (MIT) and issues: https://github.com/plge0n/DungeonBrawlMods\n[/list]"
+    }
+  },
+  "DBStudio": {
+    "Id": 3824691666,
+    "Visibility": "private",
+    "Folder": "dist/workshop/DBStudio",
+    "Preview": "workshop/DBStudio/preview.png",
+    "Tags": [],
+    "Title": {
+      "schinese": "DBStudio：游戏内 Mod 工作台",
+      "english": "DBStudio: in-game mod workbench"
+    },
+    "Description": {
+      "schinese": "[b]需要先订阅并安装 [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3824690979]Mod 运行环境（BepInEx + DBModKit）[/url][/b]（游戏的创意工坊不会自动加载代码 Mod）。装好运行环境后，订阅本条目即可，第一次加载时游戏里会让你确认。\n\n按 F9 打开（单人时暂停游戏），游戏风格的窗口：\n\n[list]\n[*][b]调试[/b]：玩家属性、技能栏、附近敌人、运行记录；单人时有满血、满蓝、加金币等测试操作；\"导出\"生成诊断报告\n[*][b]规则[/b]：不写代码做\"当……如果……就……\"的玩法\n[*][b]强化[/b]：自己定义波次结束时的三选一强化\n[*][b]数值[/b]：改技能、英雄、怪物数值，随时恢复原版\n[*][b]皮肤[/b]：给每个英雄挑一套工坊模型，只改外观；Steam 联机时装了 Mod 的队友也能看到\n[*][b]Mod[/b]：所有 Mod 的设置\n[/list]\n规则、强化、数值存成玩法包，联机时只有房间里每个人都装了一样的、或房主允许时才生效。\n\n[h2]注意[/h2]\n[list]\n[*]按游戏作者的规则，装了 Mod 后成绩不会上传排行榜。\n[*]界面目前只有中文。\n[*]源码（MIT）和问题反馈：https://github.com/plge0n/DungeonBrawlMods\n[/list]",
+      "english": "[b]Requires [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3824690979]Mod Runtime (BepInEx + DBModKit)[/url] to be subscribed and installed first[/b] (the game's Workshop doesn't load code mods by itself). Once the runtime is installed, just subscribe; you'll be asked to confirm the first time it loads.\n\nPress F9 to open it (pauses the game when you're alone):\n\n[list]\n[*][b]Debug[/b]: player stats, skill bar, nearby enemies, run log; test actions when alone; export a diagnostic report\n[*][b]Rules[/b]: \"when ... if ... then ...\" gameplay without code\n[*][b]Augments[/b]: your own pick-one-of-three upgrades at the end of waves\n[*][b]Values[/b]: change skill, hero and monster numbers; restore vanilla any time\n[*][b]Skins[/b]: pick a Workshop model per hero (cosmetic only); teammates with the mods see it in Steam lobbies\n[*][b]Mod[/b]: settings of every mod\n[/list]\nRules, augments and values are saved as gameplay packs; in multiplayer they only apply when everyone has the same packs or the host allows it.\n\n[h2]Notes[/h2]\n[list]\n[*]By the game author's rule, scores aren't uploaded to the leaderboard while mods are installed.\n[*]The in-game UI is Chinese only for now.\n[*]Source code (MIT) and issues: https://github.com/plge0n/DungeonBrawlMods\n[/list]"
     }
   }
 }
