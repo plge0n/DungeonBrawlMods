@@ -1,24 +1,21 @@
-using System;
-using System.Linq;
+using DBModKit;
 
 namespace SmartSkill
 {
     // "按标签推荐"按钮：根据游戏给技能打的标签生成一份初始规则，玩家可以再改
     internal static class Recommend
     {
-        public static SkillRule For(ActiveSkillEnum skill)
+        public static SkillRule For(SkillInfo skill)
         {
-            var data = GameApi.SkillData(skill);
-            var tags = data.tags ?? Array.Empty<SkillTag>();
             var rule = new SkillRule { Mode = RuleMode.Custom };
 
-            if (tags.Contains(SkillTag.Heal) || tags.Contains(SkillTag.Revive))
+            if (skill.HasTag(SkillTags.Heal) || skill.HasTag(SkillTags.Revive))
             {
                 rule.UseHpBelow = true;
                 rule.HpBelowPercent = 50f;
                 rule.CastWithoutEnemy = true;
             }
-            else if (tags.Contains(SkillTag.Shield) || tags.Contains(SkillTag.Defense))
+            else if (skill.HasTag(SkillTags.Shield) || skill.HasTag(SkillTags.Defense))
             {
                 rule.Combine = Combine.Any;
                 rule.UseHpBelow = true;
@@ -28,7 +25,7 @@ namespace SmartSkill
                 rule.Radius = 6f;
                 rule.CastWithoutEnemy = true;
             }
-            else if (tags.Contains(SkillTag.Area))
+            else if (skill.HasTag(SkillTags.Area))
             {
                 rule.Combine = Combine.Any;
                 rule.UseEnemyCount = true;

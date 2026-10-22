@@ -1,0 +1,34 @@
+<!-- 所有 Mod 项目共用的构建配置 -->
+<Project>
+  <PropertyGroup>
+    <TargetFramework>netstandard2.1</TargetFramework>
+    <LangVersion>latest</LangVersion>
+    <Nullable>disable</Nullable>
+    <!-- 游戏不在默认位置时：设置环境变量 GameDir，或 dotnet build -p:GameDir="X:\...\地下城竞技场" -->
+    <GameDir Condition="'$(GameDir)' == ''">D:\Steam\steamapps\common\地下城竞技场</GameDir>
+    <Managed>$(GameDir)\DungeonBrawl_Data\Managed</Managed>
+    <!-- 编译后复制到游戏的 BepInEx/plugins/<项目名>；打包时关闭，避免覆盖正在玩的游戏里的插件 -->
+    <DeployToGame Condition="'$(DeployToGame)' == ''">true</DeployToGame>
+    <PluginDir>$(GameDir)\BepInEx\plugins\$(MSBuildProjectName)</PluginDir>
+  </PropertyGroup>
+
+  <!-- BepInEx、Unity 和游戏自带的第三方库：只用于编译，不随 Mod 分发 -->
+  <ItemGroup>
+    <Reference Include="BepInEx" HintPath="$(GameDir)\BepInEx\core\BepInEx.dll" Private="false" />
+    <Reference Include="0Harmony" HintPath="$(GameDir)\BepInEx\core\0Harmony.dll" Private="false" />
+    <Reference Include="Newtonsoft.Json" HintPath="$(Managed)\Newtonsoft.Json.dll" Private="false" />
+    <Reference Include="UnityEngine" HintPath="$(Managed)\UnityEngine.dll" Private="false" />
+    <Reference Include="UnityEngine.CoreModule" HintPath="$(Managed)\UnityEngine.CoreModule.dll" Private="false" />
+    <Reference Include="UnityEngine.IMGUIModule" HintPath="$(Managed)\UnityEngine.IMGUIModule.dll" Private="false" />
+    <Reference Include="UnityEngine.TextRenderingModule" HintPath="$(Managed)\UnityEngine.TextRenderingModule.dll" Private="false" />
+    <Reference Include="UnityEngine.UI" HintPath="$(Managed)\UnityEngine.UI.dll" Private="false" />
+    <Reference Include="UnityEngine.UIModule" HintPath="$(Managed)\UnityEngine.UIModule.dll" Private="false" />
+  </ItemGroup>
+
+  <!-- 只有 ModKit 引用游戏代码（设置 ReferenceGame=true）；其他 Mod 一律通过 ModKit 访问游戏 -->
+  <ItemGroup Condition="'$(ReferenceGame)' == 'true'">
+    <Reference Include="Assembly-CSharp" HintPath="$(Managed)\Assembly-CSharp.dll" Private="false" />
+    <!-- 角色基类 yb 继承自 Mirror 的网络组件 -->
+    <Reference Include="Mirror" HintPath="$(Managed)\Mirror.dll" Private="false" />
+  </ItemGroup>
+</Project>

@@ -5,9 +5,9 @@ using System.Reflection;
 using HarmonyLib;
 using UnityEngine;
 
-namespace SmartSkill
+namespace DBModKit
 {
-    // 游戏每次更新都可能重新混淆，混淆名全部改变。启动时先用字符串+反射确认 Mod 依赖的成员都在，
+    // 游戏每次更新都可能重新混淆，混淆名全部改变。启动时先用字符串+反射确认 GameRaw / Hooks 用到的成员都在，
     // 对不上就整体停用，避免补丁打到错误的方法上。这里不能直接引用游戏类型，否则类型改名时 JIT 阶段就会崩。
     internal static class Compat
     {
@@ -28,12 +28,11 @@ namespace SmartSkill
             ["cl"] = new[] { "dff" },
             ["bpe"] = new[] { "bjes" },
             ["bpf"] = new[] { "bjgk", "bjgm" },
-            ["bpa"] = new[] { "OnPointerClick" },
             ["bht"] = new[] { "bhne", "bhny", "bpqi", "k896ff3548b31472b8b2cf8f649c25e65", "kacb7d091b5904139a602f04ed9552242" },
             ["RoleModeBase"] = new[] { "addRange" },
             ["ActiveSkillData"] = new[] { "tags", "indicator", "castingRange", "range", "cd", "canAuto" },
             ["ActiveSkillEnum"] = new[] { "None" },
-            ["SkillTag"] = new[] { "Heal", "Revive", "Shield", "Defense", "Area" },
+            ["SkillTag"] = new[] { "Heal", "Revive", "Shield", "Defense", "Buff", "Summon", "Aura", "Area", "Move", "Control" },
         };
 
         public static string GameVersion => Application.version;

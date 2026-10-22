@@ -25,13 +25,14 @@ SmartSkill 让你给每个技能单独设定释放条件，比如：血量低于
 Mod 只影响你自己角色的自动释放，队友不需要安装。
 
 【游戏更新后】
-如果游戏更新导致 Mod 不兼容，进游戏时屏幕顶部会提示「SmartSkill 已停用」，
+如果游戏更新导致 Mod 不兼容，进游戏时屏幕顶部会提示「DBModKit … 不兼容，相关 Mod 已停用」，
 此时 Mod 不会做任何修改，游戏可以正常玩，等 Mod 更新即可。
 
 【卸载】
 删除游戏目录下的 BepInEx\plugins\SmartSkill 文件夹即可。
+DBModKit 是 SmartSkill 依赖的公共库，没有其他 Mod 用到它时也可以删除 BepInEx\plugins\DBModKit。
 如果要连 BepInEx 一起卸载，再删除：BepInEx 文件夹、winhttp.dll、doorstop_config.ini、changelog.txt、.doorstop_version。
 
 【出问题时】
 把 BepInEx\LogOutput.log 发给作者。
-需要更详细的记录时，把 BepInEx\config\dry.dungeonbrawl.smartskill.cfg 里的 VerboseLog 改成 true。
+需要更详细的记录时，把 BepInEx\config\plge0n.dungeonbrawl.smartskill.cfg 里的 VerboseLog 改成 true。

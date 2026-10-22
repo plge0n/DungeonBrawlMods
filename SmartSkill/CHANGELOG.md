@@ -1,4 +1,8 @@
-# 更新日志
+# SmartSkill 更新日志
+
+## 0.5.0
+- 改为依赖 DBModKit，本身不再引用游戏代码；游戏更新后只需更新 DBModKit
+- 插件 GUID 改为 plge0n.dungeonbrawl.smartskill（配置文件名随之变为 plge0n.dungeonbrawl.smartskill.cfg）
 
 ## 0.4.0
 - 删除 F8 设置窗口，统一使用技能图标上的齿轮弹窗

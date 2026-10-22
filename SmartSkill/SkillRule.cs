@@ -1,6 +1,5 @@
-using System;
 using System.Collections.Generic;
-using System.IO;
+using DBModKit;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
 
@@ -50,69 +49,33 @@ namespace SmartSkill
         public bool CastWithoutEnemy;
 
         [JsonConverter(typeof(StringEnumConverter))] public TargetMode Target = TargetMode.Nearest;
-
-        public bool AnyConditionEnabled => UseHpBelow || UseManaAfter || UseEnemyCount || UseBossOrElite;
     }
 
+    // 规则按技能枚举名（SkillInfo.Key）存在 BepInEx/config/SmartSkill.rules.json
     internal static class RuleStore
     {
-        private static Dictionary<ActiveSkillEnum, SkillRule> rules = new Dictionary<ActiveSkillEnum, SkillRule>();
-        private static string path;
+        private static JsonConfig<Dictionary<string, SkillRule>> config;
 
-        public static void Load(string configDir)
+        public static void Load() => config = new JsonConfig<Dictionary<string, SkillRule>>("SmartSkill.rules.json");
+
+        public static SkillRule Get(SkillInfo skill)
         {
-            path = Path.Combine(configDir, "SmartSkill.rules.json");
-            if (!File.Exists(path)) return;
-            try
-            {
-                var loaded = JsonConvert.DeserializeObject<Dictionary<string, SkillRule>>(File.ReadAllText(path));
-                foreach (var kv in loaded)
-                    if (Enum.TryParse(kv.Key, out ActiveSkillEnum skill))
-                        rules[skill] = kv.Value;
-            }
-            catch (Exception e)
-            {
-                Plugin.Log.LogError($"读取 {path} 失败，使用默认规则：{e.Message}");
-            }
-        }
-
-        private static bool dirty;
-        private static float lastSaveTime;
-
-        // 拖动滑条时每帧都会改值，标记后隔一秒才落盘
-        public static void MarkDirty() => dirty = true;
-
-        public static void Tick()
-        {
-            if (dirty && UnityEngine.Time.unscaledTime - lastSaveTime > 1f) Flush();
-        }
-
-        public static void Flush()
-        {
-            if (!dirty) return;
-            Save();
-            dirty = false;
-            lastSaveTime = UnityEngine.Time.unscaledTime;
-        }
-
-        private static void Save()
-        {
-            var output = new Dictionary<string, SkillRule>();
-            foreach (var kv in rules)
-                output[kv.Key.ToString()] = kv.Value;
-            File.WriteAllText(path, JsonConvert.SerializeObject(output, Formatting.Indented));
-        }
-
-        public static SkillRule Get(ActiveSkillEnum skill)
-        {
-            if (!rules.TryGetValue(skill, out var rule))
+            if (!config.Data.TryGetValue(skill.Key, out var rule))
             {
                 rule = new SkillRule();
-                rules[skill] = rule;
+                config.Data[skill.Key] = rule;
             }
             return rule;
         }
 
-        public static void Set(ActiveSkillEnum skill, SkillRule rule) => rules[skill] = rule;
+        public static void Set(SkillInfo skill, SkillRule rule)
+        {
+            config.Data[skill.Key] = rule;
+            config.MarkDirty();
+        }
+
+        public static void MarkDirty() => config.MarkDirty();
+
+        public static void Flush() => config.Flush();
     }
 }

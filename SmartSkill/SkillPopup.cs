@@ -1,4 +1,5 @@
 using System.Linq;
+using DBModKit;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -16,16 +17,16 @@ namespace SmartSkill
 
         private static RectTransform root;
         private static RectTransform anchor;
-        private static bht slot;
+        private static SkillSlot slot;
         private static Text status;
         // 填充初始值时会触发控件回调，这期间忽略
         private static bool building;
         // 在控件回调里销毁控件自身会出问题，重建推迟到下一帧
         private static bool reopenPending;
 
-        public static bool IsOpenFor(bht s) => root != null && slot == s;
+        public static bool IsOpenFor(SkillSlot s) => root != null && slot == s;
 
-        public static void Toggle(bht s, RectTransform icon)
+        public static void Toggle(SkillSlot s, RectTransform icon)
         {
             if (IsOpenFor(s)) Close();
             else Open(s, icon);
@@ -55,20 +56,19 @@ namespace SmartSkill
                 return;
             }
             // 战斗结束、技能被替换时图标会回收或换技能
-            if (anchor == null || !anchor.gameObject.activeInHierarchy || slot == null || GameApi.LocalPlayer == null)
+            if (anchor == null || !anchor.gameObject.activeInHierarchy || slot == null || !Game.InBattle)
             {
                 Close();
                 return;
             }
             if (status != null)
             {
-                AutoCastGatePatch.LastStatus.TryGetValue(GameApi.SkillOf(slot), out var last);
-                string auto = GameApi.IsAutoCastOn(slot) ? "" : "（右键技能图标开启自动释放后生效）";
-                status.text = "上次：" + (last ?? "还没有触发过") + auto;
+                string auto = slot.IsAutoCastOn ? "" : "（右键技能图标开启自动释放后生效）";
+                status.text = "上次：" + (StatusLog.Last(slot.Info) ?? "还没有触发过") + auto;
             }
         }
 
-        private static void Open(bht s, RectTransform icon)
+        private static void Open(SkillSlot s, RectTransform icon)
         {
             Close();
             if (!NativeUi.Load()) return;
@@ -103,21 +103,19 @@ namespace SmartSkill
 
         private static void Build()
         {
-            var player = GameApi.LocalPlayer;
-            var skill = GameApi.SkillOf(slot);
-            var data = GameApi.SkillData(skill);
-            var rule = RuleStore.Get(skill);
-            bool selfCastable = GameApi.IsSelfCastable(data);
+            var player = Game.LocalPlayer;
+            var info = slot.Info;
+            var rule = RuleStore.Get(info);
 
             var header = NativeUi.Row(root, 44f);
-            NativeUi.Label(header, $"<b>{GameApi.SkillName(skill)}</b>  <size=18><color=#d6b67d>自动释放条件</color></size>", 28);
+            NativeUi.Label(header, $"<b>{info.Name}</b>  <size=18><color=#d6b67d>自动释放条件</color></size>", 28);
             var close = NativeUi.IconButton(header, NativeUi.CloseSprite, new Vector2(40f, 40f), Close);
             var closeLe = close.gameObject.AddComponent<LayoutElement>();
             closeLe.preferredWidth = closeLe.minWidth = 40f;
 
-            string tags = data.tags == null ? "" : string.Join("、", data.tags.Select(GameApi.TagName));
-            string cost = GameApi.CostsGold(slot) ? "花金币" : $"耗蓝 {GameApi.Cost(slot, player)}";
-            NativeUi.Label(root, $"{cost}   冷却 {data.cd:F1}s   施法范围 {GameApi.CastRange(data):F1}   {(selfCastable ? "无需瞄准" : "需要目标")}\n{tags}", 18, -1, NativeUi.DimText);
+            string tags = string.Join("、", info.Tags.Select(SkillInfo.TagDisplayName));
+            string cost = slot.CostsGold ? "花金币" : $"耗蓝 {slot.CostFor(player)}";
+            NativeUi.Label(root, $"{cost}   冷却 {info.Cooldown:F1}s   施法范围 {info.CastRange:F1}   {(info.IsSelfCastable ? "无需瞄准" : "需要目标")}\n{tags}", 18, -1, NativeUi.DimText);
             status = NativeUi.Label(root, "", 18, -1, NativeUi.DimText);
 
             var modeRow = NativeUi.Row(root);
@@ -131,25 +129,23 @@ namespace SmartSkill
             });
             mode.value = (int)rule.Mode;
 
-            if (rule.Mode == RuleMode.Custom) BuildConditions(rule, data, selfCastable);
+            if (rule.Mode == RuleMode.Custom) BuildConditions(rule, info);
 
             var buttons = NativeUi.Row(root, 56f, 16f);
             buttons.GetComponent<HorizontalLayoutGroup>().childAlignment = TextAnchor.MiddleCenter;
             NativeUi.Button(buttons, "按标签推荐", true, 230f, () =>
             {
-                RuleStore.Set(skill, Recommend.For(skill));
-                RuleStore.MarkDirty();
+                RuleStore.Set(info, Recommend.For(info));
                 Reopen();
             });
             NativeUi.Button(buttons, "恢复原版", false, 230f, () =>
             {
-                RuleStore.Set(skill, new SkillRule());
-                RuleStore.MarkDirty();
+                RuleStore.Set(info, new SkillRule());
                 Reopen();
             });
         }
 
-        private static void BuildConditions(SkillRule rule, ActiveSkillData data, bool selfCastable)
+        private static void BuildConditions(SkillRule rule, SkillInfo info)
         {
             var combineRow = NativeUi.Row(root);
             NativeUi.Label(combineRow, "条件关系", 22, LabelWidth);
@@ -175,7 +171,7 @@ namespace SmartSkill
             var radiusRow = NativeUi.Row(root);
             NativeUi.Label(radiusRow, "统计范围", 22, LabelWidth);
             var radiusValue = NativeUi.Label(radiusRow, "", 20, 130f);
-            string RadiusText(float r) => r <= 0f ? $"技能范围 {GameApi.CastRange(data):F1}" : $"{r:F1}";
+            string RadiusText(float r) => r <= 0f ? $"技能范围 {info.CastRange:F1}" : $"{r:F1}";
             var radiusSlider = NativeUi.Slider(radiusRow, 0f, 20f, false, v =>
             {
                 float r = Mathf.Round(v * 2f) / 2f;
@@ -186,7 +182,7 @@ namespace SmartSkill
             radiusSlider.value = rule.Radius;
             radiusValue.text = RadiusText(rule.Radius);
 
-            if (selfCastable)
+            if (info.IsSelfCastable)
             {
                 NativeUi.Toggle(root, "附近没有敌人也放（治疗、护盾等）", Width, v => Set(() => rule.CastWithoutEnemy = v)).isOn = rule.CastWithoutEnemy;
             }
@@ -250,35 +246,31 @@ namespace SmartSkill
 
         public static void Sync()
         {
-            var bar = cj.boyb?.dqr<bpe>();
-            if (bar?.bjes == null) return;
-            foreach (var button in bar.bjes)
+            foreach (var button in SkillBar.Buttons())
             {
-                if (button == null || button.bjgm == null) continue;
-                var icon = (RectTransform)button.bjgm.transform;
-                var gear = icon.Find(GearName);
-                bool show = ShouldShow(button);
+                var gear = button.Icon.Find(GearName);
+                bool show = ShouldShow(button.Slot);
                 if (gear == null)
                 {
                     if (!show || !NativeUi.Load()) continue;
-                    gear = Create(icon, button).transform;
+                    gear = Create(button).transform;
                 }
                 if (gear.gameObject.activeSelf != show) gear.gameObject.SetActive(show);
             }
         }
 
-        private static bool ShouldShow(bpf button)
+        private static bool ShouldShow(SkillSlot slot)
         {
-            var slot = button.bjgk;
-            if (slot == null || GameApi.SkillOf(slot) == ActiveSkillEnum.None) return false;
-            return GameApi.SkillData(GameApi.SkillOf(slot)).canAuto && (GameApi.IsAutoCastOn(slot) || SkillPopup.IsOpenFor(slot));
+            if (slot?.Info == null) return false;
+            return slot.Info.CanAutoCast && (slot.IsAutoCastOn || SkillPopup.IsOpenFor(slot));
         }
 
-        private static GameObject Create(RectTransform icon, bpf button)
+        // 同一个按钮上的技能可能被替换，点击时再取当前技能
+        private static GameObject Create(SkillButton button)
         {
-            var btn = NativeUi.IconButton(icon, NativeUi.GearSprite, new Vector2(90f, 90f), () =>
+            var btn = NativeUi.IconButton(button.Icon, NativeUi.GearSprite, new Vector2(90f, 90f), () =>
             {
-                if (button.bjgk != null) SkillPopup.Toggle(button.bjgk, icon);
+                if (button.Slot != null) SkillPopup.Toggle(button.Slot, button.Icon);
             });
             btn.name = GearName;
             var rt = (RectTransform)btn.transform;

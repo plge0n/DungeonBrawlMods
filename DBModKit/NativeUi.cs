@@ -5,10 +5,13 @@ using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.UI;
 
-namespace SmartSkill
+namespace DBModKit
 {
-    // 从游戏自己的 UI 预制体里取模板和贴图，拼出原生风格的控件
-    internal static class NativeUi
+    /// <summary>
+    /// 原生风格 UI 控件：从游戏自己的 UI 预制体里取模板和贴图拼出来，外观、字体与游戏一致。
+    /// 创建控件前先调用 <see cref="Load"/>。
+    /// </summary>
+    public static class NativeUi
     {
         public static readonly Color Gold = new Color(0.839f, 0.714f, 0.490f, 1f);
         public static readonly Color TextColor = new Color(0.92f, 0.90f, 0.85f, 1f);
@@ -16,12 +19,18 @@ namespace SmartSkill
 
         private static bool loaded;
         private static GameObject dropdownTemplate, sliderTemplate, confirmButton, cancelButton;
-        public static Sprite PanelSprite, BoxSprite, CheckSprite, GearSprite, CloseSprite;
-        public static Color PanelColor;
-        public static Font Font;
+        // 取自游戏 UI 的贴图和字体，Load 成功后可用
+        public static Sprite PanelSprite { get; private set; }
+        public static Sprite BoxSprite { get; private set; }
+        public static Sprite CheckSprite { get; private set; }
+        public static Sprite GearSprite { get; private set; }
+        public static Sprite CloseSprite { get; private set; }
+        public static Color PanelColor { get; private set; }
+        public static Font Font { get; private set; }
 
         private static bool failed;
 
+        /// <summary>加载模板；失败时返回 false 且不再重试（原因写入日志）。</summary>
         public static bool Load()
         {
             if (loaded) return true;
@@ -33,7 +42,7 @@ namespace SmartSkill
             catch (Exception e)
             {
                 failed = true;
-                Plugin.Log.LogError($"加载原生 UI 模板失败，齿轮和弹窗不可用（F8 窗口仍可用）：{e.Message}");
+                Log.Error($"加载原生 UI 模板失败，原生风格控件不可用：{e.Message}");
             }
             return loaded;
         }
@@ -59,7 +68,6 @@ namespace SmartSkill
             GearSprite = Find(battle, "trans_bg/trans_main/btn_set/Icon").GetComponent<Image>().sprite;
             CloseSprite = Find(battle, "trans_teamUI/trans_teamItem/KickOut/back").GetComponent<Image>().sprite;
             Font = dropdownTemplate.GetComponentInChildren<Text>(true).font;
-            Plugin.Log.LogInfo($"原生模板缩放：下拉框 {dropdownTemplate.transform.localScale} 滑条 {sliderTemplate.transform.localScale} 按钮 {confirmButton.transform.localScale}");
 
             loaded = true;
         }

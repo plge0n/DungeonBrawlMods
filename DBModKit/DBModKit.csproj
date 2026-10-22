@@ -1,0 +1,11 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <AssemblyName>DBModKit</AssemblyName>
+    <RootNamespace>DBModKit</RootNamespace>
+    <!-- 唯一引用游戏代码的项目 -->
+    <ReferenceGame>true</ReferenceGame>
+    <!-- 生成 XML 文档，依赖 ModKit 的 Mod 在 IDE 里能看到接口说明 -->
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <NoWarn>$(NoWarn);CS1591</NoWarn>
+  </PropertyGroup>
+</Project>
