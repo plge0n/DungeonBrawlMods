@@ -10,6 +10,7 @@
 - `RunLog.Mark()` 插带编号的标记（默认 Ctrl+F10），`RunLog.ExportReport()` 导出诊断报告（版本、兼容、状态、全部记录）
 - 配置 `RunLog.FileLevel`（写文件的最低级别，测试时改 Debug）、`RunLog.MarkHotkey`
 - `NativeUi.ListItemBackground`：列表项用游戏方框贴图做背景时不再被撑到至少 220 高
+- 修复：克隆的原版按钮文字框比按钮宽，挨着放时会抢走旁边按钮的点击（点"导出"触发"清空"）
 - 修复：定宽的 `NativeUi.Column` 仍会和旁边的栏平分剩余宽度；大窗口的标题和底部状态栏压在面板边框上；
   `GameData.Entries(Hero)` 的英雄名显示成编号
 

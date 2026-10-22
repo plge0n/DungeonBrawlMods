@@ -89,6 +89,8 @@ namespace DBModKit
             foreach (var c in go.GetComponentsInChildren<MonoBehaviour>(true))
                 if (c != null && c.GetType().Name == "LocalizationText")
                     UnityEngine.Object.DestroyImmediate(c);
+            // 原版按钮的文字框比按钮宽（350），挨着摆的时候会盖住旁边的按钮、把点击抢过去；文字不接收点击，交给按钮自己的背景
+            foreach (var t in go.GetComponentsInChildren<Text>(true)) t.raycastTarget = false;
             return go;
         }
 
@@ -364,6 +366,12 @@ namespace DBModKit
             var label = go.GetComponentInChildren<Text>(true);
             label.text = text;
             label.fontSize = 22;
+            // 文字框铺满按钮，长文字不会画到按钮外面
+            var lrt = label.rectTransform;
+            lrt.anchorMin = Vector2.zero;
+            lrt.anchorMax = Vector2.one;
+            lrt.offsetMin = new Vector2(8f, 0f);
+            lrt.offsetMax = new Vector2(-8f, 0f);
             var btn = go.GetComponent<Button>();
             btn.onClick = new Button.ButtonClickedEvent();
             btn.onClick.AddListener(onClick);
