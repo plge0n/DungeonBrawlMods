@@ -1,5 +1,10 @@
 # DBModKit 更新日志
 
+## 0.8.0
+- 新增 `ModSettings` / `ModContext.AddSettings`：Mod 往设置界面（DBStudio 的 Mod 页）里挂自定义设置区块，卸载时自动撤下；
+  设置界面和 Mod 都只依赖 ModKit，互不引用
+- `SkillInfo.Find(key)`、`SkillInfo.All()`
+
 ## 0.7.0
 - 新增 `ChoicePanel`：用游戏自己的肉鸽三选一界面（ui_roguelike）显示自定义选项（名字、描述、图标、品质色）；
   界面忙时不打开，避免把游戏待选的遗物随机选掉；不计入游戏的选项统计

@@ -93,6 +93,9 @@ namespace SmartSkill
             return rule;
         }
 
+        // 不存在时返回 null，不新建（列表显示用，免得把每个技能都写进文件）
+        public static SkillRule Peek(SkillInfo skill) => config.Data.TryGetValue(skill.Key, out var rule) ? rule : null;
+
         public static void Set(SkillInfo skill, SkillRule rule)
         {
             config.Data[skill.Key] = rule;
