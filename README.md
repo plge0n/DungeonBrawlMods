@@ -90,6 +90,10 @@ pwsh ./pack.ps1                                 # 生成 dist/ 下的发布包�
 
 **部署检查**：几个工作目录（git worktree）共用一个游戏目录，后编译的会覆盖先部署的。所以部署前会检查：当前代码要包含 `origin/main` 的最新提交，也要包含游戏里这个项目上一次部署时的提交（记在 `BepInEx/DBMods.deploy/<项目名>.commit`，里面有提交、分支和工作目录）。不满足就跳过部署并给出警告，编译照常完成；先变基或合并，确定要覆盖时加 `-p:ForceDeploy=true`。测试部署逻辑时用 `-p:DeployDir=<别的目录>` 部署到别处，不碰真实游戏目录。
 
+**开发和平时玩分开**：平时玩的游戏目录只装工坊版（运行环境 + 订阅的 Mod），在里面放一个空文件 `BepInEx\DBMods.nodeploy`，编译就不会再往里部署（`ForceDeploy` 也不行）。
+开发用另一个游戏目录：复制 `DungeonBrawl.exe`、`UnityPlayer.dll`、`MonoBleedingEdge` 等，`DungeonBrawl_Data` 用目录联接（`mklink /J`）指向原游戏，加一个内容是 `4246640` 的 `steam_appid.txt`，
+装 BepInEx 和开发工具（`tools/devtools.ps1`），然后把环境变量 `DeployDir` 设成这个目录（编译时引用的游戏程序集仍从 `GameDir` 读）。注意存档是共用的，测试前先备份。
+
 **DBStudio**：游戏内按 F9，游戏风格的调试面板：玩家属性、技能栏、敌人、事件日志、已加载插件；单人时有满血、满蓝、加金币等测试操作。规则页可以不写代码做"当……如果……就……"的玩法，强化页可以做波次结束时三选一的强化，数值页可以改技能、英雄、怪物数值，改动都存成玩法包（`BepInEx/config/DBStudio/packs/`），只在单人、房间里每个人都装了同样的玩法包、或房主允许时生效。皮肤页给每个英雄挑一套已订阅的工坊模型或 `BepInEx/skins/` 下的本地模型，只改显示、不影响玩法；Steam 联机时也装了 Mod 的队友能互相看到对方的工坊皮肤。
 
 **UnityExplorer**：游戏内按 F7。可以浏览场景里的 UI 和对象、查看/修改字段、在 C# 控制台里执行代码，是找游戏对象和调 UI 的首选工具。
