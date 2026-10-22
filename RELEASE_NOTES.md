@@ -40,8 +40,8 @@
 | 和没装 Mod 的人同房 | 握手应显示"有人没装 · 停用"；你放自定义内容时对方不应掉线 |
 | 局域网模式 | 局域网没有 Steam 大厅，确认不了别人装了什么：改玩法的内容一律停用，皮肤同步、队伍伤害统计不支持。整体没测过 |
 | Hextech | "回响"等释放时触发的效果、重试波次后还原强化、有人进房后停用 |
-| DamageMeter | 联机时召唤物伤害的归属；按来源拆分对帧率的影响 |
-| SmartMove / AutoPickup / SmartSkill 斩杀预测 | 没有专门做过完整的实战验证 |
+| DamageMeter | 联机时召唤物伤害的归属 |
+| SmartSkill 斩杀预测 | 处决、点金术、撕咬的"能斩杀的敌人 ≥"条件和命中校准 |
 | 游戏更新后的映射重建（开发者工具 `tools/Remap`） | 还没经历过真实的游戏更新 |
 
 ## 已知问题
@@ -95,8 +95,8 @@ These are implemented and compile, but haven't been fully verified in the game y
 | Rooms with players who don't have the mods | Handshake should show "someone doesn't have it · disabled"; they shouldn't disconnect when you use custom content |
 | LAN mode | There's no Steam lobby on LAN, so the mods can't check what others have installed: gameplay-changing content is always disabled, skin sync and team damage aren't supported. Not tested at all |
 | Hextech | On-cast effects such as "Echo", restoring augments after retrying a wave, disabling when someone joins |
-| DamageMeter | Attribution of summon damage in multiplayer; frame-rate impact of per-source breakdown |
-| SmartMove / AutoPickup / SmartSkill execute prediction | No dedicated full in-combat verification |
+| DamageMeter | Attribution of summon damage in multiplayer |
+| SmartSkill execute prediction | The "killable enemies >=" condition for 处决 / 点金术 / 撕咬 and its hit-based calibration |
 | Remapping after a game update (developer tool `tools/Remap`) | Not yet run against a real game update |
 
 ## Known issues
