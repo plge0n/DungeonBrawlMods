@@ -1,0 +1,38 @@
+{
+  "passiveSkills": [
+    { "key": "p1", "name": "被动", "quality": "X", "levelUp": "1", "repeatable": "no", "inSkillBook": false, "tags": ["Buff", 1] },
+    { "key": "p2", "name": "", "icon": "x.PNG" }
+  ],
+  "relics": [
+    { "key": "r1", "name": "好遗物", "values": [10], "valueTypes": ["Percent"], "maxLevel": 3, "onAdded": [ { "addStats": { "attack": "{0}" } } ] },
+    { "key": "r2", "name": "坏遗物", "valueTypes": ["Percnt", "Normal", "percent"], "onKill": [ { "damage": "target" } ] },
+    { "key": "r3", "name": "字段错", "uniqe": false, "unique": "yes", "inPool": 0, "maxLevel": 1.5 }
+  ],
+  "equipEffects": [
+    { "key": "e1", "name": "特效", "attachTo": [2, 3], "onHit": [ { "mana": 1 } ] },
+    { "key": "e2", "name": "特效2", "attachTo": [0] },
+    { "key": "e3", "name": "特效3", "attachTo": [5000000] },
+    { "key": "e4", "name": "特效4", "attachTo": 2 },
+    { "key": "e5", "name": "特效5", "attachTo": [2.5] },
+    { "key": "e6", "icon": "x" }
+  ],
+  "equipment": [
+    { "key": "q1", "name": "装备", "attributes": { "attack": 60, "hp": 200.5 }, "effects": ["e1"] },
+    { "key": "q2", "name": "空装备" },
+    { "key": "q3", "name": "空属性", "attributes": { } },
+    { "key": "q4", "name": "属性错", "attributes": { "attack": "60", "hp": null } },
+    { "key": "q5", "name": "属性不是对象", "attributes": [1] },
+    { "key": "q6", "name": "只有游戏特效", "gameEffects": ["Sputtering"], "artifact": "true" },
+    { "key": "q7", "name": "特效列表错", "effects": "e1" }
+  ],
+  "heroVariants": [
+    { "key": "v1", "name": "变体", "baseHero": 99 },
+    { "key": "v2", "name": "变体2", "baseHero": 1, "strength": 30, "moveSpeed": 4.5, "attackSpeed": "1", "hp": 1.5 },
+    { "key": "v3", "name": "变体3", "baseHero": 2, "activeSkill": "nova", "gamePassiveSkill": 501 },
+    { "key": "v4", "name": "变体4", "baseHero": 3, "gameActiveSkill": null, "passiveSkill": "p1" },
+    { "key": "v5", "baseHero": "1", "workshopModel": 3798456516, "modelFolder": 5 },
+    { "key": "v6", "name": "变体6", "baseHero": 43, "workshopModel": -1 }
+  ],
+  "monsters": [],
+  "Relics": []
+}

@@ -1,0 +1,22 @@
+{
+  "activeSkills": [
+    { "key": "ok1", "name": "好技能", "onCast": [ { "damage": "area" } ] },
+    { "key": "bad1", "name": "坏技能", "cooldwn": 3, "onCast": [ { "damge": "area" } ] },
+    { "key": "", "name": "没键" },
+    { "key": "中文", "name": "中文键" },
+    { "key": 5, "name": "数字键" },
+    { "key": "noname" },
+    { "key": "types", "name": "类型", "cost": 2.5, "cooldown": "8", "quality": "s", "indicator": "Line", "canAuto": 1, "tags": "Area", "values": [1, "2"] },
+    { "key": "enumnum", "name": "序号", "quality": "4", "indicator": " Target " },
+    { "key": "tick1", "name": "缺时长", "onTick": { "every": 0, "do": [ { "heal": 1 } ], "x": 1 } },
+    { "key": "tick2", "name": "tick 不是对象", "duration": 2, "onTick": [ ] },
+    { "key": "anim1", "name": "动作", "animation": { "speed": "fast", "loop": true } },
+    { "key": "anim2", "name": "动作2", "animation": "Frank" },
+    { "key": "icon1", "name": "图标", "icon": "assets/missing.png" },
+    { "key": "icon2", "name": "图标2", "icon": "SpellBook01_1" },
+    { "key": "icon3", "name": "图标3", "icon": "../outside.jpg" },
+    { "key": "lists", "name": "列表", "onCast": { "heal": 1 }, "onEnd": [ 1, { "heal": 2 } ] },
+    "不是对象",
+    { "key": "nullname", "name": null, "description": null }
+  ]
+}

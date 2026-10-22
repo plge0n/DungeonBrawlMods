@@ -64,7 +64,7 @@ public class Plugin : BaseUnityPlugin
 | 新装备、给已有装备加特效 | [自定义装备](docs/api/装备.md)、示例 [samples/SkillSample](samples/SkillSample)（风暴法杖、静电） |
 | "新英雄" | [英雄](docs/api/英雄.md)、示例 [samples/Frieren](samples/Frieren)（芙莉莲：无限魔力 + 杀人魔法） |
 | 自己的图标、特效、动作 | [AssetBundle](docs/AssetBundle.md)、示例 [samples/BundleSkill](samples/BundleSkill) |
-| 不写代码做 Mod（技能、被动、遗物、装备、变体） | [内容包](docs/内容包.md)、示例 [templates/ContentPack](templates/ContentPack) |
+| 不写代码做 Mod（技能、被动、遗物、装备、变体） | [内容包](docs/内容包.md)、示例 [templates/ContentPack](templates/ContentPack)、可视化编辑 [内容包工作台](tools/ContentWorkbench) |
 | 联机时该怎么办 | [联机](docs/api/联机.md) |
 | 依赖别的 Mod、和别的 Mod 抢功能 | [依赖和冲突](docs/api/依赖和冲突.md) |
 | 设置界面、窗口 | [界面](docs/api/界面.md)、[生命周期与基础设施](docs/api/生命周期.md) |
