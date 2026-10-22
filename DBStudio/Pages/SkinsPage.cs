@@ -8,7 +8,8 @@ using UnityEngine.UI;
 
 namespace DBStudio.Pages
 {
-    // 皮肤：给每个英雄从已订阅的工坊模型、本地皮肤文件夹里挑一套换上，或者强制用原版
+    // 皮肤：给每个英雄从已订阅的工坊模型、本地皮肤文件夹里挑一套换上，或者强制用原版；
+    // 左下角显示房间里也装了 Mod 的队友在用的皮肤
     internal sealed class SkinsPage : IStudioPage
     {
         // 订阅的物品可能在页面打开期间才下载完
@@ -17,11 +18,13 @@ namespace DBStudio.Pages
         // 切页再回来时保持选择
         private static string selectedHero;
 
-        private RectTransform heroList, options;
+        private RectTransform heroList, options, others;
         private Image headIcon;
         private Text headTitle, hint, state;
         private bool listBuilt;
         private float nextScan;
+        private int othersVersion = -1;
+        private bool othersShown;
         private readonly Dictionary<string, Text> heroLabels = new Dictionary<string, Text>();
         private readonly Dictionary<string, Image> heroBackgrounds = new Dictionary<string, Image>();
         // 右边每个选项的背景，键是皮肤编号（null 表示按游戏设置）
@@ -39,6 +42,17 @@ namespace DBStudio.Pages
             var left = NativeUi.Column(columns, 470f);
             NativeUi.Heading(left, "英雄");
             heroList = NativeUi.ScrollView(left, out _, 4f);
+            NativeUi.Separator(left);
+            NativeUi.Heading(left, "联机");
+            var onlyLocal = NativeUi.Toggle(left, "只换自己", 300f, Skins.SetOnlyLocalPlayer);
+            onlyLocal.isOn = Skins.Current.OnlyLocalPlayer;
+            NativeUi.SetEnabled(onlyLocal, HeroSkins.OnlyLocalPlayerAvailable);
+            var showOthers = NativeUi.Toggle(left, "显示队友的皮肤", 300f, Skins.SetShowOtherPlayers);
+            showOthers.isOn = Skins.Current.ShowOtherPlayers;
+            // 给队友换模型靠的是记下"正在出生的是谁"的钩子，和"只换自己"是同一组
+            NativeUi.SetEnabled(showOthers, HeroSkins.Available && HeroSkins.OnlyLocalPlayerAvailable);
+            others = FixedColumn(left);
+            othersVersion = -1;
 
             var right = NativeUi.Column(columns);
             var head = NativeUi.Row(right, 64f, 14f);
@@ -56,9 +70,6 @@ namespace DBStudio.Pages
 
             NativeUi.Separator(right);
             var bottom = NativeUi.Row(right, 56f, 16f);
-            var onlyLocal = NativeUi.Toggle(bottom, "只换自己", 170f, Skins.SetOnlyLocalPlayer);
-            onlyLocal.isOn = Skins.Current.OnlyLocalPlayer;
-            NativeUi.SetEnabled(onlyLocal, HeroSkins.OnlyLocalPlayerAvailable);
             state = NativeUi.Label(bottom, "", 18, -1f, NativeUi.DimText);
             NativeUi.Button(bottom, "刷新列表", false, 170f, () =>
             {
@@ -89,6 +100,39 @@ namespace DBStudio.Pages
             if (!HeroSkins.Available) state.text = "<color=#e07a5f>换模型的钩子没装上，选择不会生效</color>";
             else if (!HeroSkins.OnlyLocalPlayerAvailable) state.text = "<color=#e07a5f>“只换自己”的钩子没装上，同英雄的其他玩家也会换</color>";
             else state.text = Skins.Current.OnlyLocalPlayer ? "同英雄的其他玩家保持原样" : "同英雄的其他玩家也换成你选的模型";
+            if (othersVersion != HeroSkins.OtherPlayersVersion || changed || othersShown != Skins.Current.ShowOtherPlayers)
+            {
+                othersVersion = HeroSkins.OtherPlayersVersion;
+                othersShown = Skins.Current.ShowOtherPlayers;
+                ShowOthers();
+            }
+        }
+
+        // 房间里也装了 Mod 的其他玩家在用的皮肤；你没订阅的可以打开工坊页面自己订阅
+        private void ShowOthers()
+        {
+            Clear(others);
+            var list = HeroSkins.OtherPlayers;
+            if (list.Count == 0)
+            {
+                Studio.Block(others, 18).text = "<color=#a6a6a6>Steam 联机时，房间里也装了 Mod 的队友在用的皮肤会显示在这里。局域网模式不同步。</color>";
+                return;
+            }
+            foreach (var r in list)
+            {
+                var row = NativeUi.Row(others, 44f, 10f);
+                string hero = GameData.Entries(DataTable.Hero).FirstOrDefault(e => e.Key == r.HeroId.ToString())?.Name ?? $"英雄 {r.HeroId}";
+                string skin = !Skins.Current.ShowOtherPlayers ? "<color=#a6a6a6>（不显示队友的皮肤）</color>"
+                    : r.SkinId == HeroSkins.Original ? "原版"
+                    : r.Installed ? Skins.All.FirstOrDefault(x => x.Id == r.SkinId)?.Title ?? $"工坊 {r.PublishedFileId}"
+                    : "<color=#d6b67d>没订阅，显示原版</color>";
+                NativeUi.Label(row, $"{Escape(r.PlayerName)}  <color=#a6a6a6>{hero}</color>  {skin}", 18);
+                if (!r.Installed)
+                {
+                    ulong id = r.PublishedFileId;
+                    NativeUi.Button(row, "去订阅", false, 120f, () => HeroSkins.OpenWorkshopPage(id)).GetComponent<LayoutElement>().preferredHeight = 40f;
+                }
+            }
         }
 
         private void RebuildList()
@@ -145,12 +189,12 @@ namespace DBStudio.Pages
             if (hero == null)
             {
                 headTitle.text = "";
-                hint.text = "皮肤只改你这边的显示，不影响玩法，联机时也能用。";
+                hint.text = "皮肤只改显示，不影响玩法，联机时也能用。Steam 联机时，也装了 Mod 的队友能看到你的工坊皮肤（要他们也订阅了）。";
                 Studio.Block(options).text = GameData.Ready ? "在左边选一个英雄" : "";
                 return;
             }
             headTitle.text = hero.Name;
-            hint.text = "选好立即换上，战斗中也可以换。其他玩家看到的是他们自己的设置。";
+            hint.text = "选好立即换上，战斗中也可以换。工坊皮肤会同步给也装了 Mod 的队友；本地皮肤只有你自己能看到。";
 
             int heroId = HeroId(hero.Key);
             AddOption(heroId, null, hero.Icon, "游戏设置", "用主菜单“工坊 Mod”里给这个英雄启用的模型，没有就是原版");
@@ -226,6 +270,19 @@ namespace DBStudio.Pages
             return (RectTransform)go.transform;
         }
 
+        // 高度随内容变化、不抢剩余空间的竖向容器
+        private static RectTransform FixedColumn(Transform parent)
+        {
+            var go = new GameObject("fixedColumn", typeof(RectTransform), typeof(VerticalLayoutGroup));
+            go.transform.SetParent(parent, false);
+            var v = go.GetComponent<VerticalLayoutGroup>();
+            v.spacing = 4f;
+            v.childControlWidth = v.childControlHeight = true;
+            v.childForceExpandWidth = true;
+            v.childForceExpandHeight = false;
+            return (RectTransform)go.transform;
+        }
+
         // 没有图时留出同样的宽度，文字才对得齐
         private static void AddIcon(Transform parent, Sprite sprite, float size)
         {
@@ -252,6 +309,9 @@ namespace DBStudio.Pages
             for (int i = t.childCount - 1; i >= 0; i--)
                 Object.Destroy(t.GetChild(i).gameObject);
         }
+
+        // Steam 昵称里可能有 <size>、<color> 之类的标签，插一个零宽空格让它不被当成富文本
+        private static string Escape(string s) => (s ?? "").Replace("<", "<\u200B");
 
         private static string StripTags(string s) => System.Text.RegularExpressions.Regex.Replace(s, "<.*?>", "");
     }

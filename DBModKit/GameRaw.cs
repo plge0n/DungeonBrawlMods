@@ -333,8 +333,9 @@ namespace DBModKit
         // 启动参数 -disable-mods 时为 true，游戏不加载任何工坊内容
         public static bool ModsDisabled() => buo.bkkn;
 
-        // 同 buj.pwv：manifest 的英雄编号对得上，模型包文件存在
-        public static bool IsValidSkinFolder(string dir, int heroId) => ReadSkinManifest(dir, out var m) && m.heroId == heroId;
+        // 同 buj.pwv：manifest 的英雄编号对得上，模型包文件存在；另外排除召唤物模型（bum.pyi，它的 manifest 也可能带 heroId）
+        public static bool IsValidSkinFolder(string dir, int heroId)
+            => ReadSkinManifest(dir, out var m) && m.heroId == heroId && !bum.pyi(m.contentType);
 
         private static bool ReadSkinManifest(string dir, out LocalWorkshopManifest m)
         {
@@ -403,6 +404,61 @@ namespace DBModKit
             buj.pwm(heroId);
             if (nn.bpbu is bbe p && (int)p.heroType == heroId && p.roleType == RoleType.Player)
                 p.roleName = ez.dvm(p.heroType);
+        }
+
+        // 在 HeroSkinHooks 的角色上下文里撤掉模型（buj.pwn）再换（buj.pwh），名字（roleName）也按这个角色重新算
+        public static void ReapplyHeroModel(Component p)
+        {
+            var player = (bbe)p;
+            if (player.bpia == null) return;
+            HeroSkinHooks.WithOwner(player, () =>
+            {
+                buj.pwn(player.bpia);
+                buj.pwh(player);
+                if (player.roleType == RoleType.Player) player.roleName = ez.dvm(player.heroType);
+            });
+        }
+
+        // 游戏自己的工坊绑定（主菜单"工坊 Mod"里启用的物品），没有时为 0
+        public static ulong GameSkinBinding(int heroId) => cj.boys != null && cj.boys.pzk(heroId, out ulong id) ? id : 0UL;
+
+        // buu.qal：打开物品的创意工坊页面（游戏的工坊界面也用它）
+        public static void OpenWorkshopPage(ulong id) => cj.boyt?.qal(id);
+
+        // ---- 玩家 ----
+        // yb.bphc：Mirror 的 isLocalPlayer
+        public static bool IsLocalPlayer(Component r) => r is yb role && role.bphc;
+        // Mirror 的 netId（NetworkBehaviour.bqbx），同一局里每个客户端看到的都一样
+        public static uint NetId(Component r) => ((yb)r).bqbx;
+        public static int HeroIdOf(Component p) => (int)((bbe)p).heroType;
+        // bbe.bpnc：Steam 昵称（服务器生成角色时写入的 SyncVar）
+        public static string PlayerName(Component p) => ((bbe)p).bpnc;
+        public static bbe[] AllPlayers() => UnityEngine.Object.FindObjectsOfType<bbe>();
+
+        // ---- Steam 大厅（cft = SteamMatchmaking，cgi = SteamUser）----
+        // pq.bpcn：当前大厅，房主是 nn.bbwa、客户端是 nn.bbwb；进地牢后不离开大厅。本地（KCP）模式没有大厅，返回 0
+        public static ulong LobbyId()
+        {
+            var lobby = bz.ddr<pq>();
+            return lobby != null ? lobby.bpcn.m_SteamID : 0UL;
+        }
+
+        public static ulong MySteamId() => cgi.uep().m_SteamID;
+
+        // 成员数据：每个成员只能写自己的，所有成员都能读。游戏不用它，pq.glv 收到成员数据的更新时直接返回
+        public static void SetLobbyMemberData(ulong lobby, string key, string value)
+            => cft.tqj(new Steamworks.CSteamID(lobby), key, value);
+
+        public static string LobbyMemberData(ulong lobby, ulong member, string key)
+            => cft.tqi(new Steamworks.CSteamID(lobby), new Steamworks.CSteamID(member), key);
+
+        public static List<ulong> LobbyMembers(ulong lobby)
+        {
+            var id = new Steamworks.CSteamID(lobby);
+            var list = new List<ulong>();
+            int count = cft.tqb(id);
+            for (int i = 0; i < count; i++) list.Add(cft.tqc(id, i).m_SteamID);
+            return list;
         }
 
         // ---- 技能实例 bht ----

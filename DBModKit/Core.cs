@@ -107,6 +107,7 @@ namespace DBModKit
                 else ModEvents.RaiseBattleEnded();
             }
             ModEvents.RaiseUpdate();
+            Safe.Run("皮肤同步", HeroSkinSync.Tick);
             JsonConfigRegistry.Tick();
         }
 
