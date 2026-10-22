@@ -12,7 +12,7 @@ BepInEx 5 插件，目标游戏：地下城竞技场（Steam 4246640，Unity 202
 | [DamageMeter](DamageMeter) | 伤害统计：按普攻、技能、召唤物分开统计本波和本局的伤害与 DPS；Steam 联机时显示装了它的队友的伤害 |
 | [Hextech](Hextech) | 海克斯强化：每局 4 次三选一，自动生成强化英雄专属技能的卡（只在单人时生效） |
 
-玩家说明见 [安装说明.txt](安装说明.txt)。
+玩家说明见 [安装说明.txt](安装说明.txt)（英文 [INSTALL-EN.txt](INSTALL-EN.txt)），当前版本的发版说明见 [RELEASE_NOTES.md](RELEASE_NOTES.md)。
 
 ## 架构
 ```
@@ -96,7 +96,8 @@ pwsh ./pack.ps1                                 # 生成 dist/ 下的发布包�
 
 - 游戏不在默认位置：设置环境变量 `GameDir`，或加 `-p:GameDir="X:\...\地下城竞技场"`。
 - 公共构建配置在 `Directory.Build.props/.targets`：Mod 项目只需写 `AssemblyName` 和对 DBModKit 的 `ProjectReference`（`Private="false"`）。模板在 `templates/DBMod`。
-- 发布新版本：改源码里的 `Version` 常量 → 在对应目录的 `CHANGELOG.md` 加条目 → `pack.ps1`（缺少更新日志条目时会报错）。
+- 发布新版本：改源码里的 `Version` 常量 → 在对应目录的 `CHANGELOG.md` 加条目 → 整套发版时改根目录的 `VERSION`，在 `RELEASE_NOTES.md` 写中英文发版说明（包括哪些功能没实测）→ `pack.ps1`（缺少更新日志条目或发版说明时会报错）。
+  发布包是 `dist/DungeonBrawlMods-<VERSION>-full.zip`（带 BepInEx）和 `-plugins.zip`，根目录放 `安装说明.txt`、`INSTALL-EN.txt`、`RELEASE_NOTES.md`。
 
 ## 创意工坊
 游戏的工坊不加载 dll。DBModKit 自带加载器：订阅的条目里有 `dbmod.json`（`"Type": "plugin"`）就当成 BepInEx 插件加载，
@@ -134,3 +135,7 @@ dotnet $remap update --old ../_DungeonBrawl_backup/6.45 --notes ../_DungeonBrawl
 3. 把新版本号加进 `Compat.TestedVersions`，然后 `dotnet $remap snapshot --version <新版本>` 保存这一版，作为下次的 `--old`。
 
 **不要**把游戏的 dll、反编译出来的源码放进本仓库或发布包。
+
+## 许可证
+本仓库的代码和文档使用 [MIT 许可证](LICENSE)。完整包和运行环境条目里再分发的 BepInEx、Doorstop（LGPL-2.1）和 HarmonyX、MonoMod、Mono.Cecil（MIT）
+按各自的许可证分发，见 [workshop/Runtime/licenses](workshop/Runtime/licenses)。游戏本身的代码和资源不在本仓库里。

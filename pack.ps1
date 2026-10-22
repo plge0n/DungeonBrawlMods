@@ -1,6 +1,7 @@
 # 打包发布包到 dist/
-#   完整包：BepInEx + DBModKit + SmartSkill，首次安装用
-#   仅插件：DBModKit + SmartSkill，已装过 BepInEx 的人更新用
+#   完整包（full）：BepInEx + 解决方案里的所有插件，首次安装用
+#   仅插件（plugins）：解决方案里的所有插件，已装过 BepInEx 的人更新用
+#   两个包都带中英文安装说明和发版说明；包名里的版本号是整套 Mod 的发版版本（根目录 VERSION），各插件仍有自己的版本号
 #   内容包：仓库 content/ 下的每个内容包，加上 -Content 指定的文件夹，原样做成工坊条目
 # 用法：pwsh ./pack.ps1 [-GameDir "X:\...\地下城竞技场"] [-Content "X:\我的内容包", ...]
 param(
@@ -42,8 +43,11 @@ foreach ($name in $plugins) {
     }
     $versions[$name] = $v
 }
-$version = $versions["SmartSkill"]
-Write-Host "打包 SmartSkill $version（DBModKit $($versions["DBModKit"])）"
+$version = (Get-Content (Join-Path $root "VERSION") -Raw).Trim()
+if (-not (Select-String -Path (Join-Path $root "RELEASE_NOTES.md") -Pattern "Mods $([regex]::Escape($version))" -Quiet)) {
+    throw "RELEASE_NOTES.md 里还没有 $version 的发版说明"
+}
+Write-Host "打包 DungeonBrawlMods $version（$(($plugins | ForEach-Object { "$_ $($versions[$_])" }) -join "、")）"
 
 dotnet build $sln -c Release -nologo -v q -p:DeployToGame=false "-p:GameDir=$GameDir"
 if ($LASTEXITCODE -ne 0) { throw "编译失败" }
@@ -57,7 +61,10 @@ if (-not (Test-Path $bepinexZip)) {
 
 if (Test-Path $dist) { Remove-Item -Recurse -Force $dist }
 New-Item -ItemType Directory -Force $dist | Out-Null
-$readme = Join-Path $root "安装说明.txt"
+# 放进发布包根目录的说明
+$docs = "安装说明.txt", "INSTALL-EN.txt", "RELEASE_NOTES.md", "LICENSE" | ForEach-Object { Join-Path $root $_ }
+# BepInEx 等第三方组件的许可证（LGPL-2.1 要求随再分发的文件附上），完整包和运行环境条目共用
+$licenses = Join-Path $root "workshop\Runtime\licenses"
 
 # 插件项目里的 lang/（翻译）和 assets/（图片、AssetBundle）放在 dll 旁边，ModContext.Folder 从这里找
 function Copy-ModContent([string]$plugin, [string]$dest) {
@@ -70,22 +77,25 @@ function Copy-ModContent([string]$plugin, [string]$dest) {
 function New-Package([string]$name, [bool]$withBepInEx) {
     $stage = Join-Path $dist "_stage_$name"
     New-Item -ItemType Directory -Force $stage | Out-Null
-    if ($withBepInEx) { Expand-Archive $bepinexZip -DestinationPath $stage }
+    if ($withBepInEx) {
+        Expand-Archive $bepinexZip -DestinationPath $stage
+        Copy-Item -Recurse $licenses (Join-Path $stage "licenses")
+    }
     foreach ($plugin in $plugins) {
         $pluginDir = Join-Path $stage "BepInEx\plugins\$plugin"
         New-Item -ItemType Directory -Force $pluginDir | Out-Null
         Copy-Item (Join-Path $root "$plugin\bin\Release\netstandard2.1\$plugin.dll") $pluginDir
         Copy-ModContent $plugin $pluginDir
     }
-    Copy-Item $readme $stage
-    $zip = Join-Path $dist "SmartSkill-$version-$name.zip"
+    Copy-Item $docs $stage
+    $zip = Join-Path $dist "DungeonBrawlMods-$version-$name.zip"
     Compress-Archive -Path (Join-Path $stage "*") -DestinationPath $zip
     Remove-Item -Recurse -Force $stage
     Write-Host "  -> $zip"
 }
 
-New-Package "完整包" $true
-New-Package "仅插件" $false
+New-Package "full" $true
+New-Package "plugins" $false
 
 # 创意工坊条目：每个插件一个文件夹（dll + dbmod.json），DBModKit 除外（它和 BepInEx 一起装在游戏目录）
 $workshop = Join-Path $dist "workshop"
@@ -98,7 +108,7 @@ foreach ($plugin in $plugins | Where-Object { $_ -ne "DBModKit" }) {
         Format      = 1
         Type        = "plugin"
         Name        = $plugin
-        Author      = ""
+        Author      = "plge0n"
         Version     = $versions[$plugin]
         Description = ""
         MinModKit   = $versions["DBModKit"]
@@ -130,6 +140,7 @@ $runtime = Join-Path $workshop "Runtime"
 $template = Join-Path $root "workshop\Runtime"
 New-Item -ItemType Directory -Force $runtime | Out-Null
 Copy-Item -Recurse (Join-Path $template "*") $runtime -Exclude "preview.png"
+Copy-Item (Join-Path $root "LICENSE") (Join-Path $runtime "licenses\DBModKit-MIT.txt")
 $runtimeFiles = Join-Path $runtime "files"
 Expand-Archive $bepinexZip -DestinationPath $runtimeFiles
 # BepInEx 自己的更新日志不需要放进游戏目录
@@ -141,7 +152,7 @@ Copy-Item (Join-Path $root "DBModKit\bin\Release\netstandard2.1\DBModKit.dll") $
     Format      = 1
     Type        = "runtime"
     Name        = "DBModKit Runtime"
-    Author      = ""
+    Author      = "plge0n"
     Version     = $versions["DBModKit"]
     Description = "BepInEx $BepInExVersion + DBModKit"
     MinModKit   = ""

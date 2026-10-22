@@ -1,0 +1,110 @@
+DungeonBrawl Mods 0.1 - Installation and usage
+中文说明见 安装说明.txt
+
+Note: the in-game UI of these mods is Chinese only for now.
+
+The package contains 7 mods, each in its own folder under BepInEx\plugins. Delete a folder to remove that mod:
+  DBModKit     Shared library required by all the others (main-menu Mod button, multiplayer handshake, Workshop loader)
+  SmartSkill   Conditions for auto-cast skills
+  SmartMove    Auto-dodge ground telegraphs
+  AutoPickup   Auto-pickup
+  DamageMeter  Damage meter
+  Hextech      Hextech augments (single-player)
+  DBStudio     In-game mod workbench (F9)
+Features that haven't been fully verified in game yet are listed under "Not yet tested in game" in RELEASE_NOTES.md.
+
+[Install]
+1. In Steam, right-click the game -> Manage -> Browse local files to open the game folder (the one with DungeonBrawl.exe).
+2. First install: extract everything from the "full" package into that folder.
+   Updating: extract the "plugins" package into that folder and overwrite the old files.
+3. Start the game. BepInEx initialises on the first launch, so it may take a little longer.
+4. A "Mod" button appears below "Workshop" in the main menu - that means it worked. It lists the installed mods and whether they're running.
+   A red "!" on the button means a mod failed to load or needs your confirmation; open it to see why.
+
+[SmartSkill - auto-cast conditions]
+The game lets you right-click a skill icon to auto-cast it, but it fires whenever the skill is off cooldown, you have mana and an enemy is nearby.
+SmartSkill lets you set conditions per skill, e.g. only heal below 50% HP, only use an AoE when 3+ enemies are in range, prefer bosses.
+1. In combat, right-click a skill icon to turn on auto-cast (vanilla feature).
+2. A gear appears at the icon's top-right corner; click it to open the settings.
+3. Modes:
+   Vanilla (原版)            - no change, same as without the mod (default)
+   Custom (自定义条件)        - cast only when the ticked conditions are met
+   Never (永不自动)           - never auto-cast, even if auto-cast is on
+4. Not sure what to pick? Click "Recommend by tags" (按标签推荐) to fill in common conditions for that kind of skill.
+Settings are saved to BepInEx\config\SmartSkill.rules.json and shared by all heroes (per skill).
+5. Execution-type skills (处决, 点金术, 撕咬) can use "killable enemies >=" (能斩杀的敌人 ≥) so they only fire when they can kill, targeting those enemies first;
+   toggle skills such as 献祭 stay on while the conditions hold and turn off when they don't.
+You can also review and switch every skill's mode outside combat in DBStudio (F9) -> Mod page.
+
+[SmartMove - auto-dodge]
+When you aren't pressing a direction key, it walks you out of red ground telegraphs (enemy skills, traps), with or without auto-battle. F9 toggles it.
+Enemy basic attacks always hit once started and can't be dodged; only skills with a red telegraph can.
+Note: DBStudio also uses F9. Change one of them in DBStudio's Mod page.
+Settings: BepInEx\config\plge0n.dungeonbrawl.smartmove.cfg
+
+[AutoPickup]
+Picks up drops within 5 m during combat (yours, shared ones, and teammates' shared drops) - the same as pressing C for you, no pickup from afar.
+Per-category switches: gold, attribute books, skill books, relics, cards, potions and upgrade materials are on by default; runes and story items are off.
+When your bag is full, items that take a slot (skill books, potions, ...) are skipped.
+Settings: BepInEx\config\plge0n.dungeonbrawl.autopickup.cfg, or DBStudio (F9) -> Mod page.
+
+[DamageMeter]
+Shows your damage on the right side of the screen during combat, split by basic attacks, each skill, summons, on-hit effects, damage over time, auras,
+thorns, specific equipment and passives, with share and crit rate, plus total, DPS, time, biggest hit, damage taken and kills.
+The buttons on the panel switch between "this wave" and "this run".
+It only counts damage dealt by you (and your summons) and doesn't change the game, so it works in multiplayer.
+In Steam lobbies the "Team" section lists everyone's damage, share and DPS - only for teammates who also have DamageMeter
+(damage is computed on each player's own PC, so only their mod can send it). Not supported in LAN mode.
+Turn off ShareInLobby if you don't want to share your numbers.
+Wave and run summaries are written to BepInEx\LogOutput.log.
+Settings (position, size, opacity, rows, hotkey): BepInEx\config\plge0n.dungeonbrawl.damagemeter.cfg, or DBStudio -> Mod page.
+
+[Hextech - augments]
+4 picks per run (one at the start, then after the relic pick at roughly 1/4, 1/2 and 3/4 of the waves). Every card upgrades your hero's signature skill:
+damage, cooldown, mana cost, duration, charges, or on-cast effects like attack speed / armor / invulnerability / heal / mana refund,
+cooldown refund on skill kills, or a free extra cast.
+Cards come in silver, gold and prismatic tiers; prismatic gets more likely later on (max 2 per run). 2 rerolls per run (the 4th option; doesn't use the game's own rerolls).
+Chosen augments are shown to the right of the bag, under your portrait; hover for details. They're also listed in the signature skill's tooltip, and F7 lists them.
+Single-player only: disabled for the run as soon as anyone else is in the room. The 10 passive heroes without parameters (e.g. 赏金猎人, 黑衣剑士) aren't supported yet; you'll get a notice at the start.
+Settings: BepInEx\config\plge0n.dungeonbrawl.hextech.cfg
+
+[DBStudio - mod workbench]
+Press F9 to open it (pauses the game when you're alone). Pages:
+  Debug    player stats, skill bar, nearby enemies, run log; test actions (full HP/mana, gold, ...) when alone; "Export" (导出) creates a diagnostic report
+  Rules    "when ... if ... then ..." gameplay without code, e.g. "gain gold on crit"
+  Augments your own pick-one-of-three upgrades at the end of waves
+  Values   change skill, hero and monster numbers; restore vanilla at any time
+  Skins    choose a subscribed Workshop model or a local model in BepInEx\skins\ for each hero (cosmetic only);
+           in Steam lobbies, teammates who also have the mods see your Workshop skin (if they're subscribed too)
+  Mod      settings of every mod (toggles, sliders, hotkeys, ...), saved immediately
+Rules, augments and value changes are saved as "gameplay packs" (BepInEx\config\DBStudio\packs\) and follow the multiplayer rules below.
+
+[Multiplayer]
+Helper features (auto-cast, dodging, pickup, damage meter) only affect you; teammates don't need the mods.
+Gameplay-changing content (custom skills, relics, equipment, content packs, DBStudio gameplay packs) only takes effect when:
+  - you're alone in the room;
+  - everyone in the room has the mods with exactly the same gameplay content (compared automatically via the Steam lobby);
+  - the host ticks "I'm the host: allow gameplay content in this room" under DBStudio (F9) -> Mod page -> DBModKit -> Multiplayer (everyone gets a notice).
+Otherwise only cosmetics such as skins stay on for that run; you'll see a notice when entering the dungeon. The state locks when combat starts:
+it can only be turned off mid-run, never back on, and anything you already got stays.
+LAN games have no Steam lobby, so the mods can't check what others have installed; gameplay content is always disabled there.
+Hextech is stricter: disabled as soon as anyone else is in the room.
+
+[Leaderboard]
+By the game author's rule, you can't upload to the leaderboard with mods installed. Your results won't be uploaded (you'll see a notice); nothing else is affected.
+In someone else's room your build isn't handed to the host for upload either (teammates' results still upload, just without you).
+When you host, the whole team's results won't upload. Uninstall the mods if you want to compete on the leaderboard.
+
+[After a game update]
+If an update breaks compatibility, a notice at the top of the screen says "DBModKit ... 不兼容" (incompatible) and the mods are disabled.
+They won't change anything, the game plays normally; wait for a mod update.
+
+[Uninstall]
+A single mod: delete its folder under BepInEx\plugins in the game folder (e.g. BepInEx\plugins\SmartMove).
+DBModKit is the shared library every other mod needs; removing it stops all of them.
+To remove BepInEx as well, also delete: the BepInEx folder, winhttp.dll, doorstop_config.ini, changelog.txt, .doorstop_version.
+
+[Reporting problems]
+Press F9 to open DBStudio -> Debug page -> "Export" (导出), and send the generated BepInEx\DBModKit\report-<time>.txt to the author;
+BepInEx\LogOutput.log helps too.
+If you can reproduce it, first set FileLevel to Debug under Mod page -> DBModKit, then press Ctrl+F10 at the moment it happens to add a marker.

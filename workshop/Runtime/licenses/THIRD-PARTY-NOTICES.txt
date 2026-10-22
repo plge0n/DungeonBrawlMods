@@ -14,5 +14,5 @@ BepInEx_win_x64_5.4.23.5.zip（https://github.com/BepInEx/BepInEx/releases/tag/v
 The full LGPL-2.1 text is in LGPL-2.1.txt. Source code is available at the links above; the files are identical to
 the official release BepInEx_win_x64_5.4.23.5.zip.
 
-DBModKit（BepInEx/plugins/DBModKit）由本条目作者编写。
-DBModKit (BepInEx/plugins/DBModKit) is written by the author of this item.
+DBModKit（BepInEx/plugins/DBModKit）由本条目作者编写，MIT 许可证（DBModKit-MIT.txt；完整包里是根目录的 LICENSE）。
+DBModKit (BepInEx/plugins/DBModKit) is written by the author of this item, MIT licensed (DBModKit-MIT.txt; LICENSE at the root of the full package).
