@@ -27,6 +27,10 @@ namespace DBModKit
                     AccessTools.Method(typeof(ez), "dxy", new[] { typeof(bbe), typeof(ActiveSkillData) }),
                     prefix: nameof(AutoCastHooks.TargetPrefix));
 
+            GameEvents.WaveEventsAvailable = TryPatch(harmony, typeof(WaveHooks), "波次事件",
+                AccessTools.Method(typeof(MyServerNetworkManager), "qhu", new[] { typeof(ClientNetMessage) }),
+                postfix: nameof(WaveHooks.MessagePostfix));
+
             // 分开打：gad 失败时 ModKit 在进入战斗时补写倍率，gaf 失败时出场覆盖的数值不乘倍率
             GameData.Available = TryPatch(harmony, typeof(GameDataHooks), "怪物倍率（出场覆盖）",
                 AccessTools.Method(typeof(oo), "gaf", new[] { typeof(EnemyType), typeof(EnemySpawnKind), typeof(int) }),
@@ -180,5 +184,29 @@ namespace DBModKit
         }
 
         private static int ScaleInt(int v, double scale) => (int)Math.Round(Math.Min(int.MaxValue, v * scale));
+    }
+
+    // MyServerNetworkManager.qhu(ClientNetMessage)：客户端（含主机自己）收到服务器消息后的分发（在 cik.vig 里注册，是真方法）。
+    // 用后缀：游戏先处理完（比如更新波次），再通知 Mod
+    internal static class WaveHooks
+    {
+        internal static void MessagePostfix(ClientNetMessage __0)
+        {
+            switch (__0.clientNetOperation)
+            {
+                case ClientNetOperation.OnStartGame:
+                    GameEvents.Raise(new GameEvent(GameEventKind.WaveStarted));
+                    break;
+                case ClientNetOperation.OnStartRest:
+                    GameEvents.Raise(new GameEvent(GameEventKind.WaveEnded));
+                    break;
+                case ClientNetOperation.EnemyEnterTip:
+                    GameEvents.Raise(new GameEvent(GameEventKind.BossAppeared, isBoss: true));
+                    break;
+                case ClientNetOperation.OnGameOver:
+                    GameEvents.Raise(new GameEvent(GameEventKind.GameOver));
+                    break;
+            }
+        }
     }
 }

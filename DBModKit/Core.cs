@@ -99,6 +99,7 @@ namespace DBModKit
                 }
                 else ModEvents.RaiseBattleEnded();
             }
+            Safe.Run("GameEvents", GameEvents.Tick);
             ModEvents.RaiseUpdate();
             JsonConfigRegistry.Tick();
         }

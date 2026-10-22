@@ -17,7 +17,7 @@ namespace DBModKit
         // 类型名 → Mod 用到的成员（字段/属性/方法，含继承自基类的）
         private static readonly Dictionary<string, string[]> Required = new Dictionary<string, string[]>
         {
-            ["nn"] = new[] { "bpbu" },
+            ["nn"] = new[] { "bpbu", "bbsr" },
             ["cj"] = new[] { "boyb", "boyi", "boyl" },
             ["ez"] = new[] { "dxx", "dxy" },
             ["bwu"] = new[] { "quj", "qut" },
@@ -27,9 +27,14 @@ namespace DBModKit
             ["yb"] = new[]
             {
                 "hp", "maxHp", "izk", "iyn", "ivj", "bphx", "bpia",
+                "enemyDefeatedEvent", "activeSkillCastEvent", "criticalEvent", "dogeEvent",
                 "bphz", "bphq", "bphp", "bpho", "bphb", "bphl", "bphm", "bphk", "bphr", "bphv", "bpgy", "iwz", "iwh",
             },
-            ["bbe"] = new[] { "bfru", "bfrv", "ksd", "k4a25de8c63fe4a7192613346ae51af4e", "kfd63a19d353a42878846361e6af4f637" },
+            ["bbe"] = new[] { "kkl", "onPlayerLevelUp", "onPlayerRelife", "addBagItemEvent", "bfru", "bfrv", "ksd", "k4a25de8c63fe4a7192613346ae51af4e", "kfd63a19d353a42878846361e6af4f637" },
+            ["EnemyDefeatContext"] = new[] { "IsBoss", "IsElite" },
+            ["MyServerNetworkManager"] = new[] { "qhu" },
+            ["ClientNetMessage"] = new[] { "clientNetOperation" },
+            ["ClientNetOperation"] = new[] { "OnStartGame", "OnStartRest", "EnemyEnterTip", "OnGameOver" },
             ["GoldIncomeSource"] = new[] { "Gameplay" },
             ["os"] = new[] { "gba" },
             ["ciy"] = new[] { "bmyj", "bmyc" },

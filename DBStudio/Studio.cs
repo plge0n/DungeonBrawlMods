@@ -37,6 +37,9 @@ namespace DBStudio
 
         public static void Init(params IStudioPage[] all) => pages = all;
 
+        // 下一帧就刷新当前页（页面要在控件回调之外重建自己时用）
+        public static void RefreshSoon() => nextRefresh = 0f;
+
         public static void Tick()
         {
             if (Plugin.Hotkey.Value.IsDown() && !NativeUi.IsTyping)

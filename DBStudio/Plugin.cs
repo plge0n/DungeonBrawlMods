@@ -6,15 +6,15 @@ using UnityEngine;
 
 namespace DBStudio
 {
-    // 游戏内的 Mod 工作台：调试面板、数值编辑器，以后还会有规则、强化
+    // 游戏内的 Mod 工作台：调试面板、规则、数值编辑器，以后还会有强化
     [BepInPlugin(Guid, Name, Version)]
-    [BepInDependency(ModKitPlugin.Guid, "0.4.0")]
+    [BepInDependency(ModKitPlugin.Guid, "0.5.0")]
     public class Plugin : BaseUnityPlugin
     {
         public const string Guid = "plge0n.dungeonbrawl.studio";
         public const string Name = "DBStudio";
         // 发布时同步修改 CHANGELOG.md；pack.ps1 从这里读取版本号
-        public const string Version = "0.2.0";
+        public const string Version = "0.3.0";
 
         internal static ManualLogSource Log;
 
@@ -34,9 +34,10 @@ namespace DBStudio
             Hotkey = Config.Bind("General", "Hotkey", new KeyboardShortcut(KeyCode.F9), "打开/关闭工作台");
             PauseWhenSolo = Config.Bind("General", "PauseWhenSolo", true, "单人战斗中打开工作台时暂停游戏（联机时不会暂停）");
 
-            Studio.Init(new Pages.DebugPage(), new Pages.ValuesPage(), new Pages.ModsPage());
+            Studio.Init(new Pages.DebugPage(), new Pages.RulesPage(), new Pages.ValuesPage(), new Pages.ModsPage());
             EventLog.Attach(mod);
             Packs.Init(mod);
+            RuleEngine.Attach(mod);
             mod.OnUpdate(Studio.Tick);
         }
 

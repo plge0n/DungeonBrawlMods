@@ -58,6 +58,68 @@ namespace DBModKit
         public static int AddGold(Component p, int amount)
             => ((bbe)p).kfd63a19d353a42878846361e6af4f637(((bbe)p).iwh(), amount, c: false, d: false, e: false, GoldIncomeSource.Gameplay);
 
+        // bbe.kkl(力, 敏, 体, 攻击)：加到加成字段 bfpj/bfpk/bfpl/bfpi（不是被防篡改校验的基础值），负数撤销；
+        // 体力变化会自动同步生命上限。游戏的卡牌、装备也用它
+        public static void AddStats(Component p, int str, int agi, int sta, long attack) => ((bbe)p).kkl(str, agi, sta, attack);
+
+        // 当前波次
+        public static int Wave() => nn.bbsr;
+
+        // ---- 本地玩家的战斗回调（多播委托字段，只在拥有者客户端触发）----
+        // 只挂没有返回值、不带 ref 的回调：damageEvent 之类的返回值会替换伤害，多挂一个就会改掉游戏结果
+        private sealed class PlayerBinding
+        {
+            public bbe Player;
+            public yb.EnemyDefeated Defeated;
+            public yb.ActiveSkillCastEvent SkillCast;
+            public yb.Critical Critical;
+            public yb.DogeEvent Dodge;
+            public Action LevelUp;
+            public Action Relife;
+            public bbe.AddBagItem BagItem;
+        }
+
+        public static object BindPlayerEvents(Component player)
+        {
+            var p = (bbe)player;
+            var b = new PlayerBinding
+            {
+                Player = p,
+                Defeated = (killer, dead, ctx) =>
+                {
+                    if (dead is xo) GameEvents.Raise(new GameEvent(GameEventKind.EnemyKilled, Role.Wrap(dead), isBoss: ctx.IsBoss, isElite: ctx.IsElite));
+                },
+                SkillCast = (caster, skill) => GameEvents.Raise(new GameEvent(GameEventKind.SkillCast, skill: SkillInfo.Get((int)skill))),
+                Critical = (hurt, damage, type) => GameEvents.Raise(new GameEvent(GameEventKind.Critical, Role.Wrap(hurt), amount: damage)),
+                Dodge = () => GameEvents.Raise(new GameEvent(GameEventKind.Dodged)),
+                LevelUp = () => GameEvents.Raise(new GameEvent(GameEventKind.LevelUp)),
+                Relife = () => GameEvents.Raise(new GameEvent(GameEventKind.Revived)),
+                BagItem = item => GameEvents.Raise(new GameEvent(GameEventKind.ItemPicked, itemId: (int)item)),
+            };
+            p.enemyDefeatedEvent += b.Defeated;
+            p.activeSkillCastEvent += b.SkillCast;
+            p.criticalEvent += b.Critical;
+            p.dogeEvent += b.Dodge;
+            p.onPlayerLevelUp += b.LevelUp;
+            p.onPlayerRelife += b.Relife;
+            p.addBagItemEvent += b.BagItem;
+            return b;
+        }
+
+        public static void UnbindPlayerEvents(object binding)
+        {
+            var b = (PlayerBinding)binding;
+            var p = b.Player;
+            if (ReferenceEquals(p, null)) return;
+            p.enemyDefeatedEvent -= b.Defeated;
+            p.activeSkillCastEvent -= b.SkillCast;
+            p.criticalEvent -= b.Critical;
+            p.dogeEvent -= b.Dodge;
+            p.onPlayerLevelUp -= b.LevelUp;
+            p.onPlayerRelife -= b.Relife;
+            p.addBagItemEvent -= b.BagItem;
+        }
+
         // ---- 联机（Mirror：ciy = NetworkServer，cik = NetworkClient）----
         public static bool ServerActive() => ciy.bmyj;
         public static bool ClientActive() => cik.bqcb;

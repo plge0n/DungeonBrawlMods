@@ -3,7 +3,7 @@ using DBModKit;
 
 namespace DBStudio
 {
-    // 玩法包：玩家做的改动（目前只有数值，之后加规则、强化）。存在 BepInEx/config/DBStudio/packs/，复制文件就能分享
+    // 玩法包：玩家做的改动（数值、规则，之后加强化）。存在 BepInEx/config/DBStudio/packs/，复制文件就能分享
     internal sealed class Pack
     {
         public string Name = "我的玩法";
@@ -12,6 +12,7 @@ namespace DBStudio
         // 表 → 键（技能枚举名 / 英雄编号 / 怪物枚举名）→ 字段 → 值；怪物的值是倍率
         public Dictionary<DataTable, Dictionary<string, Dictionary<string, double>>> Values =
             new Dictionary<DataTable, Dictionary<string, Dictionary<string, double>>>();
+        public List<Rule> Rules = new List<Rule>();
     }
 
     // 当前玩法包的加载、保存，以及"只在单人时生效"
@@ -20,6 +21,12 @@ namespace DBStudio
         private static JsonConfig<Pack> config;
 
         public static Pack Current => config.Data;
+
+        // 玩法包正在生效（打开了、单人、游戏表已加载）；数值和规则共用这个开关
+        public static bool IsActive => GameData.Active;
+
+        // 规则改了之后调用，一秒后保存
+        public static void MarkDirty() => config.MarkDirty();
 
         // 玩法包没生效的原因；生效时为 null
         public static string InactiveReason

@@ -27,6 +27,9 @@ namespace DBModKit
             }
         }
 
+        /// <summary>当前波次（不在战斗中时是上一局的值）。</summary>
+        public static int Wave => ModKit.Compatible ? GameRaw.Wave() : 0;
+
         /// <summary>自己是房主（联机主机，或者单人）。</summary>
         public static bool IsHost => ModKit.Compatible && (GameRaw.ServerActive() || !GameRaw.ClientActive());
 
@@ -132,6 +135,16 @@ namespace DBModKit
         {
             RequireLocal();
             return amount > 0 ? GameRaw.AddGold(Native, amount) : 0;
+        }
+
+        /// <summary>
+        /// 加力量、敏捷、体力、攻击（负数为减），加在加成上而不是基础值上，不会触发防篡改校验；体力会同步生命上限。
+        /// 本局有效，下一局英雄重新生成时清零。要临时加成就到时间后用相反数调用一次。
+        /// </summary>
+        public void AddStats(int strength, int agility, int stamina, long attack)
+        {
+            RequireLocal();
+            GameRaw.AddStats(Native, strength, agility, stamina, attack);
         }
 
         private void RequireLocal()
