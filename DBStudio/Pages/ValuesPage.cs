@@ -86,7 +86,7 @@ namespace DBStudio.Pages
 
             NativeUi.Separator(right);
             var bottom = NativeUi.Row(right, 56f, 16f);
-            enabledToggle = NativeUi.Toggle(bottom, "启用数值改动", 230f, v => Packs.SetEnabled(v));
+            enabledToggle = NativeUi.Toggle(bottom, "启用玩法包", 230f, v => Packs.SetEnabled(v));
             enabledToggle.isOn = Packs.Current.Enabled;
             state = NativeUi.Label(bottom, "", 18, -1f, NativeUi.DimText);
             resetEntry = NativeUi.Button(bottom, "恢复这一项", false, 190f, () =>

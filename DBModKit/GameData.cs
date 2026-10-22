@@ -48,7 +48,8 @@ namespace DBModKit
         public string Key { get; }
         /// <summary>本地化后的名字。</summary>
         public string Name { get; }
-        internal string IconPath;
+        /// <summary>图标的 Resources 路径；没有时为 null。</summary>
+        public string IconPath { get; }
         private Sprite icon;
         private bool iconLoaded;
 

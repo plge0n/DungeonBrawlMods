@@ -151,22 +151,56 @@ namespace SmartSkill
             NativeUi.Label(combineRow, "条件关系", 22, LabelWidth);
             NativeUi.Dropdown(combineRow, CombineLabels, 300f, v => Set(() => rule.Combine = (Combine)v)).value = (int)rule.Combine;
 
+            if (info.IsToggle)
+                NativeUi.Label(root, "开关技能：条件满足时打开并保持，不再满足时自动关闭", 18, -1, NativeUi.Gold);
+
             PercentRow("自身血量 ≤", rule.UseHpBelow, v => rule.UseHpBelow = v, rule.HpBelowPercent, v => rule.HpBelowPercent = v);
+            PercentRow("自身血量 ≥", rule.UseHpAbove, v => rule.UseHpAbove = v, rule.HpAbovePercent, v => rule.HpAbovePercent = v);
             PercentRow("释放后剩余蓝 ≥", rule.UseManaAfter, v => rule.UseManaAfter = v, rule.ManaAfterPercent, v => rule.ManaAfterPercent = v);
 
-            var enemyRow = NativeUi.Row(root);
-            NativeUi.Toggle(enemyRow, "范围内敌人 ≥", LabelWidth, v => Set(() => rule.UseEnemyCount = v)).isOn = rule.UseEnemyCount;
-            var enemyValue = NativeUi.Label(enemyRow, "", 22, 70f);
-            var enemySlider = NativeUi.Slider(enemyRow, 1, 10, true, v =>
-            {
-                enemyValue.text = $"{v:F0} 个";
-                Set(() => rule.MinEnemies = Mathf.RoundToInt(v));
-            });
-            enemyValue.transform.SetAsLastSibling();
-            enemySlider.value = rule.MinEnemies;
-            enemyValue.text = $"{rule.MinEnemies} 个";
+            CountRow("范围内敌人 ≥", rule.UseEnemyCount, v => rule.UseEnemyCount = v, rule.MinEnemies, v => rule.MinEnemies = v);
 
-            NativeUi.Toggle(root, "范围内有 Boss 或精英", Width, v => Set(() => rule.UseBossOrElite = v)).isOn = rule.UseBossOrElite;
+            var bossRow = NativeUi.Row(root);
+            NativeUi.Toggle(bossRow, "有 Boss 或精英", LabelWidth, v => Set(() => rule.UseBossOrElite = v)).isOn = rule.UseBossOrElite;
+            NativeUi.Toggle(bossRow, "没有 Boss", LabelWidth, v => Set(() => rule.UseNoBoss = v)).isOn = rule.UseNoBoss;
+
+            PercentRow("有敌人血量 ≤", rule.UseTargetHpBelow, v => rule.UseTargetHpBelow = v, rule.TargetHpBelowPercent, v => rule.TargetHpBelowPercent = v);
+
+            if (info.HasKillReward)
+            {
+                CountRow("能斩杀的敌人 ≥", rule.UseKillable, v => rule.UseKillable = v, rule.MinKillable, v => rule.MinKillable = v);
+                var marginRow = NativeUi.Row(root);
+                NativeUi.Label(marginRow, "　伤害按估算的", 22, LabelWidth);
+                var marginValue = NativeUi.Label(marginRow, "", 22, 70f);
+                var marginSlider = NativeUi.Slider(marginRow, 50f, 120f, false, v =>
+                {
+                    float stepped = Mathf.Round(v / 5f) * 5f;
+                    marginValue.text = $"{stepped:F0}%";
+                    Set(() => rule.KillMarginPercent = stepped);
+                });
+                marginValue.transform.SetAsLastSibling();
+                marginSlider.value = rule.KillMarginPercent;
+                marginValue.text = $"{rule.KillMarginPercent:F0}%";
+                NativeUi.Label(root, "　" + KillPredictor.Describe(info), 16, -1, NativeUi.DimText);
+            }
+
+            if (!info.IsToggle)
+                NativeUi.Toggle(root, "上一次的效果结束后再放（增益、变身、持续伤害）", Width, v => Set(() => rule.UseEffectEnded = v)).isOn = rule.UseEffectEnded;
+
+            if (slot.MaxCharges > 1)
+            {
+                var chargeRow = NativeUi.Row(root);
+                NativeUi.Label(chargeRow, "保留充能", 22, LabelWidth);
+                var chargeValue = NativeUi.Label(chargeRow, "", 22, 70f);
+                var chargeSlider = NativeUi.Slider(chargeRow, 0, slot.MaxCharges - 1, true, v =>
+                {
+                    chargeValue.text = $"{v:F0} 层";
+                    Set(() => rule.KeepCharges = Mathf.RoundToInt(v));
+                });
+                chargeValue.transform.SetAsLastSibling();
+                chargeSlider.value = rule.KeepCharges;
+                chargeValue.text = $"{rule.KeepCharges} 层";
+            }
 
             var radiusRow = NativeUi.Row(root);
             NativeUi.Label(radiusRow, "统计范围", 22, LabelWidth);
@@ -210,6 +244,21 @@ namespace SmartSkill
             valueLabel.transform.SetAsLastSibling();
             slider.value = value;
             valueLabel.text = $"{value:F0}%";
+        }
+
+        private static void CountRow(string label, bool enabled, System.Action<bool> setEnabled, int value, System.Action<int> setValue)
+        {
+            var row = NativeUi.Row(root);
+            NativeUi.Toggle(row, label, LabelWidth, v => Set(() => setEnabled(v))).isOn = enabled;
+            var valueLabel = NativeUi.Label(row, "", 22, 70f);
+            var slider = NativeUi.Slider(row, 1, 10, true, v =>
+            {
+                valueLabel.text = $"{v:F0} 个";
+                Set(() => setValue(Mathf.RoundToInt(v)));
+            });
+            valueLabel.transform.SetAsLastSibling();
+            slider.value = value;
+            valueLabel.text = $"{value} 个";
         }
 
         private static void Set(System.Action apply)

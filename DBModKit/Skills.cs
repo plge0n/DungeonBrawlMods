@@ -38,6 +38,25 @@ namespace DBModKit
         // 技能表被 GameData 改动后丢掉缓存
         internal static void Invalidate(int id) => cache.Remove(id);
 
+        /// <summary>按枚举名（<see cref="Key"/>）查找。</summary>
+        public static SkillInfo Find(string key)
+        {
+            if (!ModKit.Compatible || !GameData.Ready) return null;
+            return GameRaw.SkillIdOf(key) is int id ? Get(id) : null;
+        }
+
+        /// <summary>技能表里的所有技能（游戏表加载后才有）。</summary>
+        public static List<SkillInfo> All()
+        {
+            var list = new List<SkillInfo>();
+            foreach (var e in GameData.Entries(DataTable.Skill))
+            {
+                var info = Find(e.Key);
+                if (info != null) list.Add(info);
+            }
+            return list;
+        }
+
         public static SkillInfo Get(int id)
         {
             if (!ModKit.Compatible) return null;
@@ -57,6 +76,12 @@ namespace DBModKit
 
         /// <summary>无需瞄准（None / Switch），可以不依赖敌人位置直接释放。</summary>
         public bool IsSelfCastable => Indicator == "None" || Indicator == "Switch";
+
+        /// <summary>开关类技能：放一次打开，再放一次关闭。</summary>
+        public bool IsToggle => Indicator == "Switch";
+
+        /// <summary>有斩杀奖励：处决（属性）、点金术（金币）、撕咬（最大血量）。支持 <see cref="SkillSlot.EstimateDamage"/>。</summary>
+        public bool HasKillReward => Key.EndsWith("_Execution") || Key.EndsWith("_Alchemy") || Key == "Bite";
 
         public bool HasTag(string tag)
         {
@@ -81,6 +106,8 @@ namespace DBModKit
         public const string Area = "Area";
         public const string Move = "Move";
         public const string Control = "Control";
+        public const string Henshin = "Henshin";
+        public const string Duration = "Duration";
     }
 
     /// <summary>玩家身上的一个技能（技能栏里的一格）。同一个技能实例总是对应同一个 SkillSlot。</summary>
@@ -102,6 +129,23 @@ namespace DBModKit
         public bool CostsGold => GameRaw.CostsGold(Native);
         /// <summary>对该玩家的实际消耗（已计入减耗等加成）。</summary>
         public int CostFor(Player player) => GameRaw.Cost(Native, player.Native);
+        /// <summary>开关类技能（献祭等，指示器为 Switch）当前开着。开着时自动释放会把它关掉。</summary>
+        public bool IsToggledOn => GameRaw.IsToggledOn(Native);
+        /// <summary>当前充能层数；没有充能机制的技能为 0（看 <see cref="MaxCharges"/>）。</summary>
+        public int Charges => GameRaw.Charges(Native);
+        public int MaxCharges => GameRaw.MaxCharges(Native);
+
+        /// <summary>
+        /// 估算这个技能打在目标身上的伤害（未计暴击、目标减伤和各种触发效果）。
+        /// 只支持有斩杀奖励的技能（处决、点金术、撕咬），其他技能返回 null。
+        /// 已乘上 <see cref="Player.DamageBonusAgainst"/>。
+        /// </summary>
+        public long? EstimateDamage(Player player, Role target)
+        {
+            var raw = GameRaw.BaseSkillDamage(GameRaw.SkillId(Native), player.Native, target.Native);
+            if (raw == null) return null;
+            return (long)(raw.Value * (1.0 + player.DamageBonusAgainst(target)));
+        }
     }
 
     /// <summary>技能栏上的一个按钮。</summary>

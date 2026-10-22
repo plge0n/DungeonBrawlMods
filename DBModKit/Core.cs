@@ -46,6 +46,13 @@ namespace DBModKit
                 Run($"{name} → {handler.Method.DeclaringType?.FullName}.{handler.Method.Name}", handler);
         }
 
+        public static void InvokeEach<T>(Action<T> evt, string name, T arg)
+        {
+            if (evt == null) return;
+            foreach (Action<T> handler in evt.GetInvocationList())
+                Run($"{name} → {handler.Method.DeclaringType?.FullName}.{handler.Method.Name}", () => handler(arg));
+        }
+
         public static void Run(string where, Action action)
         {
             try
@@ -87,6 +94,8 @@ namespace DBModKit
         {
             GamePause.Tick();
             if (!ModKit.Compatible) return;
+            // 第一帧：Chainloader 已经加载完 plugins 目录，再加载工坊插件（依赖检查才准）
+            Workshop.Start();
             bool inBattle = InBattle();
             if (inBattle != wasInBattle)
             {
@@ -99,6 +108,7 @@ namespace DBModKit
                 }
                 else ModEvents.RaiseBattleEnded();
             }
+            Safe.Run("GameEvents", GameEvents.Tick);
             ModEvents.RaiseUpdate();
             JsonConfigRegistry.Tick();
         }
