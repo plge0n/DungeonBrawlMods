@@ -134,6 +134,17 @@ namespace DBModKit
             return section;
         }
 
+        /// <summary>
+        /// 注册一个自定义被动技能（见 <see cref="PassiveSkills"/>）。名字和说明按 Mod 的 <see cref="Text"/> 翻译
+        /// （键 passive.&lt;Key&gt;.name / passive.&lt;Key&gt;.desc）。卸载时自动注销，本地玩家身上的这个被动也会被移除。
+        /// </summary>
+        public PassiveSkillInfo RegisterPassive(PassiveSkillDef def)
+        {
+            var info = PassiveSkills.Register(Metadata.GUID, Text, def);
+            AddCleanup(() => PassiveSkills.Unregister(info));
+            return info;
+        }
+
         /// <summary>订阅战斗事件（见 <see cref="GameEvents"/>）。</summary>
         public void OnGameEvent(Action<GameEvent> handler)
         {

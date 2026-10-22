@@ -69,6 +69,21 @@ namespace DBModKit
                     AccessTools.Method(typeof(bbe), "kqh", new Type[0]),
                     prefix: nameof(MoveHooks.AttackPrefix), postfix: nameof(MoveHooks.Postfix));
 
+            // 先装构筑数据的过滤（保证自定义被动不会传给没装 Mod 的人），都装上了才接管被动的创建
+            PassiveSkills.Available =
+                TryPatch(harmony, typeof(PassiveHooks), "自定义被动（构筑数据过滤）",
+                    AccessTools.Method(typeof(ez), "ebf", Type.EmptyTypes),
+                    postfix: nameof(PassiveHooks.KingSkillsPostfix))
+                && TryPatch(harmony, typeof(PassiveHooks), "自定义被动（镜像 Boss 过滤）",
+                    AccessTools.Method(typeof(bax), "ker", Type.EmptyTypes),
+                    postfix: nameof(PassiveHooks.MirrorSnapshotPostfix))
+                && TryPatch(harmony, typeof(PassiveHooks), "自定义被动（文本）",
+                    AccessTools.Method(typeof(cl), "dfg", new[] { typeof(string), typeof(string), typeof(bool) }),
+                    prefix: nameof(PassiveHooks.TextPrefix))
+                && TryPatch(harmony, typeof(PassiveHooks), "自定义被动（创建）",
+                    AccessTools.Method(typeof(ez), "eax", new[] { typeof(string) }),
+                    postfix: nameof(PassiveHooks.CreatePostfix));
+
             try
             {
                 Combat.Install();
@@ -229,6 +244,59 @@ namespace DBModKit
         internal static void TogglePostfix(bool __result, State? __state)
         {
             if (__state is State s) AutoCast.RaiseResolved(new AutoCastResult(s.Slot, s.Verdict, __result));
+        }
+    }
+
+    // 自定义被动（见 PassiveSkills）：
+    // ez.eax(类名)：被动表 class 列 → qp 实例的大 switch，未知类名返回 null。学技能（yb.ivb / iuz）、镜像 Boss（zr.jzy 兜底）都经过它
+    // cl.dfg(键, 默认值, 找不到时返回键)：dfe / dff 的真正实现（mee 是同签名的诱饵）
+    // ez.ebf()：构筑里的技能列表（"p_" / "a_" + 编号），ez.ebj 用它生成同步给队友、上传国王对决的数据
+    // bax.ker()：镜像 Boss 用的本地玩家快照（jwm 是没有调用者的副本）
+    internal static class PassiveHooks
+    {
+        internal static void CreatePostfix(string __0, ref qp __result)
+        {
+            if (__result != null) return;
+            try
+            {
+                __result = GameRaw.CreateModPassive(__0);
+            }
+            catch (Exception e)
+            {
+                Safe.Report("自定义被动（创建）", e);
+            }
+        }
+
+        internal static bool TextPrefix(string __0, ref string __result)
+        {
+            string text = GameRaw.PassiveText(__0);
+            if (text == null) return true;
+            __result = text;
+            return false;
+        }
+
+        internal static void KingSkillsPostfix(ref de.PlayerKingSkillData[] __result)
+        {
+            try
+            {
+                __result = GameRaw.FilterKingSkills(__result);
+            }
+            catch (Exception e)
+            {
+                Safe.Report("自定义被动（构筑数据过滤）", e);
+            }
+        }
+
+        internal static void MirrorSnapshotPostfix(MirrorBossPlayerSnapshot __result)
+        {
+            try
+            {
+                GameRaw.FilterMirrorSnapshot(__result);
+            }
+            catch (Exception e)
+            {
+                Safe.Report("自定义被动（镜像 Boss 过滤）", e);
+            }
         }
     }
 

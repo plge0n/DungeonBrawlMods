@@ -611,6 +611,180 @@ namespace DBModKit
             return list;
         }
 
+        // ---- 自定义被动（PassiveSkills）----
+        // 被动表 cx.zyc["passsiveSkill"]：编号 → 行（列名 → 值）。学习时 yb.ivb / iuz 读 class 列 → ez.eax(类名) 创建 qp 实例，
+        // 再 msz(行) 解析数值、gou() 生效、ez.dzq 放进技能栏（roleSkillList，最多 nn.MaxSkillNum 格，被动也占格）。
+        // 技能书候选池是 pj（cj.boyn）的私有字段 bcxj：品级 → 行，在 pj 构造时（gjs）从被动表建好，之后加的行要自己放进去
+        private static readonly AccessTools.FieldRef<pj, Dictionary<string, List<object>>> passivePool =
+            AccessTools.FieldRefAccess<pj, Dictionary<string, List<object>>>("bcxj");
+        private static readonly Dictionary<int, Dictionary<string, object>> injectedPassives = new Dictionary<int, Dictionary<string, object>>();
+
+        public const string ModPassiveClassPrefix = "DBModKit.Passive:";
+
+        private static Dictionary<string, object> PassiveTable()
+            => cx.zyc.TryGetValue("passsiveSkill", out var t) ? t as Dictionary<string, object> : null;
+
+        public static void InjectPassive(PassiveSkillInfo info)
+        {
+            var table = PassiveTable();
+            if (table == null) return;
+            var def = info.Def;
+            // 以现有的一行为模板，保证列齐全、类型和游戏读到的一致
+            var template = table.Values.OfType<Dictionary<string, object>>().FirstOrDefault();
+            var row = template != null ? new Dictionary<string, object>(template) : new Dictionary<string, object>();
+            void Set(string column, object value)
+            {
+                if (template != null && template.TryGetValue(column, out var old) && old != null && value != null && old.GetType() != value.GetType())
+                {
+                    try
+                    {
+                        value = Convert.ChangeType(value, old.GetType(), System.Globalization.CultureInfo.InvariantCulture);
+                    }
+                    catch (Exception)
+                    {
+                        // 类型转不过去就保留原值，游戏读的时候会再转换
+                    }
+                }
+                row[column] = value;
+            }
+            string Join(float[] values) => values == null || values.Length == 0 ? null
+                : string.Join("|", values.Select(v => v.ToString(System.Globalization.CultureInfo.InvariantCulture)));
+            Set("id", info.Id.ToString());
+            Set("class", ModPassiveClassPrefix + info.Id);
+            Set("name", def.Name);
+            Set("lock", !def.InSkillBook);
+            // 国王对决里的拟人玩家不会拿到（构筑数据本来也会去掉自定义被动）
+            Set("kingLock", true);
+            Set("repeat", def.Repeatable);
+            Set("quality", def.Quality.ToString());
+            Set("attribute", "无属性");
+            Set("tags", string.Join(",", def.Tags ?? new string[0]));
+            Set("icon", def.Icon);
+            Set("info", def.Description);
+            Set("cost", 0);
+            Set("cd", 0);
+            Set("range", 0);
+            // value / levelup 是 "|" 分隔的字符串（bht.msz → ez.dwe），不按模板转换
+            row["value"] = Join(def.Values);
+            row["levelup"] = Join(def.LevelUp);
+
+            EjectPassive(info.Id);
+            table[info.Id.ToString()] = row;
+            injectedPassives[info.Id] = row;
+            if (def.InSkillBook && cj.boyn != null)
+            {
+                var pool = passivePool(cj.boyn);
+                string quality = def.Quality.ToString();
+                if (!pool.TryGetValue(quality, out var list)) pool[quality] = list = new List<object>();
+                list.Add(row);
+            }
+        }
+
+        public static bool PassiveInjected(int id)
+        {
+            if (!injectedPassives.TryGetValue(id, out var row)) return false;
+            var table = PassiveTable();
+            if (table == null || !table.TryGetValue(id.ToString(), out var current) || current != row) return false;
+            // pj 重建时会从被动表重新建池（gjs），我们的行还在表里就也在池里
+            bool wantPool = !(row.TryGetValue("lock", out var l) && Convert.ToBoolean(l));
+            return !wantPool || cj.boyn == null || passivePool(cj.boyn).Values.Any(list => list.Contains(row));
+        }
+
+        public static void EjectPassive(int id)
+        {
+            var table = PassiveTable();
+            string key = id.ToString();
+            if (table != null && table.TryGetValue(key, out var row) && IsModPassiveRow(row))
+                table.Remove(key);
+            if (cj.boyn != null)
+                foreach (var list in passivePool(cj.boyn).Values)
+                    list.RemoveAll(r => r is Dictionary<string, object> d && d.TryGetValue("id", out var v) && v?.ToString() == key && IsModPassiveRow(d));
+            injectedPassives.Remove(id);
+        }
+
+        private static bool IsModPassiveRow(object row)
+            => row is Dictionary<string, object> d && d.TryGetValue("class", out var c) && c is string s && s.StartsWith(ModPassiveClassPrefix);
+
+        // ez.eax 的后缀：类名是我们的前缀时创建 ModPassive（原版对未知类名返回 null）
+        public static qp CreateModPassive(string className)
+        {
+            if (className == null || !className.StartsWith(ModPassiveClassPrefix)) return null;
+            if (!int.TryParse(className.Substring(ModPassiveClassPrefix.Length), out int id) || !PassiveSkills.IsCustom(id)) return null;
+            return new ModPassive(id);
+        }
+
+        // yb.ivb(被动, 要替换的格子)：技能书学被动走它（真方法）。技能栏满、又不指定格子时，ez.dzq 会替换第 2 格，所以这里先判断
+        public static bool GivePassive(int id, int replaceSlot)
+        {
+            var p = nn.bpbu;
+            if (p == null) return false;
+            bht replace = null;
+            if (p.roleSkillList.Count >= nn.MaxSkillNum)
+            {
+                if (replaceSlot < 0 || replaceSlot >= p.roleSkillList.Count) return false;
+                replace = p.roleSkillList[replaceSlot];
+            }
+            p.ivb((PasssiveSkillEnum)id, replace);
+            return true;
+        }
+
+        // ez.dzo：游戏的移除（dzp 里调 qp.gov，再刷新技能栏）
+        public static void RemoveLocalPassives(int id)
+        {
+            var p = nn.bpbu;
+            if (p == null) return;
+            foreach (var s in p.roleSkillList.OfType<ModPassive>().Where(s => s.DefId == id).ToList())
+                ez.dzo(s);
+        }
+
+        public static void LocalModPassives(List<object> output)
+        {
+            output.Clear();
+            var p = nn.bpbu;
+            if (p == null) return;
+            foreach (var s in p.roleSkillList)
+                if (s is ModPassive m) output.Add(m);
+        }
+
+        public static int ModPassiveInstance(object native) => ((ModPassive)native).Instance;
+        public static Component PassiveOwner(object native) => ((bht)native).bhnd;
+        // 等级 bht.kb03f1…；数值 bhnp = value + levelup × 等级（msz → mtm 算好）
+        public static int PassiveLevel(object native) => ((bht)native).kb03f1a3bfdcd4ea8aecbd90f39216246;
+
+        public static float PassiveValue(object native, int i)
+        {
+            var values = ((bht)native).bhnp;
+            return values != null && i >= 0 && i < values.Length ? values[i] : 0f;
+        }
+
+        // 去掉构筑数据里的自定义被动：ez.ebf（技能列表，"p_"+编号）给 ez.ebj 用，ebj 的结果会同步给队友、上传成国王对决数据；
+        // bax.ker 的镜像 Boss 快照另有一份技能来源（activeSkill = None 的是被动）
+        public static de.PlayerKingSkillData[] FilterKingSkills(de.PlayerKingSkillData[] skills)
+        {
+            if (skills == null || !skills.Any(s => IsCustomPassiveName(s.skillName))) return skills;
+            return skills.Where(s => !IsCustomPassiveName(s.skillName)).ToArray();
+        }
+
+        public static void FilterMirrorSnapshot(MirrorBossPlayerSnapshot snapshot)
+        {
+            if (snapshot?.skills == null) return;
+            if (snapshot.skills.Any(s => s.activeSkill == ActiveSkillEnum.None && IsCustomPassiveName(s.skillName)))
+                snapshot.skills = snapshot.skills.Where(s => !(s.activeSkill == ActiveSkillEnum.None && IsCustomPassiveName(s.skillName))).ToArray();
+            snapshot.player.skill = FilterKingSkills(snapshot.player.skill);
+        }
+
+        private static bool IsCustomPassiveName(string name)
+            => name != null && name.StartsWith("p_") && PassiveSkills.IsCustom(name.Substring(2));
+
+        // 本地化 cl.dfg 的前缀："p_<编号>" 是名字，"p_<编号>_m" 是说明
+        public static string PassiveText(string key)
+        {
+            if (key == null || key.Length < 9 || !key.StartsWith("p_")) return null;
+            bool description = key.EndsWith("_m");
+            string id = description ? key.Substring(2, key.Length - 4) : key.Substring(2);
+            return int.TryParse(id, out int n) && n >= PassiveSkills.FirstId ? PassiveSkills.Text(n, description) : null;
+        }
+
         // ---- 技能实例 bht ----
         public static int SkillId(object s) => (int)((bht)s).bhne;
         public static bool IsAutoCastOn(object s) => ((bht)s).bhny;
@@ -638,6 +812,38 @@ namespace DBModKit
                 object skill = b.bjgk != null && b.bjgk.bhne != ActiveSkillEnum.None ? b.bjgk : null;
                 output.Add((b, skill, (RectTransform)b.bjgm.transform));
             }
+        }
+    }
+
+    // 自定义被动在游戏里的实例：游戏按被动表的 class 列（ez.eax）创建它，它把获得、移除、每帧转给 PassiveSkills 里 Mod 的行为对象。
+    // 字段只放整数：重试波次（wb）会反射深拷贝技能实例的全部字段
+    internal sealed class ModPassive : qp
+    {
+        public readonly int DefId;
+        public readonly int Instance;
+
+        public ModPassive(int defId)
+        {
+            DefId = defId;
+            Instance = PassiveSkills.Created(defId);
+        }
+
+        public override void gou()
+        {
+            base.gou();
+            PassiveSkills.Added(Instance, this);
+        }
+
+        public override void gov()
+        {
+            base.gov();
+            PassiveSkills.Removed(Instance);
+        }
+
+        public override void gpc()
+        {
+            base.gpc();
+            if (bhnd != null && bhnd == nn.bpbu) PassiveSkills.Update(Instance, this);
         }
     }
 }

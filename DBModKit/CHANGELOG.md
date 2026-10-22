@@ -1,5 +1,14 @@
 # DBModKit 更新日志
 
+## 0.15.0
+- 新增自定义被动技能（`PassiveSkills`）：`mod.RegisterPassive(new PassiveSkillDef { … })` 注册后和游戏的被动一样，
+  会出现在技能书三选一里（按品级进池，可关）、占一个技能格、图鉴里能看到；名字和说明走 Mod 的 `Text`（键 `passive.<Key>.name/desc`），
+  说明里的 `{0}` 等换成数值（含等级成长）。行为继承 `PassiveSkill`，重写 `OnAdded` / `OnRemoved` / `OnUpdate` / `OnGameEvent` / `OnHit`，
+  只发给本地玩家技能栏里的被动。`PassiveSkills.Give` 直接发放，`OnLocalPlayer` 找到身上的实例。Mod 卸载时自动注销并从技能栏移除
+- 编号由 Mod 的 GUID 和 Key 算出（1000000 起），每次启动都一样
+- 联机：被动只在自己的客户端生效，别人不用装。同步给队友、上传国王对决、镜像 Boss 的构筑数据会去掉自定义被动，
+  没装 Mod 的人不会因此出错（代价是这些地方也看不到它）
+
 ## 0.14.0
 - 新增 `LobbySync`：通过 Steam 大厅成员数据和其他装了 Mod 的玩家交换少量文字数据（`Publish` / `Read` / `Clear`）。
   皮肤同步用的同一个通道，没装 Mod 的玩家不受影响；局域网模式没有大厅，不可用

@@ -71,6 +71,7 @@ public class Plugin : BaseUnityPlugin
 | `ChoicePanel` / `RelicInfo` | 用游戏的三选一界面显示自定义选项；遗物列表、发遗物 |
 | `ModSettings` | 往 DBStudio 的 Mod 页里挂自定义设置区块 |
 | `GameData` | 改技能、英雄、怪物配置表里的数值，可随时整体恢复原版 |
+| `PassiveSkills` | 自定义被动技能：注册后进技能书三选一、占技能格，行为由 Mod 写（`mod.RegisterPassive`） |
 | `HeroSkins` | 给每个英雄选一套工坊或本地的模型（或原版），可以只换本地玩家；Steam 联机时通过大厅成员数据同步 |
 | `LobbySync` | 通过 Steam 大厅成员数据和其他装了 Mod 的玩家交换少量文字数据（局域网不可用） |
 | `JsonConfig<T>` | `BepInEx/config` 下的 JSON 配置，自动延迟保存 |

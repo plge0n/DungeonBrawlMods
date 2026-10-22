@@ -17,12 +17,12 @@ namespace DBModKit
         // 类型名 → Mod 用到的成员（字段/属性/方法，含继承自基类的）
         private static readonly Dictionary<string, string[]> Required = new Dictionary<string, string[]>
         {
-            ["nn"] = new[] { "bpbu", "bbsr", "bbtv", "bbtm", "bbth", "bbtz", "fqr", "frk" },
+            ["nn"] = new[] { "bpbu", "bbsr", "bbtv", "bbtm", "bbth", "bbtz", "fqr", "frk", "MaxSkillNum" },
             ["os"] = new[] { "gba", "bctl", "bctm" },
             ["cj"] = new[] { "boyb", "boyi", "boyj", "boyl", "boyn", "boyq", "boyt" },
-            ["ez"] = new[] { "dxx", "dxy", "dyk", "dvm", "eaz", "ebc" },
+            ["ez"] = new[] { "dxx", "dxy", "dyk", "dvm", "eaz", "ebc", "eax", "ebf", "dzo" },
             ["bfl"] = new[] { "mna" },
-            ["pj"] = new[] { "bcxi" },
+            ["pj"] = new[] { "bcxi", "bcxj" },
             ["bfe"] = new[] { "bgwf", "bgwg", "bgwi" },
             ["oj"] = new[] { "bcqp" },
             ["ok"] = new[] { "bcqs", "bcqt", "bcqv", "bcqw", "bcqx", "bcqy" },
@@ -40,13 +40,13 @@ namespace DBModKit
                 "hp", "maxHp", "authorityId", "izk", "iyn", "ivj", "bphx", "bpia", "bphc", "bqbx", "roleName", "bpgz", "beqd", "ivk", "bphy", "roleType",
                 "henShinSkillId", "timer", "iyi", "iyj", "isCheckAttack",
                 "enemyDefeatedEvent", "activeSkillCastEvent", "criticalEvent", "dogeEvent",
-                "bphz", "bphq", "bphp", "bpho", "bphb", "bphl", "bphm", "bphk", "bphr", "bphv", "bpgy", "iwz", "iwh",
+                "bphz", "bphq", "bphp", "bpho", "bphb", "bphl", "bphm", "bphk", "bphr", "bphv", "bpgy", "iwz", "iwh", "ivb",
             },
             ["bbe"] = new[]
             {
                 "heroType", "kzz", "bpnc", "bfru", "bfrv", "kqi", "kqh", "addDamagePercent", "addBossEnemy", "addEliteEnemy", "addNormalEnemy",
                 "ksd", "k4a25de8c63fe4a7192613346ae51af4e", "kfd63a19d353a42878846361e6af4f637",
-                "kqk", "kkl", "CmdPickItem", "playerAttribute", "onPlayerLevelUp", "onPlayerRelife", "addBagItemEvent",
+                "kqk", "kkl", "CmdPickItem", "playerAttribute", "onPlayerLevelUp", "onPlayerRelife", "addBagItemEvent", "roleSkillList",
             },
             ["EnemyDefeatContext"] = new[] { "IsBoss", "IsElite" },
             ["MyServerNetworkManager"] = new[] { "qhu" },
@@ -77,13 +77,22 @@ namespace DBModKit
                 "attackSpeed", "moveSpeed", "hpRecover", "mpRecover", "shiled",
             },
             ["du"] = new[] { "dqr", "bact" },
-            ["cl"] = new[] { "dff" },
+            ["cl"] = new[] { "dff", "dfg" },
+            // 自定义被动
+            ["qp"] = new[] { "gou", "gov" },
+            ["bax"] = new[] { "ker" },
+            ["MirrorBossPlayerSnapshot"] = new[] { "skills", "player" },
+            ["MirrorBossSkillSource"] = new[] { "activeSkill", "skillName" },
+            ["PasssiveSkillEnum"] = new string[0],
+            // 嵌套类型 de.PlayerKingData / PlayerKingSkillData 的名字没混淆，按成员检查（映射重建工具不认 "de+X" 这种写法）
+            ["de"] = new[] { "PlayerKingData", "PlayerKingSkillData" },
             ["bpe"] = new[] { "bjes", "bprr" },
             ["bpf"] = new[] { "bjgk", "bjgm" },
             ["bht"] = new[]
             {
                 "bhne", "bhny", "bhnv", "bhng", "bhnd", "bpqi", "k896ff3548b31472b8b2cf8f649c25e65", "kacb7d091b5904139a602f04ed9552242",
                 "k4b2ca10ddec34cdb90bf84a3f664f727", "kbb80bea445ac47778d36b05d19be7f37", "kcac92c2266be41d3979b385715ce318e",
+                "bhnp", "kb03f1a3bfdcd4ea8aecbd90f39216246", "gpc",
             },
             ["RoleModeBase"] = new[] { "addRange", "ico" },
             ["ActiveSkillData"] = new[]

@@ -129,6 +129,18 @@ namespace Remap
                     return;
                 }
             }
+            else if (node is MethodDeclarationSyntax || node is PropertyDeclarationSyntax || node is EventDeclarationSyntax)
+            {
+                // 重写游戏的虚方法（class ModPassive : qp { override void gou() }）：声明的名字跟着被重写的方法改
+                var declaredSymbol = model.GetDeclaredSymbol(node);
+                symbol = declaredSymbol switch
+                {
+                    IMethodSymbol m => m.OverriddenMethod,
+                    IPropertySymbol p => p.OverriddenProperty,
+                    IEventSymbol e => e.OverriddenEvent,
+                    _ => null,
+                };
+            }
             else return;
             if (symbol == null) return;
             var (def, param) = ToCecil(symbol);
