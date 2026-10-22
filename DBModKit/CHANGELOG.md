@@ -1,5 +1,13 @@
 # DBModKit 更新日志
 
+## 0.23.0
+- dbmod.json 新增 `Dependencies`（GUID 或内容包 Id、最低版本、工坊物品号）：工坊插件条目和内容包按依赖排序加载，缺依赖时不加载，
+  在 Mod 设置里提示并给出"订阅"按钮（打开工坊页面）。内容包关掉时依赖它的包跟着停用，互相依赖时报循环
+- **注意**：`AutoCast` / `MoveControl` 的处理器改为"玩家指定的优先，否则先注册的优先"，后注册的排队、生效的卸载后自动轮到下一个
+  （原来是后注册的覆盖先注册的）。新增 `Owner`、`Contenders`、`Prefer`
+- 新增 `ModConflicts` 和 Mod 设置 → DBModKit → 依赖和冲突：列出缺的依赖、抢处理器的 Mod（可以在这里指定）、
+  两个 Mod 改了同一项数值（`GameData`，后改的生效；载入时清掉别人的改动也会提示）、内容包 Id 重复、同一个技能被几个 Mod 调整（倍率相乘）
+
 ## 0.22.0
 - 新增自定义遗物（`CustomRelics`）：`mod.RegisterRelic(new RelicDef { … })` 注册后和游戏的遗物一样，按品级进遗物三选一、显示在遗物栏、可以升级；
   名字和说明走 Mod 的 `Text`（键 `relic.<Key>.name/desc`），说明里的 `{0}` 由游戏换成数值（`ValueTypes` 决定显示成原值还是百分比）。
