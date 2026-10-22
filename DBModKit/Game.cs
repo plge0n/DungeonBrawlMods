@@ -13,6 +13,34 @@ namespace DBModKit
 
         public static bool InBattle => LocalPlayer != null;
 
+        /// <summary>
+        /// 房间里只有自己：没联机，或者自己当主机且没有别人连进来。连到别人的房间时为 false。
+        /// 改数值、作弊类功能应该只在单人时生效（游戏不检查 Mod，伤害由各自客户端计算，改了会影响队友）。
+        /// </summary>
+        public static bool IsSolo
+        {
+            get
+            {
+                if (!ModKit.Compatible) return false;
+                if (GameRaw.ServerActive()) return GameRaw.ServerConnections() <= 1;
+                return !GameRaw.ClientActive();
+            }
+        }
+
+        /// <summary>自己是房主（联机主机，或者单人）。</summary>
+        public static bool IsHost => ModKit.Compatible && (GameRaw.ServerActive() || !GameRaw.ClientActive());
+
+        /// <summary>房间里的玩家数（含自己）。只有主机知道准确人数；连到别人的房间时返回 -1。</summary>
+        public static int PlayerCount
+        {
+            get
+            {
+                if (!ModKit.Compatible) return 1;
+                if (GameRaw.ServerActive()) return Mathf.Max(1, GameRaw.ServerConnections());
+                return GameRaw.ClientActive() ? -1 : 1;
+            }
+        }
+
         /// <summary>取游戏本地化文本，找不到时返回 fallback。</summary>
         public static string Localize(string key, string fallback = null)
             => ModKit.Compatible ? GameRaw.Localize(key, fallback ?? key) : fallback ?? key;
@@ -47,6 +75,21 @@ namespace DBModKit
         public bool IsBoss => GameRaw.IsBoss(Native);
         public bool IsElite => GameRaw.IsElite(Native);
 
+        // ---- 属性（含装备、遗物、卡牌等加成后的当前值）----
+        public long Attack => GameRaw.Attack(Native);
+        public int Strength => GameRaw.Strength(Native);
+        public int Agility => GameRaw.Agility(Native);
+        public int Stamina => GameRaw.Stamina(Native);
+        /// <summary>每秒攻击次数。</summary>
+        public float AttackSpeed => GameRaw.AttackSpeed(Native);
+        /// <summary>暴击率，0~1。</summary>
+        public float CriticalRate => GameRaw.CriticalRate(Native);
+        public float CriticalDamage => GameRaw.CriticalDamage(Native);
+        public int Armor => GameRaw.Armor(Native);
+        public int Dodge => GameRaw.Dodge(Native);
+        public float LifeSteal => GameRaw.LifeSteal(Native);
+        public float MoveSpeed => GameRaw.MoveSpeed(Native);
+
         /// <summary>水平距离（忽略高度）。</summary>
         public float DistanceTo(Role other) => GameRaw.Distance(Native, other.Position);
 
@@ -64,6 +107,37 @@ namespace DBModKit
 
         public int Mana => GameRaw.Mana(Native);
         public int MaxMana => GameRaw.MaxMana(Native);
+        public int Gold => GameRaw.Gold(Native);
+
+        /// <summary>是本地玩家（只有本地玩家能用下面的修改方法）。</summary>
+        public bool IsLocal => Native != null && Native == GameRaw.LocalPlayer();
+
+        // 修改都走游戏自己的方法：金币等数值有防篡改校验，直接写字段会被当成作弊上报
+        /// <summary>回血（会同步给服务器）。</summary>
+        public void Heal(double amount)
+        {
+            RequireLocal();
+            if (amount > 0) GameRaw.Heal(Native, amount);
+        }
+
+        /// <summary>加蓝（负数为扣蓝），结果限制在 0~上限。</summary>
+        public void AddMana(int amount)
+        {
+            RequireLocal();
+            GameRaw.AddMana(Native, amount);
+        }
+
+        /// <summary>加金币（不吃金币加成和关卡倍率），返回实际到账数量。</summary>
+        public int AddGold(int amount)
+        {
+            RequireLocal();
+            return amount > 0 ? GameRaw.AddGold(Native, amount) : 0;
+        }
+
+        private void RequireLocal()
+        {
+            if (!IsLocal) throw new InvalidOperationException("只能修改本地玩家");
+        }
 
         /// <summary>当前所有存活的敌人。</summary>
         public List<Role> Enemies()

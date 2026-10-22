@@ -11,7 +11,7 @@ namespace DBModKit
     /// 原生风格 UI 控件：从游戏自己的 UI 预制体里取模板和贴图拼出来，外观、字体与游戏一致。
     /// 创建控件前先调用 <see cref="Load"/>。
     /// </summary>
-    public static class NativeUi
+    public static partial class NativeUi
     {
         public static readonly Color Gold = new Color(0.839f, 0.714f, 0.490f, 1f);
         public static readonly Color TextColor = new Color(0.92f, 0.90f, 0.85f, 1f);

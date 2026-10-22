@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -27,9 +28,45 @@ namespace DBModKit
         public static bool IsElite(Component r) => r is xo e && e.isElite;
         public static List<yb> Enemies(Component r) => ((yb)r).izk();
 
+        // ---- 属性（yb，bbe 有部分重写）----
+        public static long Attack(Component r) => ((yb)r).bphz;
+        public static int Strength(Component r) => ((yb)r).bphq;
+        public static int Agility(Component r) => ((yb)r).bphp;
+        public static int Stamina(Component r) => ((yb)r).bpho;
+        public static float AttackSpeed(Component r) => ((yb)r).bphb;
+        // 暴击率是 0~1 的概率（Random.value < bphl）
+        public static float CriticalRate(Component r) => ((yb)r).bphl;
+        public static float CriticalDamage(Component r) => ((yb)r).bphm;
+        public static int Armor(Component r) => ((yb)r).bphk;
+        public static int Dodge(Component r) => ((yb)r).bphr;
+        public static float LifeSteal(Component r) => ((yb)r).bphv;
+        public static float MoveSpeed(Component r) => ((yb)r).bpgy;
+
         // ---- 玩家 bbe ----
         public static int Mana(Component p) => ((bbe)p).bfru;
         public static int MaxMana(Component p) => ((bbe)p).bfrv;
+        public static int Gold(Component p) => ((bbe)p).k4a25de8c63fe4a7192613346ae51af4e;
+
+        // 以下都是游戏自己加数值的方法：金币、力敏体等有影子副本校验（nn.fsx），不能直接写字段
+        // yb.iwz(量, 来源)：回血，内部走 CmdUpdateHp 同步
+        public static void Heal(Component r, double amount) => ((yb)r).iwz(amount, (yb)r);
+        // bbe.ksd：加蓝（自动限制在 0~上限）
+        public static void AddMana(Component p, int amount) => ((bbe)p).ksd(amount);
+        // bbe.kfd63a19…(飘字位置, 数量, 吃金币加成, 吃关卡倍率, 允许负债, 来源)：返回实际到账数量
+        public static int AddGold(Component p, int amount)
+            => ((bbe)p).kfd63a19d353a42878846361e6af4f637(((bbe)p).iwh(), amount, c: false, d: false, e: false, GoldIncomeSource.Gameplay);
+
+        // ---- 联机（Mirror：ciy = NetworkServer，cik = NetworkClient）----
+        public static bool ServerActive() => ciy.bmyj;
+        public static bool ClientActive() => cik.bqcb;
+        // 主机上的连接数，包含主机自己
+        public static int ServerConnections() => ciy.bmyc.Count;
+
+        // ---- 输入、UI ----
+        // os.gba()：持有期间屏蔽移动、技能、Tab 商店、ESC 菜单（os.day 在计数非 0 时提前返回）
+        public static IDisposable BlockInput() => os.gba();
+        // 游戏 UI 的 Canvas（UIRoot 第 0 个子节点）；主菜单之前可能还没创建
+        public static Canvas UiCanvas() => cj.boyb?.bact != null ? cj.boyb.bact.GetComponent<Canvas>() : null;
 
         // ---- 技能数据 ActiveSkillData，表在 cj.boyl.bcrw ----
         public static SkillInfo ReadSkillInfo(int id)

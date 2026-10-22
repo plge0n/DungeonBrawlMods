@@ -6,6 +6,7 @@ BepInEx 5 插件，目标游戏：地下城竞技场（Steam 4246640，Unity 202
 |---|---|
 | [DBModKit](DBModKit) | 依赖库：游戏接口、自动释放钩子、事件、原生风格 UI、JSON 配置、兼容检查 |
 | [SmartSkill](SmartSkill) | 给"右键技能图标自动释放"加上每个技能单独的释放条件 |
+| [DBStudio](DBStudio) | 游戏内的 Mod 工作台（F9）：调试面板，之后会加规则、强化、数值编辑器 |
 
 玩家说明见 [安装说明.txt](安装说明.txt)。
 
@@ -50,14 +51,15 @@ public class Plugin : BaseUnityPlugin
 ```
 | 类型 | 作用 |
 |---|---|
-| `Game` | 本地玩家、是否在战斗、本地化文本 |
-| `Role` / `Player` | 血量、位置、Boss/精英、距离判定；玩家的蓝量、范围内敌人、按评分选敌人 |
+| `Game` | 本地玩家、是否在战斗、房间状态（`IsSolo` 等）、本地化文本 |
+| `Role` / `Player` | 血量、属性、位置、Boss/精英、距离判定；玩家的蓝量、金币、范围内敌人、按评分选敌人；本地玩家回血/加蓝/加金币 |
 | `SkillInfo` | 技能表数据：名字、标签、指示器、施法范围、冷却 |
 | `SkillSlot` / `SkillBar` | 技能栏里的技能：自动释放开关、剩余冷却、消耗、图标 |
 | `AutoCast` | 接管自动释放：决定放不放、打谁；`Resolved` 事件报告结果 |
 | `ModContext` | Mod 运行上下文：`OnUpdate`、`OnBattleStarted`、`UseAutoCast`、`LoadJson` 等，卸载时自动清理 |
 | `ModEvents` | 每帧、进入/离开战斗、退出游戏 |
-| `NativeUi` | 用游戏素材拼的面板、开关、滑条、下拉框、按钮 |
+| `NativeUi` | 用游戏素材拼的面板、开关、滑条、下拉框、按钮，以及大窗口、页签、滚动列表、输入框 |
+| `GameInput` / `GamePause` | 打开自己的窗口时屏蔽游戏输入、暂停游戏（都要 Dispose 释放） |
 | `JsonConfig<T>` | `BepInEx/config` 下的 JSON 配置，自动延迟保存 |
 | `ScreenNotice` | 屏幕顶部临时提示 |
 
@@ -72,6 +74,8 @@ pwsh ./pack.ps1                                 # 生成 dist/ 下的发布包�
 ```
 
 **热重载**：装了 ScriptEngine 后，普通 Mod 会部署到 `BepInEx/scripts`，游戏开着也能编译，约 1 秒后自动重载（也可按 F6）。DBModKit 始终在 `BepInEx/plugins`，改了它要重启游戏（编译前先关游戏，否则 dll 被占用）。没装 ScriptEngine 时一律部署到 `plugins`。
+
+**DBStudio**：游戏内按 F9，游戏风格的调试面板：玩家属性、技能栏、敌人、事件日志、已加载插件；单人时有满血、满蓝、加金币等测试操作。
 
 **UnityExplorer**：游戏内按 F7。可以浏览场景里的 UI 和对象、查看/修改字段、在 C# 控制台里执行代码，是找游戏对象和调 UI 的首选工具。
 

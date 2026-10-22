@@ -85,6 +85,7 @@ namespace DBModKit
 
         private void Update()
         {
+            GamePause.Tick();
             if (!ModKit.Compatible) return;
             bool inBattle = InBattle();
             if (inBattle != wasInBattle)

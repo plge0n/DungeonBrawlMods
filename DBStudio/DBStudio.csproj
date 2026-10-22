@@ -1,0 +1,9 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <AssemblyName>DBStudio</AssemblyName>
+  </PropertyGroup>
+  <ItemGroup>
+    <!-- 只通过 ModKit 访问游戏；ModKit 由玩家单独安装，不打进本插件 -->
+    <ProjectReference Include="..\DBModKit\DBModKit.csproj" Private="false" />
+  </ItemGroup>
+</Project>
