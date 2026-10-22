@@ -182,7 +182,7 @@ namespace DBModKit
         // bio.Pick（点击单个物品）的判断：死了不能捡（nn.bbth 时除外）
         public static bool CanPickNow(Component p) => nn.bbth || (((yb)p).hp > 0 && ((yb)p).bphy != RoleState.Dead);
 
-        // 背包 bba.bfnb，上限 6 格；金币、宝石、属性书、护符等不占格子（ez.eaz）
+        // 背包 bba.bfnb，上限 6 格；金币、宝石、阳光、力量/敏捷/耐力之书、护符不占格子（ez.eaz；全属性之书、金币袋占格子）
         public static int BagCount(Component p) => ((bbe)p).playerAttribute.kgw();
 
         // 护符需按键拾取（设置项 IsKeyPickTalisman）；关掉时护符靠碰到自动拾取，按 C 也不捡

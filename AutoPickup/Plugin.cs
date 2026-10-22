@@ -6,7 +6,7 @@ using UnityEngine;
 
 namespace AutoPickup
 {
-    // 战斗中自动拾取身边自己的掉落物，等于替玩家按 C（范围不超过按 C 的 5 米），可以按类别过滤
+    // 战斗中自动拾取身边能捡的掉落物（自己的、公共的、队友设了共享的），等于替玩家按 C（范围不超过按 C 的 5 米），可以按类别过滤
     [BepInPlugin(Guid, Name, Version)]
     [BepInDependency(ModKitPlugin.Guid, "0.12.0")]
     public class Plugin : BaseUnityPlugin
@@ -16,8 +16,9 @@ namespace AutoPickup
         // 发布时同步修改 CHANGELOG.md；pack.ps1 从这里读取版本号
         public const string Version = "0.1.0";
 
-        // 发出请求后这么久物品还在地上，就再请求一次（联机延迟、服务器没处理）
+        // 发出请求后这么久物品还在地上，就再请求一次（联机延迟、服务器没处理）；请求这么多次还在就不再管它
         private const float RetryAfter = 1.5f;
+        private const int MaxAttempts = 3;
 
         internal static ConfigEntry<bool> Enabled;
         internal static ConfigEntry<KeyboardShortcut> ToggleKey;
@@ -26,8 +27,8 @@ namespace AutoPickup
         internal static ConfigEntry<bool> Sound;
         private static readonly Dictionary<LootKind, ConfigEntry<bool>> kinds = new Dictionary<LootKind, ConfigEntry<bool>>();
 
-        // 已请求拾取的物品 → 请求时间
-        private readonly Dictionary<uint, float> requested = new Dictionary<uint, float>();
+        // 已请求拾取的物品 → 最近一次请求的时间、请求次数
+        private readonly Dictionary<uint, (float at, int attempts)> requested = new Dictionary<uint, (float, int)>();
         private readonly HashSet<uint> seen = new HashSet<uint>();
         private float nextScan;
         private bool bagFullNoticed;
@@ -41,7 +42,7 @@ namespace AutoPickup
 
         private void OnLoad(ModContext mod)
         {
-            Enabled = Config.Bind("General", "Enabled", true, "战斗中自动拾取身边自己的掉落物");
+            Enabled = Config.Bind("General", "Enabled", true, "战斗中自动拾取身边能捡的掉落物（和按 C 一样）");
             ToggleKey = Config.Bind("General", "ToggleKey", KeyboardShortcut.Empty, "开关自动拾取的快捷键（默认不设）");
             Range = Config.Bind("General", "Range", Loot.PickRange,
                 new ConfigDescription("拾取范围（米），最大和按 C 一样是 5 米", new AcceptableValueRange<float>(1f, Loot.PickRange)));
@@ -98,15 +99,15 @@ namespace AutoPickup
             // 背包格子要算上已请求、服务器还没确认的
             int bag = Loot.BagCount;
             foreach (var item in items)
-                if (item.UsesBagSlot && requested.ContainsKey(item.Id)) bag++;
+                if (item.UsesBagSlot && requested.TryGetValue(item.Id, out var r) && r.attempts < MaxAttempts) bag++;
 
             bool picked = false, bagFull = false;
             float now = Time.unscaledTime;
             foreach (var item in items)
             {
                 if (!item.Pickable || !Wanted(item) || player.DistanceTo(item.Position) > Range.Value) continue;
-                if (requested.TryGetValue(item.Id, out float at) && now - at < RetryAfter) continue;
-                bool retry = requested.ContainsKey(item.Id);
+                bool retry = requested.TryGetValue(item.Id, out var last);
+                if (retry && (last.attempts >= MaxAttempts || now - last.at < RetryAfter)) continue;
                 if (item.UsesBagSlot && !retry && bag >= Loot.BagSize)
                 {
                     bagFull = true;
@@ -116,7 +117,7 @@ namespace AutoPickup
                 if (result == PickResult.BagFull) bagFull = true;
                 if (result != PickResult.Requested) continue;
                 if (item.UsesBagSlot && !retry) bag++;
-                requested[item.Id] = now;
+                requested[item.Id] = (now, retry ? last.attempts + 1 : 1);
                 picked = true;
             }
 

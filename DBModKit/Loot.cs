@@ -6,7 +6,7 @@ namespace DBModKit
     /// <summary>掉落物的大类（按游戏的 ItemType 编号分段）。</summary>
     public enum LootKind
     {
-        /// <summary>金币、宝石、金币袋。</summary>
+        /// <summary>金币、宝石、金币袋、阳光。</summary>
         Gold,
         /// <summary>力量 / 敏捷 / 耐力 / 全属性之书。</summary>
         AttributeBook,
@@ -56,7 +56,7 @@ namespace DBModKit
             if (t >= 1000 && t < 1100) return LootKind.AttributeBook;
             if (t >= 1100 && t < 1300) return LootKind.SkillBook;
             if (t >= 1300 && t < 1400) return LootKind.Gold;
-            if (t == 1506 || t == 1507) return LootKind.Gold; // Gold、Gem
+            if (t == 1500 || t == 1506 || t == 1507) return LootKind.Gold; // Pick_Sun（捡到变成金币）、Gold、Gem
             if (t >= 1600 && t < 1700) return LootKind.Material;
             if (t >= 1700 && t < 1800) return LootKind.Potion;
             if (t >= 2000 && t < 10000) return LootKind.Card;

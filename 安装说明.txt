@@ -29,7 +29,7 @@ SmartSkill 让你给每个技能单独设定释放条件，比如：血量低于
 设置在 BepInEx\config\plge0n.dungeonbrawl.smartmove.cfg。
 
 【自动拾取：AutoPickup】
-战斗中自动捡起身边 5 米内自己的掉落物，相当于替你按 C，不会隔空拾取，也捡不了别人的东西。
+战斗中自动捡起身边 5 米内能捡的掉落物（自己的、公共的、队友设了共享的），相当于替你按 C，不会隔空拾取。
 可以按类别开关：金币、属性书、技能书、遗物、卡牌、药剂、强化材料默认捡；神符和剧情道具默认不捡。
 背包满了时，占格子的物品（技能书、药剂等）先不捡。
 设置在 BepInEx\config\plge0n.dungeonbrawl.autopickup.cfg，也可以在 DBStudio（F9）的 Mod 页里改。
