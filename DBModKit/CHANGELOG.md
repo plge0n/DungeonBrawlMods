@@ -2,6 +2,7 @@
 
 ## 0.13.0
 - `HitInfo.IsNormalAttack`：这一下是普攻（游戏命中记录的 `Normal`）
+- `Game.Wave`（以及 `GameEvent.Wave`）改为从 1 开始，和游戏界面一致；原来比显示的少 1，DBStudio 规则的"波次至少"也因此差一波
 - `Role.IsSummon`、`Role.IsSummonOf(Player)`：召唤物和它的主人（`roleType = Summon`，`authorityId` = 主人的 netId）
 
 ## 0.12.0

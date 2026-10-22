@@ -21,7 +21,8 @@ namespace DamageMeter
 
         public static void Tick()
         {
-            bool show = Plugin.Enabled.Value && Game.InBattle;
+            // 三选一界面开着时让开，免得挡住选项
+            bool show = Plugin.Enabled.Value && Game.InBattle && !ChoicePanel.IsBusy;
             if (!show)
             {
                 if (root != null) root.gameObject.SetActive(false);
@@ -82,6 +83,9 @@ namespace DamageMeter
             {
                 var row = NativeUi.Row(root, 26f, 8f);
                 var name = NativeUi.Label(row, "", 18);
+                // 名字太长就截断，不换行挤到下一行
+                name.horizontalOverflow = HorizontalWrapMode.Wrap;
+                name.verticalOverflow = VerticalWrapMode.Truncate;
                 var damage = NativeUi.Label(row, "", 18, 90f);
                 damage.alignment = TextAnchor.MiddleRight;
                 var share = NativeUi.Label(row, "", 18, 56f, NativeUi.DimText);

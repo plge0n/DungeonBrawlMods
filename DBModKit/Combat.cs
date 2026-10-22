@@ -16,7 +16,7 @@ namespace DBModKit
         /// <summary>由主动技能造成时为技能编号，普攻、被动等为 null。</summary>
         public int? SkillId { get; }
         public bool Critical { get; }
-        /// <summary>普攻（含普攻特效）。不是普攻、也没有 SkillId 时，是被动、异常状态、装备特效等造成的。</summary>
+        /// <summary>普攻本身（AttackType.Normal）。普攻特效、被动、异常状态、装备特效等既不是普攻、也没有 SkillId。</summary>
         public bool IsNormalAttack { get; }
         /// <summary>这一下打死了目标（与游戏判定斩杀奖励的方式一致：伤害 ≥ 血量 + 护盾）。</summary>
         public bool Lethal => Damage >= TargetHp + TargetShield;

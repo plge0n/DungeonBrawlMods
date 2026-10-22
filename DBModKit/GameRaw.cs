@@ -88,7 +88,7 @@ namespace DBModKit
         // 体力变化会自动同步生命上限。游戏的卡牌、装备也用它
         public static void AddStats(Component p, int str, int agi, int sta, long attack) => ((bbe)p).kkl(str, agi, sta, attack);
 
-        // 当前波次
+        // 当前波次，从 0 开始（游戏显示 nn.bbsr + 1）
         public static int Wave() => nn.bbsr;
 
         // ---- 本地玩家的战斗回调（多播委托字段，只在拥有者客户端触发）----

@@ -56,10 +56,16 @@ namespace DamageMeter
             mod.OnHit(Meter.OnHit);
             mod.OnGameEvent(e =>
             {
+                bool midWave = Meter.Wave.Running;
                 Meter.OnEvent(e);
                 if (!LogSummary.Value) return;
                 if (e.Kind == GameEventKind.WaveEnded) Summary.Log(Logger, $"第 {Meter.WaveNumber} 波", Meter.Wave);
-                if (e.Kind == GameEventKind.GameOver) Summary.Log(Logger, "本局", Meter.Run);
+                if (e.Kind == GameEventKind.GameOver)
+                {
+                    // 在波次中途结束时，最后这一波也记一下
+                    if (midWave) Summary.Log(Logger, $"第 {Meter.WaveNumber} 波（未打完）", Meter.Wave);
+                    Summary.Log(Logger, "本局", Meter.Run);
+                }
             });
             mod.OnBattleStarted(Meter.Reset);
             mod.OnUpdate(() =>

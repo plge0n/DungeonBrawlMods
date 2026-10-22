@@ -42,6 +42,8 @@ namespace DamageMeter
 
         public float Dps => Total / Mathf.Max(1f, Seconds);
 
+        public bool Running => runningSince >= 0f;
+
         public IEnumerable<SourceStats> Sources => sources.Values.OrderByDescending(s => s.Damage);
 
         public void Start()
@@ -76,18 +78,20 @@ namespace DamageMeter
     {
         public const string NormalAttack = "普攻";
         public const string Summons = "召唤物";
-        public const string Other = "其他（被动、异常、装备）";
+        public const string Other = "其他";
 
         public static readonly Period Wave = new Period();
         public static readonly Period Run = new Period();
         /// <summary>正在统计的波次（0 = 还没开始第一波）。</summary>
         public static int WaveNumber { get; private set; }
+        private static bool waveEventSeen;
 
         public static void Reset()
         {
             Wave.Clear();
             Run.Clear();
             WaveNumber = 0;
+            waveEventSeen = false;
         }
 
         public static void OnHit(HitInfo hit)
@@ -101,9 +105,13 @@ namespace DamageMeter
                 source = Summons;
             else
                 return;
-            // 第一波开始前（或者没收到波次事件时）打出的伤害也算，计时从第一下开始
-            Wave.Start();
-            Run.Start();
+            // 波次之间（休息、商店）打出的伤害照算，但不计时，DPS 只算波次进行中的时间。
+            // 第一波开始前还没收到过波次事件时，从第一下开始计时
+            if (!waveEventSeen)
+            {
+                Wave.Start();
+                Run.Start();
+            }
             Wave.Add(source, hit.Damage, hit.Critical);
             Run.Add(source, hit.Damage, hit.Critical);
         }
@@ -113,6 +121,7 @@ namespace DamageMeter
             switch (e.Kind)
             {
                 case GameEventKind.WaveStarted:
+                    waveEventSeen = true;
                     Wave.Clear();
                     WaveNumber = e.Wave;
                     Wave.Start();
@@ -120,6 +129,7 @@ namespace DamageMeter
                     break;
                 case GameEventKind.WaveEnded:
                 case GameEventKind.GameOver:
+                    waveEventSeen = true;
                     Wave.Stop();
                     Run.Stop();
                     break;
