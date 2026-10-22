@@ -7,13 +7,13 @@ namespace SmartSkill
 {
     // 接管游戏自带的"右键技能图标自动释放"：每个技能的释放条件在技能图标上的齿轮弹窗里设定
     [BepInPlugin(Guid, Name, Version)]
-    [BepInDependency(ModKitPlugin.Guid, "0.2.0")]
+    [BepInDependency(ModKitPlugin.Guid, "0.3.0")]
     public class Plugin : BaseUnityPlugin
     {
         public const string Guid = "plge0n.dungeonbrawl.smartskill";
         public const string Name = "SmartSkill";
         // 发布时同步修改 CHANGELOG.md；pack.ps1 从这里读取版本号
-        public const string Version = "0.5.1";
+        public const string Version = "0.6.0";
 
         internal static ManualLogSource Log;
 
@@ -37,6 +37,8 @@ namespace SmartSkill
             RuleStore.Init(mod.LoadJson<RuleStore.Rules>("SmartSkill.rules.json"));
             mod.UseAutoCast(SkillBrain.Decide);
             mod.OnAutoCastResolved(StatusLog.OnResolved);
+            mod.OnHit(KillPredictor.OnHit);
+            mod.OnBattleStarted(KillPredictor.Reset);
             mod.OnUpdate(SkillGear.Sync);
             mod.OnUpdate(SkillPopup.Tick);
             mod.OnBattleEnded(SkillPopup.Close);

@@ -7,6 +7,7 @@ BepInEx 5 插件，目标游戏：地下城竞技场（Steam 4246640，Unity 202
 | [DBModKit](DBModKit) | 依赖库：游戏接口、自动释放钩子、事件、原生风格 UI、JSON 配置、兼容检查 |
 | [SmartSkill](SmartSkill) | 给"右键技能图标自动释放"加上每个技能单独的释放条件 |
 | [DBStudio](DBStudio) | 游戏内的 Mod 工作台（F9）：调试面板、数值编辑器、英雄皮肤，之后会加规则、强化 |
+| [SmartMove](SmartMove) | 自动躲避地面预警（F9 开关） |
 
 玩家说明见 [安装说明.txt](安装说明.txt)。
 
@@ -56,6 +57,9 @@ public class Plugin : BaseUnityPlugin
 | `SkillInfo` | 技能表数据：名字、标签、指示器、施法范围、冷却 |
 | `SkillSlot` / `SkillBar` | 技能栏里的技能：自动释放开关、剩余冷却、消耗、图标 |
 | `AutoCast` | 接管自动释放：决定放不放、打谁；`Resolved` 事件报告结果 |
+| `MoveControl` | 接管没有方向键输入时的走位（等同按住方向键） |
+| `Arena` | 地面预警（形状、剩余时间）、场地边界 |
+| `Combat` | 命中事件：伤害、是否打死、来源技能 |
 | `ModContext` | Mod 运行上下文：`OnUpdate`、`OnBattleStarted`、`UseAutoCast`、`LoadJson` 等，卸载时自动清理 |
 | `ModEvents` | 每帧、进入/离开战斗、退出游戏 |
 | `NativeUi` | 用游戏素材拼的面板、开关、滑条、下拉框、按钮，以及大窗口、页签、滚动列表、输入框 |
