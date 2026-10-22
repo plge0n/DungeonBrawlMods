@@ -5,6 +5,8 @@
       游戏开着也能重新编译，ScriptEngine 检测到变化后自动重载（也可按 F6）。
     - 否则复制到 BepInEx/plugins/<项目名>（需先关闭游戏）。
     两个位置只保留一份，避免同一个 Mod 被加载两次。
+    项目里的 lang/（翻译）和 assets/（图片、AssetBundle）一起复制：plugins 下放在插件文件夹里，
+    热重载时放在 BepInEx/scripts/<程序集名>/（ScriptEngine 从内存加载 dll，ModContext 到这里找文件）。
   -->
   <PropertyGroup>
     <HotReload Condition="'$(HotReload)' == '' And Exists('$(GameDir)\BepInEx\plugins\ScriptEngine.dll')">true</HotReload>
@@ -12,6 +14,7 @@
     <!-- ScriptEngine 加载时会读取同名 .pdb，缺失就抛异常、整批 Mod 都不加载 -->
     <ScriptsPdb>$(GameDir)\BepInEx\scripts\$(TargetName).pdb</ScriptsPdb>
     <BuiltPdb>$(TargetDir)$(TargetName).pdb</BuiltPdb>
+    <ScriptsContentDir>$(GameDir)\BepInEx\scripts\$(TargetName)</ScriptsContentDir>
   </PropertyGroup>
 
   <Target Name="DeployToGame" AfterTargets="Build" Condition="'$(DeployToGame)' == 'true'">
@@ -22,6 +25,18 @@
     <MakeDir Directories="$(PluginDir)" Condition="'$(HotReload)' != 'true'" />
     <Copy SourceFiles="$(TargetPath)" DestinationFolder="$(PluginDir)" Condition="'$(HotReload)' != 'true'" />
     <Delete Files="$(ScriptsFile);$(ScriptsPdb)" Condition="'$(HotReload)' != 'true'" />
+
+    <ItemGroup>
+      <ModLang Include="$(MSBuildProjectDirectory)\lang\**\*" />
+      <ModAssetFile Include="$(MSBuildProjectDirectory)\assets\**\*" />
+    </ItemGroup>
+    <PropertyGroup>
+      <ContentDest Condition="'$(HotReload)' == 'true'">$(ScriptsContentDir)</ContentDest>
+      <ContentDest Condition="'$(HotReload)' != 'true'">$(PluginDir)</ContentDest>
+    </PropertyGroup>
+    <RemoveDir Directories="$(ScriptsContentDir)" Condition="'$(HotReload)' != 'true'" ContinueOnError="true" />
+    <Copy SourceFiles="@(ModLang)" DestinationFiles="@(ModLang->'$(ContentDest)\lang\%(RecursiveDir)%(Filename)%(Extension)')" />
+    <Copy SourceFiles="@(ModAssetFile)" DestinationFiles="@(ModAssetFile->'$(ContentDest)\assets\%(RecursiveDir)%(Filename)%(Extension)')" />
 
     <Message Importance="high" Text="$(MSBuildProjectName) -> $(GameDir)\BepInEx\scripts（热重载）" Condition="'$(HotReload)' == 'true'" />
     <Message Importance="high" Text="$(MSBuildProjectName) -> $(PluginDir)" Condition="'$(HotReload)' != 'true'" />

@@ -39,6 +39,12 @@ namespace DBModKit
         /// <summary>这个 Mod 的多语言文本（翻译放在插件 dll 旁边的 lang 文件夹，见 <see cref="ModText"/>）。</summary>
         public ModText Text { get; }
 
+        /// <summary>
+        /// 插件的文件夹（相对路径的图片、AssetBundle，以及 lang/ 翻译从这里找）；找不到时为 null。
+        /// 项目里的 lang/、assets/ 编译时会复制过来（热重载时是 BepInEx/scripts/&lt;程序集名&gt;/），打包时放在 dll 旁边。
+        /// </summary>
+        public string Folder { get; }
+
         /// <summary>Mod 已启动（ModKit 兼容且 onLoad 成功）。</summary>
         public bool Loaded { get; private set; }
 
@@ -47,6 +53,7 @@ namespace DBModKit
             Metadata = metadata;
             Logger = logger;
             RunLog = new ModRunLog(metadata.Name);
+            Folder = folder;
             Text = new ModText(folder == null ? null : System.IO.Path.Combine(folder, "lang"));
             this.onUnload = onUnload;
         }
@@ -60,6 +67,13 @@ namespace DBModKit
             string location = plugin.Info?.Location;
             if (string.IsNullOrEmpty(location)) location = plugin.GetType().Assembly.Location;
             string folder = string.IsNullOrEmpty(location) ? null : System.IO.Path.GetDirectoryName(location);
+            // ScriptEngine 从内存加载 dll，拿不到位置；或者 dll 直接在 scripts 下。lang/、assets/ 部署在 scripts/<程序集名>/
+            string scripts = System.IO.Path.Combine(Paths.BepInExRootPath, "scripts");
+            if (folder == null || string.Equals(System.IO.Path.GetFullPath(folder).TrimEnd('\\', '/'), System.IO.Path.GetFullPath(scripts).TrimEnd('\\', '/'), StringComparison.OrdinalIgnoreCase))
+            {
+                string own = System.IO.Path.Combine(scripts, plugin.GetType().Assembly.GetName().Name);
+                if (System.IO.Directory.Exists(own)) folder = own;
+            }
             var ctx = new ModContext(MetadataHelper.GetMetadata(plugin), logger, onUnload, folder);
             if (!ModKit.Compatible)
             {
@@ -154,6 +168,55 @@ namespace DBModKit
             var info = ActiveSkills.Register(Metadata.GUID, Text, def);
             AddCleanup(() => ActiveSkills.Unregister(info));
             return info;
+        }
+
+        private string ResolveFile(string file)
+        {
+            if (string.IsNullOrEmpty(file)) throw new ArgumentException("文件名为空");
+            if (System.IO.Path.IsPathRooted(file)) return file;
+            if (Folder == null) throw new InvalidOperationException($"找不到 {Metadata.Name} 的文件夹，请写完整路径：{file}");
+            return System.IO.Path.Combine(Folder, file);
+        }
+
+        /// <summary>
+        /// 读一张图片（PNG/JPG，相对插件文件夹）做技能图标，返回图标名，填进 <see cref="PassiveSkillDef.Icon"/> / <see cref="ActiveSkillDef.Icon"/>。
+        /// 建议 128×128 左右的正方形图。
+        /// </summary>
+        public string LoadIcon(string key, string file) => RegisterIcon(key, ModAssets.LoadSprite(ResolveFile(file)));
+
+        /// <summary>用现成的 Sprite（比如 <see cref="ModBundle.Sprite"/>）注册技能图标，返回图标名。卸载时自动注销。</summary>
+        public string RegisterIcon(string key, UnityEngine.Sprite sprite)
+        {
+            string name = ModAssets.RegisterIcon(Metadata.GUID, key, sprite);
+            AddCleanup(() => ModAssets.UnregisterIcon(name));
+            return name;
+        }
+
+        /// <summary>
+        /// 注册一个特效，返回特效路径，传给 <see cref="ActiveSkill.Effect"/>。template 是 AssetBundle 里的预制体，
+        /// 或者代码搭好的 GameObject（会被藏起来当模板）。游戏的对象池按需复制它，到时间自动回收。卸载时自动注销。
+        /// </summary>
+        public string RegisterEffect(string key, UnityEngine.GameObject template)
+        {
+            string name = ModAssets.RegisterEffect(Metadata.GUID, key, template);
+            AddCleanup(() => ModAssets.UnregisterEffect(name));
+            return name;
+        }
+
+        /// <summary>打开一个 AssetBundle（相对插件文件夹）。卸载时自动关闭（之后从里面读的资源都会失效）。</summary>
+        public ModBundle LoadBundle(string file)
+        {
+            string path = ResolveFile(file);
+            var bundle = UnityEngine.AssetBundle.LoadFromFile(path);
+            if (bundle == null) throw new System.IO.InvalidDataException($"打不开 AssetBundle（文件不存在、不是 AssetBundle，或 Unity 版本不对，游戏是 {UnityEngine.Application.unityVersion}）：{path}");
+            var result = new ModBundle(path, bundle);
+            // 注册的图标、特效先注销（后注册的先清理），最后才关包
+            cleanups.Insert(0, () =>
+            {
+                result.Bundle = null;
+                bundle.Unload(true);
+            });
+            return result;
         }
 
         /// <summary>订阅战斗事件（见 <see cref="GameEvents"/>）。</summary>

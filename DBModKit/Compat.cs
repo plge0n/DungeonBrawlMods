@@ -84,6 +84,8 @@ namespace DBModKit
             ["MirrorBossPlayerSnapshot"] = new[] { "skills", "player" },
             ["MirrorBossSkillSource"] = new[] { "activeSkill", "skillName" },
             ["PasssiveSkillEnum"] = new string[0],
+            // Mod 资源
+            ["m"] = new[] { "cyn", "zop", "zoq" },
             // 自定义主动技能
             ["bff"] = new string[0],
             ["Mirror.NetworkManager"] = new[] { "bmxm" },
@@ -93,7 +95,7 @@ namespace DBModKit
             // 嵌套类型 de.PlayerKingData / PlayerKingSkillData 的名字没混淆，按成员检查（映射重建工具不认 "de+X" 这种写法）
             ["de"] = new[] { "PlayerKingData", "PlayerKingSkillData" },
             ["bpe"] = new[] { "bjes", "bprr" },
-            ["bpf"] = new[] { "bjgk", "bjgm" },
+            ["bpf"] = new[] { "bjgk", "bjgm", "bjgj", "opi" },
             ["bht"] = new[]
             {
                 "bhne", "bhny", "bhnv", "bhng", "bhnd", "bpqi", "k896ff3548b31472b8b2cf8f649c25e65", "kacb7d091b5904139a602f04ed9552242",

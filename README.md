@@ -73,6 +73,7 @@ public class Plugin : BaseUnityPlugin
 | `GameData` | 改技能、英雄、怪物配置表里的数值，可随时整体恢复原版 |
 | `PassiveSkills` | 自定义被动技能：注册后进技能书三选一、占技能格，行为由 Mod 写（`mod.RegisterPassive`） |
 | `ActiveSkills` | 自定义主动技能：蓝耗、冷却、瞄准等按游戏的表填，生效时的效果由 Mod 写，伤害走游戏结算（`mod.RegisterSkill`） |
+| `ModAssets` / `ModBundle` | Mod 自己的图标（图片或 AssetBundle）和特效，用法和游戏资源一样（`mod.LoadIcon`、`RegisterEffect`、`LoadBundle`） |
 | `HeroSkins` | 给每个英雄选一套工坊或本地的模型（或原版），可以只换本地玩家；Steam 联机时通过大厅成员数据同步 |
 | `LobbySync` | 通过 Steam 大厅成员数据和其他装了 Mod 的玩家交换少量文字数据（局域网不可用） |
 | `JsonConfig<T>` | `BepInEx/config` 下的 JSON 配置，自动延迟保存 |

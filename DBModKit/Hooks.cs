@@ -92,6 +92,19 @@ namespace DBModKit
                     }),
                     postfix: nameof(PassiveHooks.SkillCreatedPostfix));
 
+            // Mod 的特效：m.cyn(路径) 是对象池第一次用到某个路径时加载模板的地方（m.cyp 等取对象的方法都经过它）
+            ModAssets.EffectsAvailable = TryPatch(harmony, typeof(AssetHooks), "Mod 特效",
+                AccessTools.Method(typeof(m), "cyn", new[] { typeof(string) }),
+                postfix: nameof(AssetHooks.PrefabPostfix));
+            // Mod 的图标：游戏到处用 Resources.Load<Sprite>("Bundles/UI/Icon/Skill/" + 名字)（技能栏、三选一、图鉴、构筑面板…），
+            // 泛型 Load<T> 内部调用 Load(string, Type)。它是 Unity 的 extern 方法，HarmonyX 用原生跳转打补丁；装不上时技能栏单独补
+            ModAssets.IconsAvailable = TryPatch(harmony, typeof(AssetHooks), "Mod 图标",
+                AccessTools.Method(typeof(Resources), nameof(Resources.Load), new[] { typeof(string), typeof(Type) }),
+                prefix: nameof(AssetHooks.ResourcesPrefix));
+            TryPatch(harmony, typeof(AssetHooks), "Mod 图标（技能栏）",
+                AccessTools.Method(typeof(bpf), "opi"),
+                postfix: nameof(AssetHooks.SkillButtonPostfix));
+
             try
             {
                 Combat.Install();
@@ -317,6 +330,38 @@ namespace DBModKit
             catch (Exception e)
             {
                 Safe.Report("自定义被动（镜像 Boss 过滤）", e);
+            }
+        }
+    }
+
+    // Mod 的图标和特效（见 ModAssets）：名字都以 "DBMod/" 开头，原版的路径一律放行
+    internal static class AssetHooks
+    {
+        internal static void PrefabPostfix(string __0, ref GameObject __result)
+        {
+            if (__result == null && ModAssets.IsOurs(__0)) __result = ModAssets.EffectFor(__0);
+        }
+
+        internal static bool ResourcesPrefix(string __0, Type __1, ref UnityEngine.Object __result)
+        {
+            if (!ModAssets.IsOurs(__0)) return true;
+            var sprite = ModAssets.IconFor(__0);
+            if (sprite == null) return true;
+            if (__1 == null || __1.IsAssignableFrom(typeof(Sprite))) __result = sprite;
+            else if (__1.IsAssignableFrom(typeof(Texture2D))) __result = sprite.texture;
+            else return true;
+            return false;
+        }
+
+        internal static void SkillButtonPostfix(object __instance, object __0)
+        {
+            try
+            {
+                GameRaw.FixSkillButtonIcon(__instance, __0);
+            }
+            catch (Exception e)
+            {
+                Safe.Report("Mod 图标（技能栏）", e);
             }
         }
     }

@@ -14,7 +14,13 @@
   `FormulaDamage`，以及走游戏伤害结算的 `DamageArea` / `Damage`、对象池特效 `Effect`。`ActiveSkills.Give` 直接发放
 - 联机：技能在每个装了这个 Mod 的客户端上都会创建（能看到效果），伤害只在施法者那边结算；没装的人只看到施法动作，不会出错。
   编号 2000000 起
-- 映射重建工具：重写游戏虚方法的声明、带命名空间的类型名字符串也会跟着改
+- 新增 Mod 资源（`ModAssets`）：`mod.LoadIcon(键, "图片.png")` / `mod.RegisterIcon(键, Sprite)` 返回图标名，填进技能的 `Icon`，
+  技能栏、三选一、图鉴、构筑面板都会显示；`mod.RegisterEffect(键, 模板)` 返回特效路径，传给 `ActiveSkill.Effect`，走游戏的对象池；
+  `mod.LoadBundle("xxx.bundle")` 打开 AssetBundle（`Sprite` / `Prefab` / `Clip` / `Load<T>`），卸载时自动关闭。`mod.Folder` 是插件所在文件夹
+- 插件项目里的 `lang/`、`assets/` 编译时跟着 dll 部署（热重载时在 `BepInEx/scripts/<程序集名>/`，`mod.Folder` 会找到这里），`pack.ps1` 也会打进包和工坊条目；
+  原来 `lang/` 翻译文件不会被部署和打包
+- 图标靠 `Resources.Load` 补丁（`ModAssets.IconsAvailable`）；装不上时技能栏按钮单独补上
+- 映射重建工具：重写游戏虚方法的声明、带命名空间的类型名字符串也会跟着改；编译检查也读项目文件自己的引用
 
 ## 0.14.0
 - 新增 `LobbySync`：通过 Steam 大厅成员数据和其他装了 Mod 的玩家交换少量文字数据（`Publish` / `Read` / `Clear`）。

@@ -1014,6 +1014,34 @@ namespace DBModKit
         // oj.fuv(路径, 时长, 位置, 缩放)：从对象池取 Bundles/路径 的预制体，到时自动回收（游戏的闪电等技能都用它）
         public static void SpawnEffect(string path, Vector3 position, float duration, float scale) => cj.boyj?.fuv(path, duration, position, scale);
 
+        // ---- Mod 资源（ModAssets）----
+        // 游戏的预制体对象池 m：zop 路径 → 模板（第一次用时 m.cyn 从 Resources 加载），zoq 路径 → 回收的实例。
+        // 只在切场景时整体清空（m.Clear），所以 Mod 注销特效时要自己把这条路径的缓存清掉
+        private static readonly AccessTools.FieldRef<Dictionary<string, GameObject>> pooledTemplates =
+            AccessTools.StaticFieldRefAccess<Dictionary<string, GameObject>>(AccessTools.Field(typeof(m), "zop"));
+        private static readonly AccessTools.FieldRef<Dictionary<string, Queue<GameObject>>> pooledInstances =
+            AccessTools.StaticFieldRefAccess<Dictionary<string, Queue<GameObject>>>(AccessTools.Field(typeof(m), "zoq"));
+
+        public static void ForgetPooledEffect(string path)
+        {
+            pooledTemplates()?.Remove(path);
+            var pools = pooledInstances();
+            if (pools == null || !pools.TryGetValue(path, out var queue)) return;
+            pools.Remove(path);
+            foreach (var go in queue)
+                if (go != null) UnityEngine.Object.Destroy(go);
+        }
+
+        // 技能按钮 bpf.opi(技能, 按键) 里 bjgj.sprite = Resources.Load("Bundles/UI/Icon/Skill/" + bht.bhnf)；
+        // Resources.Load 补丁没装上时，技能栏这里单独补上（最常看到的地方）
+        public static void FixSkillButtonIcon(object button, object skill)
+        {
+            var s = (bht)skill;
+            if (s == null || !ModAssets.IsOurs(s.bhnf)) return;
+            var sprite = ModAssets.IconFor(s.bhnf);
+            if (sprite != null) ((bpf)button).bjgj.sprite = sprite;
+        }
+
         // ---- 技能实例 bht ----
         public static int SkillId(object s) => (int)((bht)s).bhne;
         public static bool IsAutoCastOn(object s) => ((bht)s).bhny;

@@ -119,16 +119,19 @@ namespace Remap
 
         // 编译检查用的其他引用：和真实构建一致，取仓库根目录 Directory.Build.props 里的 HintPath
         // （全引用 Managed 会多出不相干的程序集，里面的同名全局类型会造成假的冲突），再加上 Unity 的基础库
-        private static List<string> ExtraRefs(string game, string[] processed)
+        private static List<string> ExtraRefs(string game, string[] processed, IEnumerable<string> sources)
         {
             var managed = Managed(game);
             var list = new List<string>();
-            var props = RepoRoot() is string root ? Path.Combine(root, "Directory.Build.props") : null;
-            if (props != null && File.Exists(props))
-                foreach (Match m in Regex.Matches(File.ReadAllText(props), "HintPath=\"([^\"]+)\""))
+            // 公共的 Directory.Build.props，加上源码目录里项目文件自己的引用（比如 DBModKit 的 AssetBundle 模块）
+            var files = new List<string>();
+            if (RepoRoot() is string root && File.Exists(Path.Combine(root, "Directory.Build.props"))) files.Add(Path.Combine(root, "Directory.Build.props"));
+            else Console.WriteLine("警告：找不到 Directory.Build.props，编译检查只引用 Unity 基础库");
+            foreach (var dir in sources)
+                if (Directory.Exists(dir)) files.AddRange(Directory.GetFiles(dir, "*.csproj"));
+            foreach (var file in files)
+                foreach (Match m in Regex.Matches(File.ReadAllText(file), "HintPath=\"([^\"]+)\""))
                     list.Add(m.Groups[1].Value.Replace("$(Managed)", managed).Replace("$(GameDir)", game));
-            else
-                Console.WriteLine("警告：找不到 Directory.Build.props，编译检查只引用 Unity 基础库");
             foreach (var name in new[] { "netstandard.dll", "mscorlib.dll", "System.dll", "System.Core.dll" })
                 list.Add(Path.Combine(managed, name));
             return list.Where(p => !processed.Contains(Path.GetFileNameWithoutExtension(p)) && File.Exists(p)).Distinct().ToList();
@@ -183,7 +186,7 @@ namespace Remap
             matcher.Run();
             Console.WriteLine($"  对应完成（{sw.Elapsed.TotalSeconds:F0}s）");
 
-            var extra = ExtraRefs(game, asms);
+            var extra = ExtraRefs(game, asms, Sources(o));
             var scan = new SourceScan(oldSide, Sources(o), extra);
             var rewrite = scan.Rewrite((d, p) => NewName(matcher, d, p), newSide, extra);
 
@@ -246,7 +249,7 @@ namespace Remap
             Console.WriteLine($"对应完成（{sw.Elapsed.TotalSeconds:F0}s）");
             foreach (var name in o.GetValueOrDefault("explain") ?? new List<string>()) matcher.Explain(name, Console.WriteLine);
 
-            var extra = ExtraRefs(game, asms);
+            var extra = ExtraRefs(game, asms, Sources(o));
             var scan = new SourceScan(oldSide, Sources(o), extra);
             var rewrite = scan.Rewrite((d, p) => NewName(matcher, d, p), newSide, extra);
 
