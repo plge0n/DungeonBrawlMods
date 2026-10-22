@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 namespace DBModKit
@@ -92,7 +93,13 @@ namespace DBModKit
         {
             if (!ModKit.Compatible || !Game.InBattle || IsBusy) return false;
             if (options == null || options.Count == 0 || options.Count > MaxOptions) return false;
-            GameRaw.ShowChoice(title, options, i => Safe.Run("ChoicePanel 回调", () => onPick(i)));
+            string caller = RunLog.CallerMod();
+            RunLog.Info(caller, "三选一", "弹出选择", ("标题", title), ("选项", string.Join("、", options.Select(o => o.Name))));
+            GameRaw.ShowChoice(title, options, i =>
+            {
+                RunLog.Info(caller, "三选一", "选中", ("选项", i >= 0 && i < options.Count ? options[i].Name : i.ToString()));
+                Safe.Run("ChoicePanel 回调", () => onPick(i));
+            });
             return true;
         }
     }

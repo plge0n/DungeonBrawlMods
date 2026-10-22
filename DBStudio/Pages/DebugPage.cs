@@ -48,7 +48,12 @@ namespace DBStudio.Pages
             var right = NativeUi.Column(columns);
             var head = NativeUi.Row(right, 40f);
             NativeUi.Heading(head, "事件日志");
-            NativeUi.Button(head, "清空", false, 110f, EventLog.Clear).GetComponent<LayoutElement>().preferredHeight = 40f;
+            SmallButton(head, "标记", 90f, () => RunLog.Mark());
+            SmallButton(head, "导出", 90f, Export);
+            SmallButton(head, "清空", 90f, EventLog.Clear);
+            var tools = NativeUi.Row(right, 36f);
+            NativeUi.Toggle(tools, "详细（含每个战斗事件）", 330f, on => EventLog.Verbose = on).isOn = EventLog.Verbose;
+            NativeUi.Label(tools, $"{RunLog.FileLevel} 级以上写入 trace.log", 16, -1f, NativeUi.DimText);
             var content = NativeUi.ScrollView(right, out logScroll);
             log = Studio.Block(content, 18);
         }
@@ -69,7 +74,8 @@ namespace DBStudio.Pages
                 logVersion = EventLog.Version;
                 // 原本停在底部就继续跟随最新的日志
                 bool follow = logScroll.verticalNormalizedPosition <= 0.01f || logScroll.content.rect.height <= logScroll.viewport.rect.height;
-                log.text = EventLog.Lines.Count == 0 ? Dim("暂无事件") : string.Join("\n", EventLog.Lines);
+                var lines = EventLog.Lines();
+                log.text = lines.Count == 0 ? Dim("暂无事件") : string.Join("\n", lines);
                 if (follow)
                 {
                     Canvas.ForceUpdateCanvases();
@@ -129,8 +135,26 @@ namespace DBStudio.Pages
             var p = Game.LocalPlayer;
             // 按钮状态每 0.25 秒刷新一次，点击时再确认一遍
             if (p == null || !Game.IsSolo) return;
-            action(p);
             EventLog.Add($"测试操作：{name}");
+            action(p);
+        }
+
+        private static void SmallButton(Transform parent, string text, float width, UnityEngine.Events.UnityAction onClick)
+            => NativeUi.Button(parent, text, false, width, onClick).GetComponent<LayoutElement>().preferredHeight = 40f;
+
+        // 诊断报告：版本、兼容检查、当前状态和全部运行记录，反馈问题时附上
+        private static void Export()
+        {
+            try
+            {
+                string path = RunLog.ExportReport();
+                ScreenNotice.Show($"诊断报告已导出：{path}", 6f);
+            }
+            catch (System.Exception e)
+            {
+                Plugin.Log.LogError($"导出诊断报告失败：{e}");
+                ScreenNotice.Show("导出诊断报告失败，详情见 BepInEx/LogOutput.log", 4f);
+            }
         }
 
         // 把栏里的内容顶到上面

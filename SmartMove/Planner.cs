@@ -37,14 +37,19 @@ namespace SmartMove
         public static MoveCommand Decide(MoveContext ctx)
         {
             var cmd = Plan(ctx);
-            if (Plugin.VerboseLog.Value)
+            // 决策变化时记进运行记录（Debug）；VerboseLog 打开时也写 BepInEx 日志
+            string reason = cmd.Override ? cmd.Reason : null;
+            // 原因里带倒计时（"1.5秒后生效"），只在去掉数字后不同时才算变化
+            if (StripNumbers(reason) != StripNumbers(lastReason))
             {
-                string reason = cmd.Override ? cmd.Reason : null;
-                if (reason != lastReason) Plugin.Log.LogInfo(reason ?? "交还原版");
-                lastReason = reason;
+                Plugin.RunLogger.Debug("躲避", reason ?? "交还原版");
+                if (Plugin.VerboseLog.Value) Plugin.Log.LogInfo(reason ?? "交还原版");
             }
+            lastReason = reason;
             return cmd;
         }
+
+        private static string StripNumbers(string s) => s == null ? null : System.Text.RegularExpressions.Regex.Replace(s, @"[\d.]+", "#");
 
         private static MoveCommand Plan(MoveContext ctx)
         {

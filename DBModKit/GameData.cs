@@ -152,6 +152,7 @@ namespace DBModKit
             {
                 if (active == value || (value && !Ready)) return;
                 active = value;
+                RunLog.Info(RunLog.CallerMod(), "数值", value ? "改动生效" : "改动停用，表已恢复原版", ("改动行数", overrides.Sum(t => t.Value.Count)));
                 foreach (var table in overrides.Keys)
                     foreach (var key in overrides[table].Keys.ToList())
                         Sync(table, key);
@@ -225,6 +226,8 @@ namespace DBModKit
                 return;
             }
             if (!overrides[table].TryGetValue(key, out var fields)) overrides[table][key] = fields = new Dictionary<string, double>();
+            RunLog.Info(RunLog.CallerMod(), "数值", "修改", ("表", table.ToString()), ("行", key), ("字段", field),
+                ("值", $"{Get(table, key, field)}→{value}"), ("原版", Original(table, key, field)), ("生效", active));
             fields[field] = value;
             Sync(table, key);
             RaiseChanged();
@@ -234,6 +237,7 @@ namespace DBModKit
         public static void Reset(DataTable table, string key, string field = null)
         {
             if (!overrides[table].TryGetValue(key, out var fields)) return;
+            RunLog.Info(RunLog.CallerMod(), "数值", "恢复原版", ("表", table.ToString()), ("行", key), ("字段", field ?? "整行"));
             if (field == null) fields.Clear();
             else fields.Remove(field);
             if (fields.Count == 0) overrides[table].Remove(key);
@@ -252,6 +256,7 @@ namespace DBModKit
                         if (k.Value != null && k.Value.Count > 0)
                             overrides[t.Key][k.Key] = k.Value.Where(f => Field(t.Key, f.Key) != null)
                                 .ToDictionary(f => f.Key, f => f.Value);
+            RunLog.Info(RunLog.CallerMod(), "数值", data == null ? "清空全部改动" : "载入改动", ("改动行数", overrides.Sum(t => t.Value.Count)));
             foreach (var (table, key) in touched.Concat(overrides.SelectMany(t => t.Value.Keys.Select(k => (t.Key, k)))).Distinct().ToList())
                 Sync(table, key);
             RaiseChanged();

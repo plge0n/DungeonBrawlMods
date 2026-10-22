@@ -35,6 +35,12 @@ namespace DBStudio
         private static void Row(Transform parent, ConfigEntryBase entry)
         {
             var row = NativeUi.Row(parent, 48f, 12f);
+            // 说明可能有好几行：高度跟着左边的名字和说明走，至少 48；控件不拉伸、竖直居中
+            var rowLe = row.GetComponent<LayoutElement>();
+            rowLe.preferredHeight = -1f;
+            rowLe.minHeight = 48f;
+            row.GetComponent<HorizontalLayoutGroup>().childForceExpandHeight = false;
+            row.GetComponent<HorizontalLayoutGroup>().padding = new RectOffset(0, 0, 4, 4);
             var labels = NativeUi.Column(row, LabelWidth, 0f);
             NativeUi.Label(labels, entry.Definition.Key, 22);
             string desc = entry.Description?.Description;

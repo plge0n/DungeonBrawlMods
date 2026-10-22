@@ -31,6 +31,9 @@ namespace DBStudio
         private static int lastTab;
         private static float nextRefresh;
         private static IDisposable inputBlock;
+        // 关窗口后晚一帧再放开输入：游戏在同一帧稍后才读按键，立刻放开的话关窗口的 ESC 会再打开游戏菜单
+        private static IDisposable releasingInput;
+        private static int releaseAfterFrame;
         private static IDisposable pause;
 
         public static bool IsOpen => window != null && window.IsOpen;
@@ -45,6 +48,7 @@ namespace DBStudio
 
         public static void Tick()
         {
+            if (releasingInput != null && Time.frameCount > releaseAfterFrame) ReleaseInputNow();
             // 正在录快捷键时，按键都交给它（ESC 是取消录制，不是关窗口），页面照常刷新
             bool capturing = KeyCapture.Active;
             if (capturing) KeyCapture.Tick();
@@ -103,8 +107,13 @@ namespace DBStudio
             window = null;
             pageRoot = null;
             current = null;
-            inputBlock?.Dispose();
-            inputBlock = null;
+            if (inputBlock != null)
+            {
+                ReleaseInputNow();
+                releasingInput = inputBlock;
+                releaseAfterFrame = Time.frameCount;
+                inputBlock = null;
+            }
             pause?.Dispose();
             pause = null;
         }
@@ -113,8 +122,15 @@ namespace DBStudio
         public static void Shutdown()
         {
             Close();
+            ReleaseInputNow();
             if (canvas != null) UnityEngine.Object.Destroy(canvas.gameObject);
             canvas = null;
+        }
+
+        private static void ReleaseInputNow()
+        {
+            releasingInput?.Dispose();
+            releasingInput = null;
         }
 
         private static void ShowPage(int index)

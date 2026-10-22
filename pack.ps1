@@ -94,3 +94,27 @@ foreach ($plugin in $plugins | Where-Object { $_ -ne "DBModKit" }) {
     } | ConvertTo-Json | Set-Content (Join-Path $itemDir "dbmod.json") -Encoding utf8
     Write-Host "  -> $itemDir"
 }
+
+# 运行环境条目：BepInEx + DBModKit 的安装包（游戏工坊不加载 dll，玩家订阅后运行 install.bat 复制进游戏目录）
+$runtime = Join-Path $workshop "Runtime"
+$template = Join-Path $root "workshop\Runtime"
+New-Item -ItemType Directory -Force $runtime | Out-Null
+Copy-Item -Recurse (Join-Path $template "*") $runtime -Exclude "preview.png"
+$runtimeFiles = Join-Path $runtime "files"
+Expand-Archive $bepinexZip -DestinationPath $runtimeFiles
+# BepInEx 自己的更新日志不需要放进游戏目录
+Remove-Item (Join-Path $runtimeFiles "changelog.txt") -ErrorAction SilentlyContinue
+$kitDir = Join-Path $runtimeFiles "BepInEx\plugins\DBModKit"
+New-Item -ItemType Directory -Force $kitDir | Out-Null
+Copy-Item (Join-Path $root "DBModKit\bin\Release\netstandard2.1\DBModKit.dll") $kitDir
+[ordered]@{
+    Format      = 1
+    Type        = "runtime"
+    Name        = "DBModKit Runtime"
+    Author      = ""
+    Version     = $versions["DBModKit"]
+    Description = "BepInEx $BepInExVersion + DBModKit"
+    MinModKit   = ""
+    Assemblies  = @()
+} | ConvertTo-Json | Set-Content (Join-Path $runtime "dbmod.json") -Encoding utf8
+Write-Host "  -> $runtime（运行环境 $($versions["DBModKit"])）"

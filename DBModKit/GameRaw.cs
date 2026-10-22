@@ -18,6 +18,8 @@ namespace DBModKit
 
         // cj.boyi.dff：找不到 key 时返回默认值，不打警告
         public static string Localize(string key, string fallback) => cj.boyi.dff(key, fallback);
+        // cl.boyu：游戏设置里的语言（LanguageType）。不在兼容检查清单里：读不到时 Localization 退回中文，不必停用整个 ModKit
+        public static int LanguageIndex() => (int)cj.boyi.boyu;
 
         // ---- 角色 yb ----
         public static long Hp(Component r) => ((yb)r).hp;
@@ -30,6 +32,9 @@ namespace DBModKit
         public static float HitRadius(Component r) => ((yb)r).bpia != null ? ((yb)r).bpia.addRange : 0f;
         public static bool IsBoss(Component r) => r is xo e && e.isBoss;
         public static bool IsElite(Component r) => r is xo e && e.isElite;
+        // 召唤物 roleType = Summon，authorityId = 召唤者的 netId（xo.hkr）
+        public static bool IsSummon(Component r) => ((yb)r).roleType == RoleType.Summon;
+        public static uint AuthorityId(Component r) => ((yb)r).authorityId;
         public static List<yb> Enemies(Component r) => ((yb)r).izk();
         // 护盾 bpgz；无敌 beqd（受到的伤害记为 0）
         public static long Shield(Component r) => ((yb)r).bpgz;
@@ -83,7 +88,7 @@ namespace DBModKit
         // 体力变化会自动同步生命上限。游戏的卡牌、装备也用它
         public static void AddStats(Component p, int str, int agi, int sta, long attack) => ((bbe)p).kkl(str, agi, sta, attack);
 
-        // 当前波次
+        // 当前波次，从 0 开始（游戏显示 nn.bbsr + 1）
         public static int Wave() => nn.bbsr;
 
         // ---- 本地玩家的战斗回调（多播委托字段，只在拥有者客户端触发）----
@@ -159,6 +164,37 @@ namespace DBModKit
 
         // bbe.kqk(编号, 等级)：游戏的遗物三选一（ez.dzv）就调它；超过本局获取上限、或王者模式禁用时返回 null
         public static bool GiveRelic(Component p, int id) => cj.boyl.bcry.ContainsKey((ItemType)id) && ((bbe)p).kqk(id, 0) != null;
+
+        // ---- 掉落物：cj.boyq（ot）.bctu，ou 的 bcty = 编号、bctz = 所属玩家 netId（0 = 公共）、bcua = ItemType、bcuc = 位置 ----
+        public static void ReadLoot(List<LootItem> output)
+        {
+            output.Clear();
+            var items = cj.boyq?.bctu;
+            if (items == null) return;
+            foreach (var kv in items)
+            {
+                var o = kv.Value;
+                if (o == null) continue;
+                // ot.gdb：公共物品、自己的物品，或物主允许共享时能捡（服务器 bbe.lbf 用同样的判断）
+                output.Add(new LootItem(o.bcty, (int)o.bcua, o.bcuc, ot.gdb(o), ez.eaz(o.bcua), ez.ebc(o.bcua)));
+            }
+        }
+
+        public static string ItemName(int itemType) => cj.boyi.dff("pickitem_" + itemType, ((ItemType)itemType).ToString());
+
+        // bio.Pick（点击单个物品）的判断：死了不能捡（nn.bbth 时除外）
+        public static bool CanPickNow(Component p) => nn.bbth || (((yb)p).hp > 0 && ((yb)p).bphy != RoleState.Dead);
+
+        // 背包 bba.bfnb，上限 6 格；金币、宝石、阳光、力量/敏捷/耐力之书、护符不占格子（ez.eaz；全属性之书、金币袋占格子）
+        public static int BagCount(Component p) => ((bbe)p).playerAttribute.kgw();
+
+        // 护符需按键拾取（设置项 IsKeyPickTalisman）；关掉时护符靠碰到自动拾取，按 C 也不捡
+        public static bool KeyPickTalisman() => nn.bbtz;
+
+        // CmdPickItem 由服务器 bbe.lbf 处理：只检查物主，不检查距离，距离要自己限制
+        public static void PickItem(Component p, uint id) => ((bbe)p).CmdPickItem(id);
+
+        public static void PlayPickSound() => bz.ddr<AudioManager>()?.daw("Audio/Battle_Audio/UI/拾取物品", 0.9f);
 
         // ---- 三选一界面 bqa（ui_roguelike）----
         // 和游戏自己弹遗物前的判断一致（MyServerNetworkManager.qhz）：三选一界面开着，或技能栏的子面板（bpe.bprr）开着
@@ -296,10 +332,10 @@ namespace DBModKit
         }
 
         // ---- 命中事件 bdc.bgfu：攻击方客户端上每次造成伤害时触发 ----
-        public static void SubscribeHits(System.Action<Component, Component, long, long, long, int, bool, bool> handler)
+        public static void SubscribeHits(System.Action<Component, Component, long, long, long, int, bool, bool, bool> handler)
         {
             bdc.bgfu += hit => handler(hit.source, hit.target, hit.fact.Amount + System.Math.Max(0L, hit.fact.ShieldDamage),
-                hit.targetHp, hit.targetShield, hit.fact.SkillId, hit.fact.Active, hit.fact.Critical);
+                hit.targetHp, hit.targetShield, hit.fact.SkillId, hit.fact.Active, hit.fact.Critical, hit.fact.Normal);
         }
 
         // ---- 技能数据 ActiveSkillData，表在 cj.boyl.bcrw ----
@@ -341,7 +377,8 @@ namespace DBModKit
                         string id = Cell(row, "id");
                         if (id == null || !cj.boyl.bcru.ContainsKey(id) || !int.TryParse(id, out int n)) continue;
                         string head = ((HeroType)n).ToString().Split('_').Last();
-                        list.Add(new DataEntry(table, id, cj.boyi.dff(Cell(row, "name") ?? id, id), IconPath("HeadIcon/Player_", head)));
+                        // 英雄名的本地化 key 是 "hero_" + 编号（见 ez.dvm；不直接调 dvm，它会返回工坊模型的名字）
+                        list.Add(new DataEntry(table, id, cj.boyi.dff("hero_" + id, id), IconPath("HeadIcon/Player_", head)));
                     }
                     break;
                 case DataTable.Enemy:
@@ -350,7 +387,8 @@ namespace DBModKit
                     {
                         string id = Cell(row, "id");
                         if (id == null) continue;
-                        list.Add(new DataEntry(table, id, cj.boyi.dff(Cell(row, "name") ?? id, id), IconPath("HeadIcon/Enemy_", Cell(row, "model"))));
+                        // 怪物名的本地化 key 就是 id（EnemyType 名字，见 EnemyDragonBoss 的 Boss 提示）；没有翻译的（多半是没用到的怪）显示 id
+                        list.Add(new DataEntry(table, id, cj.boyi.dff(id, id), IconPath("HeadIcon/Enemy_", Cell(row, "model"))));
                     }
                     break;
             }

@@ -16,10 +16,12 @@ namespace DBModKit
         /// <summary>由主动技能造成时为技能编号，普攻、被动等为 null。</summary>
         public int? SkillId { get; }
         public bool Critical { get; }
+        /// <summary>普攻本身（AttackType.Normal）。普攻特效、被动、异常状态、装备特效等既不是普攻、也没有 SkillId。</summary>
+        public bool IsNormalAttack { get; }
         /// <summary>这一下打死了目标（与游戏判定斩杀奖励的方式一致：伤害 ≥ 血量 + 护盾）。</summary>
         public bool Lethal => Damage >= TargetHp + TargetShield;
 
-        internal HitInfo(Role source, Role target, long damage, long targetHp, long targetShield, int? skillId, bool critical)
+        internal HitInfo(Role source, Role target, long damage, long targetHp, long targetShield, int? skillId, bool critical, bool normal)
         {
             Source = source;
             Target = target;
@@ -28,6 +30,7 @@ namespace DBModKit
             TargetShield = targetShield;
             SkillId = skillId;
             Critical = critical;
+            IsNormalAttack = normal;
         }
     }
 
@@ -45,11 +48,11 @@ namespace DBModKit
             GameRaw.SubscribeHits(OnHit);
         }
 
-        private static void OnHit(Component source, Component target, long damage, long hp, long shield, int skillId, bool active, bool critical)
+        private static void OnHit(Component source, Component target, long damage, long hp, long shield, int skillId, bool active, bool critical, bool normal)
         {
             var evt = Hit;
             if (evt == null) return;
-            var info = new HitInfo(Role.Wrap(source), Role.Wrap(target), damage, hp, shield, active ? skillId : (int?)null, critical);
+            var info = new HitInfo(Role.Wrap(source), Role.Wrap(target), damage, hp, shield, active ? skillId : (int?)null, critical, normal);
             Safe.InvokeEach(evt, nameof(Hit), info);
         }
     }

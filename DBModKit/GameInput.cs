@@ -11,7 +11,18 @@ namespace DBModKit
         /// 点击穿透不用管：鼠标在带 Image 的 UI 上时游戏自己会忽略点击。
         /// 一定要释放（热重载时在 onUnload 里关窗口），否则游戏会一直不响应操作。
         /// </summary>
-        public static IDisposable Block() => ModKit.Compatible ? GameRaw.BlockInput() : Disposable.Empty;
+        public static IDisposable Block()
+        {
+            if (!ModKit.Compatible) return Disposable.Empty;
+            string caller = RunLog.CallerMod();
+            var inner = GameRaw.BlockInput();
+            RunLog.Debug(ModKitPlugin.Name, "输入", "屏蔽游戏输入", ("调用者", caller));
+            return new Disposable(() =>
+            {
+                inner.Dispose();
+                RunLog.Debug(ModKitPlugin.Name, "输入", "放开游戏输入", ("调用者", caller), ("帧", Time.frameCount));
+            });
+        }
     }
 
     /// <summary>暂停游戏时间（Time.timeScale = 0）。联机时不要用：别人的游戏不会停。</summary>
@@ -29,6 +40,7 @@ namespace DBModKit
             {
                 saved = Time.timeScale > 0f ? Time.timeScale : 1f;
                 Time.timeScale = 0f;
+                RunLog.Debug(ModKitPlugin.Name, "暂停", "暂停游戏", ("调用者", RunLog.CallerMod()), ("原速度", saved));
             }
             return new Disposable(Release);
         }
@@ -37,6 +49,7 @@ namespace DBModKit
         {
             if (count == 0 || --count > 0) return;
             if (Time.timeScale == 0f) Time.timeScale = saved;
+            RunLog.Debug(ModKitPlugin.Name, "暂停", "恢复游戏", ("速度", Time.timeScale));
         }
 
         // 暂停期间游戏自己改了速度（比如倍速按钮），记下新值并继续保持暂停

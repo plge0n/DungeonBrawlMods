@@ -109,7 +109,8 @@ namespace DBModKit
                 parentSize.x > 0f ? Mathf.Min(size.x, parentSize.x - 40f) : size.x,
                 parentSize.y > 0f ? Mathf.Min(size.y, parentSize.y - 40f) : size.y);
             var layout = frame.gameObject.AddComponent<VerticalLayoutGroup>();
-            layout.padding = new RectOffset(28, 28, 16, 14);
+            // 面板贴图的上下边缘有装饰，内容要让开，否则标题和底部状态栏会压在边框上
+            layout.padding = new RectOffset(28, 28, 30, 36);
             layout.spacing = 8f;
             layout.childControlWidth = layout.childControlHeight = true;
             layout.childForceExpandWidth = true;
@@ -323,7 +324,12 @@ namespace DBModKit
             v.childForceExpandWidth = true;
             v.childForceExpandHeight = false;
             var le = go.GetComponent<LayoutElement>();
-            if (width > 0) le.preferredWidth = le.minWidth = width;
+            // 定宽时 flexibleWidth 必须显式设 0，否则会继承子控件（比如滚动框）的可拉伸，一起分剩余宽度
+            if (width > 0)
+            {
+                le.preferredWidth = le.minWidth = width;
+                le.flexibleWidth = 0f;
+            }
             else le.flexibleWidth = 1f;
             le.flexibleHeight = 1f;
             return (RectTransform)go.transform;

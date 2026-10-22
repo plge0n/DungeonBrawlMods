@@ -89,6 +89,8 @@ namespace DBModKit
             foreach (var c in go.GetComponentsInChildren<MonoBehaviour>(true))
                 if (c != null && c.GetType().Name == "LocalizationText")
                     UnityEngine.Object.DestroyImmediate(c);
+            // 原版按钮的文字框比按钮宽（350），挨着摆的时候会盖住旁边的按钮、把点击抢过去；文字不接收点击，交给按钮自己的背景
+            foreach (var t in go.GetComponentsInChildren<Text>(true)) t.raycastTarget = false;
             return go;
         }
 
@@ -140,6 +142,29 @@ namespace DBModKit
         }
 
         public static readonly Color BoxColor = new Color(0.133f, 0.153f, 0.196f, 1f);
+
+        /// <summary>
+        /// 列表项、卡片的背景（游戏的方框贴图），返回显示背景的 Image（改颜色、当按钮的 targetGraphic 都用它）。
+        /// 贴图的九宫格边框很宽（约 110 像素），直接挂在列表项上的话 Unity 会把边框当成首选尺寸，列表项至少 220 高；
+        /// 所以背景放在一个不参与布局的子物体上，item 自己的 Image 只留着接收点击，高度跟着内容走。
+        /// </summary>
+        public static Image ListItemBackground(Image item)
+        {
+            item.sprite = null;
+            item.color = new Color(0f, 0f, 0f, 0f);
+            var go = new GameObject("background", typeof(RectTransform), typeof(Image), typeof(LayoutElement));
+            go.transform.SetParent(item.transform, false);
+            go.transform.SetAsFirstSibling();
+            go.GetComponent<LayoutElement>().ignoreLayout = true;
+            Stretch((RectTransform)go.transform);
+            var bg = go.GetComponent<Image>();
+            bg.sprite = BoxSprite;
+            bg.type = Image.Type.Sliced;
+            // 边框按 1/4 画，矮的列表项也不会被边框挤满
+            bg.pixelsPerUnitMultiplier = 4f;
+            bg.raycastTarget = false;
+            return bg;
+        }
 
         private static void StyleBox(Image img, float outlineAlpha = 0.6f)
         {
@@ -353,6 +378,12 @@ namespace DBModKit
             var label = go.GetComponentInChildren<Text>(true);
             label.text = text;
             label.fontSize = 22;
+            // 文字框铺满按钮，长文字不会画到按钮外面
+            var lrt = label.rectTransform;
+            lrt.anchorMin = Vector2.zero;
+            lrt.anchorMax = Vector2.one;
+            lrt.offsetMin = new Vector2(8f, 0f);
+            lrt.offsetMax = new Vector2(-8f, 0f);
             var btn = go.GetComponent<Button>();
             btn.onClick = new Button.ButtonClickedEvent();
             btn.onClick.AddListener(onClick);
