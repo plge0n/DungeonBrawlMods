@@ -100,7 +100,7 @@ namespace DamageMeter
             if (player == null || hit.Damage <= 0 || hit.Source == null || hit.Target == player) return;
             string source;
             if (hit.Source == player)
-                source = hit.IsNormalAttack ? NormalAttack : hit.SkillId is int id ? SkillName(id) : Other;
+                source = Classify(hit);
             else if (hit.Source.IsSummonOf(player))
                 source = Summons;
             else
@@ -142,6 +142,29 @@ namespace DamageMeter
                     Run.Kills++;
                     break;
             }
+        }
+
+        // 技能 → 普攻 → 游戏标出的来源 → 伤害类型；都没有的是被动、装备、遗物等直接结算的伤害
+        private static string Classify(HitInfo hit)
+        {
+            if (hit.SourceSkillId is int id) return SkillName(id);
+            if (hit.IsNormalAttack) return NormalAttack;
+            switch (hit.Origin)
+            {
+                case HitOrigin.Aura: return "光环";
+                case HitOrigin.Status: return "异常状态";
+                case HitOrigin.Reflect: return "反伤";
+                case HitOrigin.PassiveProc: return "被动触发";
+                case HitOrigin.IllusoryWeapon: return "幻影武器";
+            }
+            switch (hit.Type)
+            {
+                case HitType.AttackEffect: return "普攻特效";
+                case HitType.Buff: return "持续伤害";
+                case HitType.TrueDamage: return "真实伤害";
+                case HitType.Skill: return "被动、装备";
+            }
+            return Other;
         }
 
         private static readonly Dictionary<int, string> skillNames = new Dictionary<int, string>();

@@ -24,6 +24,8 @@ namespace DBModKit
             ["bfl"] = new[] { "mna" },
             ["pj"] = new[] { "bcxi" },
             ["bfe"] = new[] { "bgwf", "bgwg", "bgwi" },
+            ["AttackType"] = new[] { "Normal", "Skill", "Buff", "AttackEffect", "TrueDamage" },
+            ["DamageSourceKind"] = new[] { "Default", "ActiveSkill", "Aura", "Status", "Reflect", "PassiveProc", "IllusoryWeapon" },
             ["oj"] = new[] { "bcqp" },
             ["ok"] = new[] { "bcqs", "bcqt", "bcqv", "bcqw", "bcqx", "bcqy" },
             ["nw"] = new[] { "bcmf" },
@@ -37,7 +39,7 @@ namespace DBModKit
             ["LeaderboardUploadStage"] = new string[0],
             ["yb"] = new[]
             {
-                "hp", "maxHp", "authorityId", "izk", "iyn", "ivj", "bphx", "bpia", "bphc", "bqbx", "roleName", "bpgz", "beqd", "ivk", "bphy", "roleType",
+                "hp", "maxHp", "authorityId", "iwk", "iwr", "izk", "iyn", "ivj", "bphx", "bpia", "bphc", "bqbx", "roleName", "bpgz", "beqd", "ivk", "bphy", "roleType",
                 "henShinSkillId", "timer", "iyi", "iyj", "isCheckAttack",
                 "enemyDefeatedEvent", "activeSkillCastEvent", "criticalEvent", "dogeEvent",
                 "bphz", "bphq", "bphp", "bpho", "bphb", "bphl", "bphm", "bphk", "bphr", "bphv", "bpgy", "iwz", "iwh",
