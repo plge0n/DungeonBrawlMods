@@ -41,7 +41,8 @@ namespace Hextech
         private static Run checkpoint;
         private static SkillProfile profile;
         private static HeroSkill heroSkill;
-        private static bool unsupportedLogged;
+        // 专属技能暂不支持时记下来，在开局那次本该弹出的时候提示一次
+        private static HeroSkill unsupported;
         private static bool disabled;
         private static List<int> offerWaves;
         private static float openAt, battleStart;
@@ -78,7 +79,7 @@ namespace Hextech
             checkpoint = null;
             profile = null;
             heroSkill = null;
-            unsupportedLogged = false;
+            unsupported = null;
             disabled = false;
             offerWaves = null;
             appliedPassive = null;
@@ -108,9 +109,13 @@ namespace Hextech
                 if (run.Picks.Count > 0) ScreenNotice.Show("海克斯强化只在单人时生效：房间里有其他玩家，本局已撤销所有强化。", 6f);
                 return;
             }
-            if (profile == null && !BuildProfile(player)) return;
-
             if (ChoicePanel.IsBusy) sawGameChoice = true;
+            if (profile == null && !BuildProfile(player))
+            {
+                TickUnsupportedNotice(player);
+                return;
+            }
+
             Triggers.Tick(player);
             TickOffer();
         }
@@ -121,9 +126,9 @@ namespace Hextech
             if (hs == null) return false;
             if (!SkillData.Supported(hs.IsActive, hs.SkillId))
             {
-                if (!unsupportedLogged)
+                if (unsupported == null)
                 {
-                    unsupportedLogged = true;
+                    unsupported = hs;
                     mod.RunLog.Info("英雄", "这个英雄的专属技能暂不支持", ("技能", hs.Name), ("编号", hs.SkillId), ("主动", hs.IsActive));
                 }
                 return false;
@@ -176,18 +181,31 @@ namespace Hextech
 
         private static void TickOffer()
         {
-            if (!run.Pending) return;
+            if (!Due()) return;
+            run.Pending = false;
+            Offer();
+        }
+
+        // 该弹出了：界面空闲够久；开局那次还要等开场界面和开局遗物出现过
+        private static bool Due()
+        {
+            if (!run.Pending) return false;
             float now = Time.unscaledTime;
             if (ChoicePanel.IsBusy)
             {
                 openAt = now + IdleDelay;
-                return;
+                return false;
             }
-            // 开局那次：开场界面和开局遗物都还没出现时，先等一等
-            if (run.Round == 0 && !sawGameChoice && !waveStarted && now - battleStart < OpeningFallback) return;
-            if (now < openAt) return;
+            if (run.Round == 0 && !sawGameChoice && !waveStarted && now - battleStart < OpeningFallback) return false;
+            return now >= openAt;
+        }
+
+        // 不支持的英雄：在开局海克斯本该弹出的时候提示一次，免得以为 Mod 没装好
+        private static void TickUnsupportedNotice(Player player)
+        {
+            if (unsupported == null || !Due()) return;
             run.Pending = false;
-            Offer();
+            ScreenNotice.Show($"海克斯强化：{player.HeroName}的专属技能「{unsupported.Name}」暂不支持，本局不会出现海克斯三选一。", 8f);
         }
 
         private static Tier TierFor(int round, System.Random rng)
