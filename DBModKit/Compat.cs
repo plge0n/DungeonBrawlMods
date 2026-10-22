@@ -17,10 +17,10 @@ namespace DBModKit
         // 类型名 → Mod 用到的成员（字段/属性/方法，含继承自基类的）
         private static readonly Dictionary<string, string[]> Required = new Dictionary<string, string[]>
         {
-            ["nn"] = new[] { "bpbu", "bbtv", "bbtm", "fqr", "frk" },
-            ["os"] = new[] { "bctl", "bctm" },
-            ["cj"] = new[] { "boyb", "boyi", "boyj", "boyl", "boyn" },
-            ["ez"] = new[] { "dxx", "dxy", "dyk" },
+            ["nn"] = new[] { "bpbu", "bbsr", "bbtv", "bbtm", "fqr", "frk" },
+            ["os"] = new[] { "gba", "bctl", "bctm" },
+            ["cj"] = new[] { "boyb", "boyi", "boyj", "boyl", "boyn", "boyt" },
+            ["ez"] = new[] { "dxx", "dxy", "dyk", "dvm" },
             ["bfl"] = new[] { "mna" },
             ["pj"] = new[] { "bcxi" },
             ["bfe"] = new[] { "bgwf", "bgwg", "bgwi" },
@@ -35,21 +35,68 @@ namespace DBModKit
             ["bws"] = new string[0],
             ["LeaderboardUploadFailure"] = new[] { "InvalidData" },
             ["LeaderboardUploadStage"] = new string[0],
-            ["yb"] = new[] { "hp", "maxHp", "izk", "iyn", "ivj", "bphx", "bpia", "bpgz", "beqd", "ivk", "bphy", "bphq", "roleType",
-                "henShinSkillId", "timer", "iyi", "iyj", "isCheckAttack" },
-            ["bbe"] = new[] { "bfru", "bfrv", "kqi", "kqh", "addDamagePercent", "addBossEnemy", "addEliteEnemy", "addNormalEnemy" },
+            ["yb"] = new[]
+            {
+                "hp", "maxHp", "izk", "iyn", "ivj", "bphx", "bpia", "bphc", "roleName", "bpgz", "beqd", "ivk", "bphy", "roleType",
+                "henShinSkillId", "timer", "iyi", "iyj", "isCheckAttack",
+                "enemyDefeatedEvent", "activeSkillCastEvent", "criticalEvent", "dogeEvent",
+                "bphz", "bphq", "bphp", "bpho", "bphb", "bphl", "bphm", "bphk", "bphr", "bphv", "bpgy", "iwz", "iwh",
+            },
+            ["bbe"] = new[]
+            {
+                "heroType", "kzz", "bfru", "bfrv", "kqi", "kqh", "addDamagePercent", "addBossEnemy", "addEliteEnemy", "addNormalEnemy",
+                "ksd", "k4a25de8c63fe4a7192613346ae51af4e", "kfd63a19d353a42878846361e6af4f637",
+                "kqk", "kkl", "onPlayerLevelUp", "onPlayerRelife", "addBagItemEvent",
+            },
+            ["EnemyDefeatContext"] = new[] { "IsBoss", "IsElite" },
+            ["MyServerNetworkManager"] = new[] { "qhu" },
+            ["ClientNetMessage"] = new[] { "clientNetOperation" },
+            ["ClientNetOperation"] = new[] { "OnStartGame", "OnStartRest", "EnemyEnterTip", "OnGameOver" },
+            ["RemainsData"] = new[] { "grade" },
+            ["bqa"] = new[] { "osj", "bacf" },
+            ["RoguelikeUIData"] = new[] { "name", "dec", "icon", "quality", "data" },
+            ["GoldIncomeSource"] = new[] { "Gameplay" },
+            ["ciy"] = new[] { "bmyj", "bmyc" },
+            ["cik"] = new[] { "bqcb" },
             ["xo"] = new[] { "isBoss", "isElite" },
-            ["oo"] = new[] { "bcrw" },
-            ["du"] = new[] { "dqr" },
+            ["oo"] = new[] { "bcry", "bcrw", "bcru", "bcrv", "gaf", "gad" },
+            ["nr"] = new[] { "bcec" },
+            ["cx"] = new[] { "zyc" },
+            ["HeroType"] = new string[0],
+            ["EnemyType"] = new string[0],
+            ["EnemySpawnKind"] = new string[0],
+            ["RoleAttribute"] = new[]
+            {
+                "hp", "mp", "attackPower", "armor", "STR", "STRadd", "AGI", "AGIadd", "STA", "STAadd",
+                "attackSpeed", "moveSpeed", "hpRecover", "mpRecover", "shiled",
+            },
+            ["du"] = new[] { "dqr", "bact" },
             ["cl"] = new[] { "dff" },
-            ["bpe"] = new[] { "bjes" },
+            ["bpe"] = new[] { "bjes", "bprr" },
             ["bpf"] = new[] { "bjgk", "bjgm" },
-            ["bht"] = new[] { "bhne", "bhny", "bhnv", "bhng", "bhnd", "bpqi", "k896ff3548b31472b8b2cf8f649c25e65", "kacb7d091b5904139a602f04ed9552242",
-                "k4b2ca10ddec34cdb90bf84a3f664f727", "kbb80bea445ac47778d36b05d19be7f37", "kcac92c2266be41d3979b385715ce318e" },
+            ["bht"] = new[]
+            {
+                "bhne", "bhny", "bhnv", "bhng", "bhnd", "bpqi", "k896ff3548b31472b8b2cf8f649c25e65", "kacb7d091b5904139a602f04ed9552242",
+                "k4b2ca10ddec34cdb90bf84a3f664f727", "kbb80bea445ac47778d36b05d19be7f37", "kcac92c2266be41d3979b385715ce318e",
+            },
             ["RoleModeBase"] = new[] { "addRange", "ico" },
-            ["ActiveSkillData"] = new[] { "tags", "indicator", "castingRange", "range", "cd", "canAuto" },
+            ["ActiveSkillData"] = new[]
+            {
+                "tags", "indicator", "castingRange", "range", "cd", "canAuto", "icon",
+                "damageBase", "damageValue", "cost", "duration", "interval", "chargingNum", "chargingCd",
+            },
             ["ActiveSkillEnum"] = new[] { "None", "D_Execution", "S_Execution", "D_Alchemy", "S_Alchemy", "Bite" },
             ["SkillTag"] = new[] { "Heal", "Revive", "Shield", "Defense", "Buff", "Summon", "Aura", "Area", "Move", "Control", "Henshin", "Duration" },
+            // 英雄皮肤
+            ["buj"] = new[] { "pwu", "pwm", "pwf", "pyb" },
+            ["bup"] = new[] { "pyx" },
+            ["buu"] = new[] { "qaq", "qar", "bptc" },
+            ["buo"] = new[] { "bkkn" },
+            ["bum"] = new[] { "pyi" },
+            ["bgt"] = new[] { "mqp" },
+            ["bbp"] = new[] { "lob" },
+            ["WorkshopItemStatus"] = new[] { "publishedFileId", "installed", "heroId", "installFolder" },
+            ["LocalWorkshopManifest"] = new[] { "heroId", "title", "heroName", "heroIcon", "author", "contentType", "bundleRelativePath", "bundleAssetName" },
         };
 
         public static string GameVersion => Application.version;
