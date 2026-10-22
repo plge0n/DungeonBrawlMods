@@ -1,0 +1,7 @@
+<Project>
+  <!-- 示例 Mod：沿用仓库的公共构建配置，但默认不部署进游戏（要试的话加 -p:DeployToGame=true） -->
+  <PropertyGroup>
+    <DeployToGame Condition="'$(DeployToGame)' == ''">false</DeployToGame>
+  </PropertyGroup>
+  <Import Project="..\Directory.Build.props" />
+</Project>

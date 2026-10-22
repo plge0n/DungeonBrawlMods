@@ -57,35 +57,34 @@ namespace DBModKit
 
     /// <summary>
     /// 接管游戏"右键技能图标自动释放"。游戏在技能冷却好、蓝够时每帧询问一次是否释放，
-    /// 注册的处理器决定放不放、打谁。同一时间只有一个处理器生效。
+    /// 注册的处理器决定放不放、打谁。同一时间只有一个处理器生效：先注册的优先，玩家可以在
+    /// Mod 设置 → DBModKit → 依赖和冲突里指定（<see cref="Prefer"/>）；生效的那个注销后自动轮到下一个。
     /// </summary>
     public static class AutoCast
     {
-        private static string owner;
+        internal static readonly HandlerSlot<AutoCastHandler> Slot = new HandlerSlot<AutoCastHandler>("AutoCast", "自动释放");
 
         /// <summary>钩子已安装（ModKit 兼容且补丁成功）。</summary>
         public static bool Available { get; internal set; }
 
-        internal static AutoCastHandler Handler { get; private set; }
+        internal static AutoCastHandler Handler => Slot.Active;
+
+        /// <summary>现在由哪个 Mod 处理（GUID）；没有时为 null。</summary>
+        public static string Owner => Slot.Owner;
+
+        /// <summary>注册了处理器的 Mod（GUID，按注册顺序）。</summary>
+        public static IReadOnlyList<string> Contenders => Slot.Owners;
+
+        /// <summary>指定由哪个 Mod 处理（玩家的选择，会保存）；null 表示恢复"先注册的优先"。</summary>
+        public static void Prefer(string ownerGuid) => Slot.Preferred = ownerGuid;
 
         /// <summary>每次自动释放尝试后触发（只针对本地玩家、且有处理器时）。</summary>
         public static event Action<AutoCastResult> Resolved;
 
-        /// <summary>注册处理器。已有其他 Mod 注册时会覆盖并在日志里警告。</summary>
-        public static void SetHandler(string ownerGuid, AutoCastHandler handler)
-        {
-            if (Handler != null && owner != ownerGuid)
-                Log.Warning($"自动释放处理器被 {ownerGuid} 覆盖（原来是 {owner}），两个 Mod 可能冲突");
-            owner = ownerGuid;
-            Handler = handler;
-        }
+        /// <summary>注册处理器。已有别的 Mod 注册时排在后面（日志里有提示），同一个 Mod 再注册时替换自己的。</summary>
+        public static void SetHandler(string ownerGuid, AutoCastHandler handler) => Slot.Set(ownerGuid, handler);
 
-        public static void ClearHandler(string ownerGuid)
-        {
-            if (owner != ownerGuid) return;
-            owner = null;
-            Handler = null;
-        }
+        public static void ClearHandler(string ownerGuid) => Slot.Clear(ownerGuid);
 
         // 每个技能上一次的结果：每帧都会询问，只在结果变化或真正放出时记录
         private static readonly Dictionary<string, string> lastResult = new Dictionary<string, string>();
@@ -104,7 +103,7 @@ namespace DBModKit
             string text = r.Casted ? "已释放" : r.Verdict.Action == AutoCastAction.Skip ? "不放" : "没放出";
             if (!r.Casted && lastResult.TryGetValue(info.Key, out var last) && last == text + r.Verdict.Reason) return;
             lastResult[info.Key] = text + r.Verdict.Reason;
-            RunLog.Debug(ModKitPlugin.Name, "自动释放", $"{info.Name}：{text}", ("原因", r.Verdict.Reason), ("决定", r.Verdict.Action.ToString()), ("处理器", owner));
+            RunLog.Debug(ModKitPlugin.Name, "自动释放", $"{info.Name}：{text}", ("原因", r.Verdict.Reason), ("决定", r.Verdict.Action.ToString()), ("处理器", Slot.Owner));
         }
     }
 }

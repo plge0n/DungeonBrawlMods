@@ -1,8 +1,10 @@
 # 新建一个依赖 DBModKit 的 Mod 项目并加入解决方案
-# 用法：pwsh tools/new-mod.ps1 MyMod [-Description "一句话介绍"]
+# 用法：pwsh tools/new-mod.ps1 MyMod [-Description "一句话介绍"] [-WithSkills]
+#   -WithSkills：带一个自定义被动和主动技能的示例
 param(
     [Parameter(Mandatory)][ValidatePattern('^[A-Za-z][A-Za-z0-9]*$')][string]$Name,
-    [string]$Description = "TODO：一句话介绍这个 Mod"
+    [string]$Description = "TODO：一句话介绍这个 Mod",
+    [switch]$WithSkills
 )
 $ErrorActionPreference = "Stop"
 
@@ -21,7 +23,7 @@ if ($LASTEXITCODE -ne 0) { throw "安装模板失败" }
 
 Push-Location $root
 try {
-    dotnet new dbmod -n $Name -o $Name --description $Description
+    dotnet new dbmod -n $Name -o $Name --description $Description --skills $(if ($WithSkills) { "true" } else { "false" })
     if ($LASTEXITCODE -ne 0) { throw "生成项目失败" }
     dotnet sln DungeonBrawlMods.sln add "$Name\$Name.csproj"
     if ($LASTEXITCODE -ne 0) { throw "加入解决方案失败" }

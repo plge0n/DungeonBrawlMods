@@ -38,6 +38,19 @@
       "onKill": [ { "mana": 5, "chance": 50 } ]
     }
   ],
+  "relics": [
+    {
+      "key": "thunder_heart",
+      "name": "雷霆之心",
+      "description": "攻击力 +{0}；击杀敌人回复 {1} 点法力",
+      "icon": "remain_str",
+      "quality": "B",
+      "values": [30, 5],
+      "levelUp": [15, 2],
+      "onAdded": [ { "addStats": { "attack": "{0}" } } ],
+      "onKill": [ { "mana": "{1}" } ]
+    }
+  ],
   "heroVariants": [
     {
       "key": "storm_knight",
