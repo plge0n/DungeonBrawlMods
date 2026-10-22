@@ -361,9 +361,7 @@ namespace DBModKit
             string folder;
             try
             {
-                // yb.bphc：Mirror 的 isLocalPlayer（出生的 RPC 到达时已经有值）
-                if (HeroSkins.OnlyLocalPlayer && owner != null && !owner.bphc) folder = null;
-                else if (!HeroSkins.TryResolve(__0, out folder)) return true;
+                if (!HeroSkins.TryResolveFor(owner, __0, out folder)) return true;
             }
             catch (Exception e)
             {
@@ -398,5 +396,20 @@ namespace DBModKit
 
         // 用 finalizer 而不是 postfix：原方法抛异常时也要恢复
         internal static void RestoreOwner(yb __state) => owner = __state;
+
+        // Mod 自己给某个角色重新换模型时用（游戏里同样的操作只会对本地玩家做）
+        internal static void WithOwner(yb role, Action action)
+        {
+            var previous = owner;
+            owner = role;
+            try
+            {
+                action();
+            }
+            finally
+            {
+                owner = previous;
+            }
+        }
     }
 }

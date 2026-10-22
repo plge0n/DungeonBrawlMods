@@ -49,9 +49,34 @@ namespace DBModKit
         }
     }
 
+    /// <summary>房间里另一个玩家正在用的皮肤（从 Steam 大厅成员数据读到）。</summary>
+    public sealed class RemoteSkin
+    {
+        public string PlayerName { get; }
+        public int HeroId { get; }
+        /// <summary>"workshop:物品号" 或 <see cref="HeroSkins.Original"/>。</summary>
+        public string SkinId { get; }
+        /// <summary>工坊物品号；原版时为 0。</summary>
+        public ulong PublishedFileId { get; }
+        /// <summary>你也订阅了（原版总是 true）。</summary>
+        public bool Installed { get; }
+
+        internal RemoteSkin(string playerName, int heroId, string skinId, ulong publishedFileId, bool installed)
+        {
+            PlayerName = playerName;
+            HeroId = heroId;
+            SkinId = skinId;
+            PublishedFileId = publishedFileId;
+            Installed = installed;
+        }
+
+        internal string Signature => $"{PlayerName}|{HeroId}|{SkinId}|{Installed}";
+    }
+
     /// <summary>
     /// 英雄皮肤：用游戏自带的创意工坊模型替换功能，但每个英雄可以在多套模型之间切换，也可以强制用原版。
-    /// 没有选择的英雄按游戏自己的设置（主菜单"工坊 Mod"里启用的模型）。只改本机的显示，不联机同步。
+    /// 没有选择的英雄按游戏自己的设置（主菜单"工坊 Mod"里启用的模型）。只改本机的显示；
+    /// 打开 <see cref="SyncInLobby"/> 后，Steam 联机时也装了 Mod 的玩家能互相看到对方的工坊皮肤。
     /// </summary>
     public static class HeroSkins
     {
@@ -72,6 +97,41 @@ namespace DBModKit
 
         /// <summary><see cref="OnlyLocalPlayer"/> 需要的钩子已安装。</summary>
         public static bool OnlyLocalPlayerAvailable { get; internal set; }
+
+        /// <summary>
+        /// 在 Steam 大厅里同步皮肤：把自己正在用的工坊皮肤写进大厅成员数据，读取房间里也装了 Mod 的其他玩家的选择。
+        /// 成员数据游戏自己不用，没装 Mod 的玩家不受影响。本地（局域网）模式没有大厅，不同步。默认 false。
+        /// </summary>
+        public static bool SyncInLobby { get; set; }
+
+        /// <summary>
+        /// 其他玩家（也装了 Mod）在用工坊皮肤、你也订阅了时，在你这边给他换上；没订阅时显示原版。
+        /// 需要 <see cref="SyncInLobby"/>。默认 false。
+        /// </summary>
+        public static bool ShowOtherPlayers
+        {
+            get => showOtherPlayers;
+            set
+            {
+                if (showOtherPlayers == value) return;
+                showOtherPlayers = value;
+                HeroSkinSync.ReapplyAll();
+            }
+        }
+
+        private static bool showOtherPlayers;
+
+        /// <summary>房间里其他玩家正在用的皮肤（他们也装了 Mod、在战斗中时才有）。</summary>
+        public static IReadOnlyList<RemoteSkin> OtherPlayers => HeroSkinSync.Others;
+
+        /// <summary><see cref="OtherPlayers"/> 每次变化加一，界面据此决定要不要刷新。</summary>
+        public static int OtherPlayersVersion => HeroSkinSync.Version;
+
+        /// <summary>打开工坊物品的页面（订阅要玩家自己点）。</summary>
+        public static void OpenWorkshopPage(ulong publishedFileId)
+        {
+            if (ModKit.Compatible && publishedFileId != 0) Safe.Run("打开工坊页面", () => GameRaw.OpenWorkshopPage(publishedFileId));
+        }
 
         /// <summary>本地皮肤文件夹：每个子文件夹放一套模型（格式同创意工坊的英雄模型：manifest.json + 模型包）。</summary>
         public static string LocalRoot => Path.Combine(Paths.BepInExRootPath, "skins");
@@ -160,8 +220,40 @@ namespace DBModKit
             Safe.Run($"重新换上英雄 {heroId} 的模型", () => GameRaw.ReapplyLocalHeroModel(heroId));
         }
 
-        // 游戏查找英雄模型文件夹时调用。返回 false 表示按游戏原来的逻辑找；
-        // 返回 true 时 folder 是要用的文件夹，为 null 表示用原版
+        // 游戏给某个角色查找英雄模型文件夹时调用（owner 为 null 表示不知道是谁，例如选英雄界面的预览，按本地玩家处理）。
+        // 返回 false 表示按游戏原来的逻辑找；返回 true 时 folder 是要用的文件夹，为 null 表示用原版
+        internal static bool TryResolveFor(Component owner, int heroId, out string folder)
+        {
+            if (owner == null || GameRaw.IsLocalPlayer(owner)) return TryResolve(heroId, out folder);
+            folder = null;
+            if (ShowOtherPlayers && HeroSkinSync.TryGetSkin(owner, heroId, out string skinId))
+            {
+                // 对方的皮肤你没订阅时显示原版
+                if (skinId != Original)
+                {
+                    folder = FolderOf(skinId);
+                    if (folder != null && !GameRaw.IsValidSkinFolder(folder, heroId)) folder = null;
+                }
+                return true;
+            }
+            if (OnlyLocalPlayer) return true;
+            return TryResolve(heroId, out folder);
+        }
+
+        // 自己这个英雄实际显示的、可以告诉别人的皮肤：工坊皮肤或原版；本地皮肤别人没有，返回 null
+        internal static string ShareableSkin(int heroId)
+        {
+            string id = Get(heroId);
+            if (id == Original) return Original;
+            if (id != null && TryResolve(heroId, out string folder) && folder != null)
+                return id.StartsWith(HeroSkin.WorkshopPrefix, StringComparison.Ordinal) ? id : null;
+            // 没选（或选的不在了）时按游戏自己的工坊绑定。游戏自带的本地模型（PlayerPrefs、本地文件 Mod）没有界面入口，
+            // 这里不考虑，用了它的玩家公布的会是工坊绑定或原版
+            ulong binding = GameRaw.GameSkinBinding(heroId);
+            if (binding != 0 && GameRaw.IsValidSkinFolder(GameRaw.WorkshopFolder(binding), heroId)) return WorkshopId(binding);
+            return Original;
+        }
+
         internal static bool TryResolve(int heroId, out string folder)
         {
             folder = null;
@@ -191,8 +283,17 @@ namespace DBModKit
 
         internal static string WorkshopId(ulong fileId) => HeroSkin.WorkshopPrefix + fileId;
 
+        // "workshop:物品号" → 物品号；不是工坊皮肤时为 0
+        internal static ulong WorkshopFileId(string skinId)
+            => skinId != null && skinId.StartsWith(HeroSkin.WorkshopPrefix, StringComparison.Ordinal)
+               && ulong.TryParse(skinId.Substring(HeroSkin.WorkshopPrefix.Length), out ulong id) ? id : 0UL;
+
+        internal static bool IsInstalled(string skinId, int heroId)
+            => skinId == Original || (FolderOf(skinId) is string folder && GameRaw.IsValidSkinFolder(folder, heroId));
+
         private static void RaiseChanged()
         {
+            HeroSkinSync.InvalidateShared();
             var evt = Changed;
             if (evt != null) Safe.InvokeEach(evt, nameof(Changed));
         }

@@ -37,14 +37,14 @@ namespace DBModKit
             ["LeaderboardUploadStage"] = new string[0],
             ["yb"] = new[]
             {
-                "hp", "maxHp", "izk", "iyn", "ivj", "bphx", "bpia", "bphc", "roleName", "bpgz", "beqd", "ivk", "bphy", "roleType",
+                "hp", "maxHp", "izk", "iyn", "ivj", "bphx", "bpia", "bphc", "bqbx", "roleName", "bpgz", "beqd", "ivk", "bphy", "roleType",
                 "henShinSkillId", "timer", "iyi", "iyj", "isCheckAttack",
                 "enemyDefeatedEvent", "activeSkillCastEvent", "criticalEvent", "dogeEvent",
                 "bphz", "bphq", "bphp", "bpho", "bphb", "bphl", "bphm", "bphk", "bphr", "bphv", "bpgy", "iwz", "iwh",
             },
             ["bbe"] = new[]
             {
-                "heroType", "kzz", "bfru", "bfrv", "kqi", "kqh", "addDamagePercent", "addBossEnemy", "addEliteEnemy", "addNormalEnemy",
+                "heroType", "kzz", "bpnc", "bfru", "bfrv", "kqi", "kqh", "addDamagePercent", "addBossEnemy", "addEliteEnemy", "addNormalEnemy",
                 "ksd", "k4a25de8c63fe4a7192613346ae51af4e", "kfd63a19d353a42878846361e6af4f637",
                 "kqk", "kkl", "onPlayerLevelUp", "onPlayerRelife", "addBagItemEvent",
             },
@@ -88,13 +88,19 @@ namespace DBModKit
             ["ActiveSkillEnum"] = new[] { "None", "D_Execution", "S_Execution", "D_Alchemy", "S_Alchemy", "Bite" },
             ["SkillTag"] = new[] { "Heal", "Revive", "Shield", "Defense", "Buff", "Summon", "Aura", "Area", "Move", "Control", "Henshin", "Duration" },
             // 英雄皮肤
-            ["buj"] = new[] { "pwu", "pwm", "pwf", "pyb" },
+            ["buj"] = new[] { "pwu", "pwm", "pwn", "pwh", "pwf", "pyb" },
             ["bup"] = new[] { "pyx" },
-            ["buu"] = new[] { "qaq", "qar", "bptc" },
+            ["buu"] = new[] { "qaq", "qar", "bptc", "qal" },
             ["buo"] = new[] { "bkkn" },
             ["bum"] = new[] { "pyi" },
             ["bgt"] = new[] { "mqp" },
             ["bbp"] = new[] { "lob" },
+            ["bur"] = new[] { "pzk" },
+            // 皮肤同步：Steam 大厅成员数据
+            ["pq"] = new[] { "bpcn" },
+            ["bz"] = new[] { "ddr" },
+            ["cft"] = new[] { "tqj", "tqi", "tqb", "tqc" },
+            ["cgi"] = new[] { "uep" },
             ["WorkshopItemStatus"] = new[] { "publishedFileId", "installed", "heroId", "installFolder" },
             ["LocalWorkshopManifest"] = new[] { "heroId", "title", "heroName", "heroIcon", "author", "contentType", "bundleRelativePath", "bundleAssetName" },
         };

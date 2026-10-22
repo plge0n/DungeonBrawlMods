@@ -68,7 +68,7 @@ public class Plugin : BaseUnityPlugin
 | `ChoicePanel` / `RelicInfo` | 用游戏的三选一界面显示自定义选项；遗物列表、发遗物 |
 | `ModSettings` | 往 DBStudio 的 Mod 页里挂自定义设置区块 |
 | `GameData` | 改技能、英雄、怪物配置表里的数值，可随时整体恢复原版 |
-| `HeroSkins` | 给每个英雄选一套工坊或本地的模型（或原版），可以只换本地玩家 |
+| `HeroSkins` | 给每个英雄选一套工坊或本地的模型（或原版），可以只换本地玩家；Steam 联机时通过大厅成员数据同步 |
 | `JsonConfig<T>` | `BepInEx/config` 下的 JSON 配置，自动延迟保存 |
 | `ScreenNotice` | 屏幕顶部临时提示 |
 
@@ -84,7 +84,7 @@ pwsh ./pack.ps1                                 # 生成 dist/ 下的发布包�
 
 **热重载**：装了 ScriptEngine 后，普通 Mod 会部署到 `BepInEx/scripts`，游戏开着也能编译，约 1 秒后自动重载（也可按 F6）。DBModKit 始终在 `BepInEx/plugins`，改了它要重启游戏（编译前先关游戏，否则 dll 被占用）。没装 ScriptEngine 时一律部署到 `plugins`。
 
-**DBStudio**：游戏内按 F9，游戏风格的调试面板：玩家属性、技能栏、敌人、事件日志、已加载插件；单人时有满血、满蓝、加金币等测试操作。规则页可以不写代码做"当……如果……就……"的玩法，强化页可以做波次结束时三选一的强化，数值页可以改技能、英雄、怪物数值，改动都存成玩法包（`BepInEx/config/DBStudio/packs/`），只在单人时生效。皮肤页给每个英雄挑一套已订阅的工坊模型或 `BepInEx/skins/` 下的本地模型，只改本机显示，联机也能用。
+**DBStudio**：游戏内按 F9，游戏风格的调试面板：玩家属性、技能栏、敌人、事件日志、已加载插件；单人时有满血、满蓝、加金币等测试操作。规则页可以不写代码做"当……如果……就……"的玩法，强化页可以做波次结束时三选一的强化，数值页可以改技能、英雄、怪物数值，改动都存成玩法包（`BepInEx/config/DBStudio/packs/`），只在单人时生效。皮肤页给每个英雄挑一套已订阅的工坊模型或 `BepInEx/skins/` 下的本地模型，只改显示、不影响玩法；Steam 联机时也装了 Mod 的队友能互相看到对方的工坊皮肤。
 
 **UnityExplorer**：游戏内按 F7。可以浏览场景里的 UI 和对象、查看/修改字段、在 C# 控制台里执行代码，是找游戏对象和调 UI 的首选工具。
 

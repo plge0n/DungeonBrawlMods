@@ -110,6 +110,7 @@ namespace DBModKit
             }
             Safe.Run("GameEvents", GameEvents.Tick);
             ModEvents.RaiseUpdate();
+            Safe.Run("皮肤同步", HeroSkinSync.Tick);
             JsonConfigRegistry.Tick();
         }
 

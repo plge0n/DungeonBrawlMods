@@ -32,5 +32,7 @@
     <Reference Include="Assembly-CSharp" HintPath="$(Managed)\Assembly-CSharp.dll" Private="false" />
     <!-- 角色基类 yb 继承自 Mirror 的网络组件 -->
     <Reference Include="Mirror" HintPath="$(Managed)\Mirror.dll" Private="false" />
+    <!-- 混淆过的 Steamworks.NET（cft = SteamMatchmaking 等），用于大厅成员数据 -->
+    <Reference Include="com.rlabrecque.steamworks.net" HintPath="$(Managed)\com.rlabrecque.steamworks.net.dll" Private="false" />
   </ItemGroup>
 </Project>

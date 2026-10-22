@@ -9,11 +9,14 @@ namespace DBStudio
     {
         // 选了同一个英雄的其他玩家保持他们原来的样子，只换自己
         public bool OnlyLocalPlayer = true;
+        // Steam 联机时，房间里也装了 Mod 的玩家用的工坊皮肤，你也订阅了就在你这边显示
+        public bool ShowOtherPlayers = true;
         // 英雄编号 → 皮肤编号（"workshop:物品号" / "local:文件夹名" / "original"）；没有的按游戏设置
         public Dictionary<int, string> Choices = new Dictionary<int, string>();
     }
 
-    // 皮肤只改本机的显示，不影响玩法，所以联机时也照常生效（不像玩法包）
+    // 皮肤只改显示，不影响玩法，所以联机时也照常生效（不像玩法包）。
+    // Steam 联机时通过大厅成员数据和也装了 Mod 的玩家互相告知用的皮肤，没装 Mod 的人不受影响
     internal static class Skins
     {
         private static JsonConfig<SkinSettings> config;
@@ -29,6 +32,8 @@ namespace DBStudio
             var owner = new object();
             HeroSkins.Owner = owner;
             HeroSkins.OnlyLocalPlayer = Current.OnlyLocalPlayer;
+            HeroSkins.ShowOtherPlayers = Current.ShowOtherPlayers;
+            HeroSkins.SyncInLobby = true;
             HeroSkins.Load(Current.Choices);
             HeroSkins.Changed += Save;
             // 卸载时恢复游戏原来的行为；热重载时新实例已经接管（Owner 变了），这时不能清空
@@ -38,6 +43,8 @@ namespace DBStudio
                 if (HeroSkins.Owner != owner) return;
                 HeroSkins.Owner = null;
                 HeroSkins.OnlyLocalPlayer = false;
+                HeroSkins.ShowOtherPlayers = false;
+                HeroSkins.SyncInLobby = false;
                 HeroSkins.Load(null);
             });
         }
@@ -55,6 +62,13 @@ namespace DBStudio
         {
             if (Current.OnlyLocalPlayer == value) return;
             Current.OnlyLocalPlayer = HeroSkins.OnlyLocalPlayer = value;
+            config.MarkDirty();
+        }
+
+        public static void SetShowOtherPlayers(bool value)
+        {
+            if (Current.ShowOtherPlayers == value) return;
+            Current.ShowOtherPlayers = HeroSkins.ShowOtherPlayers = value;
             config.MarkDirty();
         }
 

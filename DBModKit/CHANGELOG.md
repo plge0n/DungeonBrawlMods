@@ -1,5 +1,12 @@
 # DBModKit 更新日志
 
+## 0.10.0
+- Steam 联机时同步皮肤（`HeroSkins.SyncInLobby`、`ShowOtherPlayers`、`OtherPlayers`）：每个装了 Mod 的玩家把
+  "角色 netId + 英雄 + 工坊皮肤"写进自己的大厅成员数据（`cft.tqj`），别人读到后，自己也订阅了就给对方换上，没订阅显示原版。
+  游戏不用成员数据，没装 Mod 的玩家不受影响；不用自定义 Mirror 消息（没装 Mod 的一方收到会断开连接）。
+  本地（局域网）模式没有大厅，不同步；本地皮肤不同步
+- `HeroSkins.OpenWorkshopPage`：打开工坊物品页面（订阅由玩家自己点）
+
 ## 0.9.0
 - 创意工坊加载器 `Workshop`：游戏的工坊不加载 dll，ModKit 扫描已订阅条目（`steamapps/workshop/content/4246640/`），
   把带 `dbmod.json`（`Type = "plugin"`）的条目当成 BepInEx 插件加载
@@ -35,7 +42,7 @@
 - `HeroSkins.OnlyLocalPlayer`：只给本地玩家换模型。游戏原本按英雄换，选了同一英雄的其他玩家在你这边也会被换掉，
   名字也会变成模型里的 heroName。补丁 `bbe.kzz`（出生）、`bgt.mqp` / `bbp.lob`（变身）记下当前角色，
   `buj.pwu` 对其他玩家返回原版，模型和名字都保持原样
-- 只改本机显示，不联机同步；启动参数 `-disable-mods` 时不生效
+- 启动参数 `-disable-mods` 时皮肤不生效
 - 修复 `NativeUi.Row` 在竖向布局里抢占剩余高度：DBStudio 的标题栏、页签被撑高，正文区只剩很小一块
 
 ## 0.4.0
