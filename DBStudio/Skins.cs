@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using DBModKit;
 
 namespace DBStudio
@@ -19,7 +20,7 @@ namespace DBStudio
 
         public static SkinSettings Current => config.Data;
 
-        // 上次扫描到的皮肤；扫描要读盘、查 Steam，只在打开皮肤页和点刷新时做
+        // 上次扫描到的皮肤；扫描要读盘、查 Steam，只在皮肤页打开期间定时做
         public static List<HeroSkin> All { get; private set; } = new List<HeroSkin>();
 
         public static void Init(ModContext mod)
@@ -41,7 +42,14 @@ namespace DBStudio
             });
         }
 
-        public static void Rescan() => All = HeroSkins.Scan();
+        // 返回列表有没有变化；没变时保留原来的对象（预览图已经加载过）
+        public static bool Rescan()
+        {
+            var found = HeroSkins.Scan();
+            if (found.Select(s => s.Id).SequenceEqual(All.Select(s => s.Id))) return false;
+            All = found;
+            return true;
+        }
 
         public static void SetOnlyLocalPlayer(bool value)
         {
