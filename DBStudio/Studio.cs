@@ -35,6 +35,9 @@ namespace DBStudio
 
         public static bool IsOpen => window != null && window.IsOpen;
 
+        // 弹出层（选择器等）挂在这里，盖在窗口上面；窗口没开时为 null
+        public static Transform ModalHost => IsOpen ? canvas.transform : null;
+
         public static void Init(params IStudioPage[] all) => pages = all;
 
         // 下一帧就刷新当前页（页面要在控件回调之外重建自己时用）
@@ -42,7 +45,10 @@ namespace DBStudio
 
         public static void Tick()
         {
-            if (Plugin.Hotkey.Value.IsDown() && !NativeUi.IsTyping)
+            // 正在录快捷键时，按键都交给它（ESC 是取消录制，不是关窗口），页面照常刷新
+            bool capturing = KeyCapture.Active;
+            if (capturing) KeyCapture.Tick();
+            else if (Plugin.Hotkey.Value.IsDown() && !NativeUi.IsTyping)
             {
                 if (IsOpen) Close();
                 else Open();
@@ -50,9 +56,11 @@ namespace DBStudio
             }
             if (!IsOpen) return;
             // 战斗中 ESC 已被输入屏蔽挡住，不会打开游戏菜单
-            if (Input.GetKeyDown(KeyCode.Escape) && !NativeUi.IsTyping)
+            if (!capturing && Input.GetKeyDown(KeyCode.Escape) && !NativeUi.IsTyping)
             {
-                Close();
+                // 先关弹出层
+                if (Picker.IsOpen) Picker.Close();
+                else Close();
                 return;
             }
             UpdatePause();
@@ -89,6 +97,8 @@ namespace DBStudio
 
         public static void Close()
         {
+            KeyCapture.Cancel();
+            Picker.Close();
             window?.Destroy();
             window = null;
             pageRoot = null;
@@ -109,6 +119,7 @@ namespace DBStudio
 
         private static void ShowPage(int index)
         {
+            KeyCapture.Cancel();
             lastTab = index;
             current = pages[index];
             for (int i = pageRoot.childCount - 1; i >= 0; i--)

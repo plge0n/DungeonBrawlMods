@@ -6,7 +6,7 @@ BepInEx 5 插件，目标游戏：地下城竞技场（Steam 4246640，Unity 202
 |---|---|
 | [DBModKit](DBModKit) | 依赖库：游戏接口、自动释放钩子、事件、原生风格 UI、JSON 配置、兼容检查 |
 | [SmartSkill](SmartSkill) | 给"右键技能图标自动释放"加上每个技能单独的释放条件 |
-| [DBStudio](DBStudio) | 游戏内的 Mod 工作台（F9）：调试面板、规则、数值编辑器、英雄皮肤，之后会加强化 |
+| [DBStudio](DBStudio) | 游戏内的 Mod 工作台（F9）：调试面板、规则、强化（海克斯式三选一）、数值编辑器、英雄皮肤 |
 | [SmartMove](SmartMove) | 自动躲避地面预警（F9 开关） |
 
 玩家说明见 [安装说明.txt](安装说明.txt)。
@@ -65,6 +65,8 @@ public class Plugin : BaseUnityPlugin
 | `NativeUi` | 用游戏素材拼的面板、开关、滑条、下拉框、按钮，以及大窗口、页签、滚动列表、输入框 |
 | `GameInput` / `GamePause` | 打开自己的窗口时屏蔽游戏输入、暂停游戏（都要 Dispose 释放） |
 | `GameEvents` | 战斗事件：击杀、放技能、暴击、受伤、升级、波次开始/结束等 |
+| `ChoicePanel` / `RelicInfo` | 用游戏的三选一界面显示自定义选项；遗物列表、发遗物 |
+| `ModSettings` | 往 DBStudio 的 Mod 页里挂自定义设置区块 |
 | `GameData` | 改技能、英雄、怪物配置表里的数值，可随时整体恢复原版 |
 | `HeroSkins` | 给每个英雄选一套工坊或本地的模型（或原版），可以只换本地玩家 |
 | `JsonConfig<T>` | `BepInEx/config` 下的 JSON 配置，自动延迟保存 |
@@ -82,13 +84,25 @@ pwsh ./pack.ps1                                 # 生成 dist/ 下的发布包�
 
 **热重载**：装了 ScriptEngine 后，普通 Mod 会部署到 `BepInEx/scripts`，游戏开着也能编译，约 1 秒后自动重载（也可按 F6）。DBModKit 始终在 `BepInEx/plugins`，改了它要重启游戏（编译前先关游戏，否则 dll 被占用）。没装 ScriptEngine 时一律部署到 `plugins`。
 
-**DBStudio**：游戏内按 F9，游戏风格的调试面板：玩家属性、技能栏、敌人、事件日志、已加载插件；单人时有满血、满蓝、加金币等测试操作。规则页可以不写代码做"当……如果……就……"的玩法，数值页可以改技能、英雄、怪物数值，改动都存成玩法包（`BepInEx/config/DBStudio/packs/`），只在单人时生效。皮肤页给每个英雄挑一套已订阅的工坊模型或 `BepInEx/skins/` 下的本地模型，只改本机显示，联机也能用。
+**DBStudio**：游戏内按 F9，游戏风格的调试面板：玩家属性、技能栏、敌人、事件日志、已加载插件；单人时有满血、满蓝、加金币等测试操作。规则页可以不写代码做"当……如果……就……"的玩法，强化页可以做波次结束时三选一的强化，数值页可以改技能、英雄、怪物数值，改动都存成玩法包（`BepInEx/config/DBStudio/packs/`），只在单人时生效。皮肤页给每个英雄挑一套已订阅的工坊模型或 `BepInEx/skins/` 下的本地模型，只改本机显示，联机也能用。
 
 **UnityExplorer**：游戏内按 F7。可以浏览场景里的 UI 和对象、查看/修改字段、在 C# 控制台里执行代码，是找游戏对象和调 UI 的首选工具。
 
 - 游戏不在默认位置：设置环境变量 `GameDir`，或加 `-p:GameDir="X:\...\地下城竞技场"`。
 - 公共构建配置在 `Directory.Build.props/.targets`：Mod 项目只需写 `AssemblyName` 和对 DBModKit 的 `ProjectReference`（`Private="false"`）。模板在 `templates/DBMod`。
 - 发布新版本：改源码里的 `Version` 常量 → 在对应目录的 `CHANGELOG.md` 加条目 → `pack.ps1`（缺少更新日志条目时会报错）。
+
+## 创意工坊
+游戏的工坊不加载 dll。DBModKit 自带加载器：订阅的条目里有 `dbmod.json`（`"Type": "plugin"`）就当成 BepInEx 插件加载，
+第一次加载前会弹窗让玩家确认。BepInEx 和 DBModKit 本身仍要装进游戏目录（Doorstop 的 `winhttp.dll` 只能放在那里）。
+
+```json
+{ "Format": 1, "Type": "plugin", "Name": "SmartSkill", "Author": "…", "Version": "0.7.0",
+  "Description": "…", "MinModKit": "0.9.0", "Assemblies": ["SmartSkill.dll"] }
+```
+- `pack.ps1` 会在 `dist/workshop/<插件>/` 生成条目文件夹（dll + dbmod.json）。
+- 上传前测试：把条目文件夹复制到 `BepInEx/workshop-dev/`，并把 `plugins`/`scripts` 里同名的插件挪走（本地已装的优先）。
+- 条目里不要放 `manifest.json`：那是游戏自己的格式（英雄模型等），游戏会去读它。
 
 ## 游戏更新后
 1. 进游戏看 `BepInEx/LogOutput.log`：DBModKit 会列出找不到的成员。

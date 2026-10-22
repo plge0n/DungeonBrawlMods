@@ -13,6 +13,8 @@ namespace DBStudio
         public Dictionary<DataTable, Dictionary<string, Dictionary<string, double>>> Values =
             new Dictionary<DataTable, Dictionary<string, Dictionary<string, double>>>();
         public List<Rule> Rules = new List<Rule>();
+        public List<Augment> Augments = new List<Augment>();
+        public AugmentOffer Offer = new AugmentOffer();
     }
 
     // 当前玩法包的加载、保存，以及"只在单人时生效"

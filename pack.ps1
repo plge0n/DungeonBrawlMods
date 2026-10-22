@@ -75,3 +75,22 @@ function New-Package([string]$name, [bool]$withBepInEx) {
 
 New-Package "完整包" $true
 New-Package "仅插件" $false
+
+# 创意工坊条目：每个插件一个文件夹（dll + dbmod.json），DBModKit 除外（它和 BepInEx 一起装在游戏目录）
+$workshop = Join-Path $dist "workshop"
+foreach ($plugin in $plugins | Where-Object { $_ -ne "DBModKit" }) {
+    $itemDir = Join-Path $workshop $plugin
+    New-Item -ItemType Directory -Force $itemDir | Out-Null
+    Copy-Item (Join-Path $root "$plugin\bin\Release\netstandard2.1\$plugin.dll") $itemDir
+    [ordered]@{
+        Format      = 1
+        Type        = "plugin"
+        Name        = $plugin
+        Author      = ""
+        Version     = $versions[$plugin]
+        Description = ""
+        MinModKit   = $versions["DBModKit"]
+        Assemblies  = @("$plugin.dll")
+    } | ConvertTo-Json | Set-Content (Join-Path $itemDir "dbmod.json") -Encoding utf8
+    Write-Host "  -> $itemDir"
+}

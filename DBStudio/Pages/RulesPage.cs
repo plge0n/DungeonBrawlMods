@@ -98,7 +98,7 @@ namespace DBStudio.Pages
 
         private void BuildList()
         {
-            Clear(listContent);
+            Widgets.Clear(listContent);
             listLabels.Clear();
             if (Rules.Count == 0)
             {
@@ -149,6 +149,8 @@ namespace DBStudio.Pages
         {
             if (!listLabels.TryGetValue(rule, out var label)) return;
             string name = rule.Enabled ? rule.Name : $"<color=#a6a6a6>{rule.Name}（已停用）</color>";
+            var owner = AugmentEngine.OwnerOf(rule);
+            if (owner != null) name += $"  <size=16><color=#d6b67d>强化「{owner.Name}」专属</color></size>";
             label.text = $"{name}\n<size=16><color=#a6a6a6>{RuleText.Sentence(rule)}</color></size>";
         }
 
@@ -156,7 +158,7 @@ namespace DBStudio.Pages
 
         private void BuildEditor()
         {
-            Clear(editorContent);
+            Widgets.Clear(editorContent);
             NativeUi.SetEnabled(deleteButton, selected != null);
             if (selected == null)
             {
@@ -169,18 +171,15 @@ namespace DBStudio.Pages
 
             var nameRow = NativeUi.Row(editorContent, 44f, 12f);
             NativeUi.Label(nameRow, "名字", 22, 90f);
-            InputField nameInput = null;
-            nameInput = NativeUi.Input(nameRow, "给规则起个名字", -1f, v =>
+            Widgets.Text(nameRow, rule.Name, "给规则起个名字", -1f, v =>
             {
-                rule.Name = string.IsNullOrWhiteSpace(v) ? "新规则" : v.Trim();
-                nameInput.SetTextWithoutNotify(rule.Name);
+                rule.Name = v;
                 Changed(rule);
-            });
-            nameInput.SetTextWithoutNotify(rule.Name);
+            }, "新规则");
 
             NativeUi.Heading(editorContent, "当");
             var whenRow = NativeUi.Row(editorContent, 44f, 12f);
-            Choice(whenRow, RuleText.Triggers.Select(t => t.label), Array.FindIndex(RuleText.Triggers, t => t.value == rule.Trigger), 360f, i =>
+            Widgets.Choice(whenRow, RuleText.Triggers.Select(t => t.label), Array.FindIndex(RuleText.Triggers, t => t.value == rule.Trigger), 360f, i =>
             {
                 rule.Trigger = RuleText.Triggers[i].value;
                 RuleEngine.Forget(rule);
@@ -189,7 +188,7 @@ namespace DBStudio.Pages
             if (rule.Trigger == Trigger.Interval)
             {
                 NativeUi.Label(whenRow, "每隔", 22, 60f);
-                Number(whenRow, rule.Every, 110f, v => rule.Every = Math.Max(0.2, v), rule);
+                Widgets.Number(whenRow, rule.Every, 110f, v => rule.Every = Math.Max(0.2, v), () => Changed(rule));
                 NativeUi.Label(whenRow, "秒", 22, 40f);
             }
 
@@ -202,16 +201,21 @@ namespace DBStudio.Pages
             NativeUi.Heading(editorContent, "就");
             if (rule.Actions.Count == 0)
                 NativeUi.Label(editorContent, "还没有动作：触发了也什么都不做", 18, -1f, NativeUi.DimText);
-            foreach (var a in rule.Actions.ToList()) ActionRow(rule, a);
+            foreach (var a in rule.Actions.ToList())
+                Widgets.ActionRow(editorContent, a, () => Changed(rule), () => Changed(rule, structure: true), () =>
+                {
+                    rule.Actions.Remove(a);
+                    Changed(rule, structure: true);
+                });
             AddButton("＋ 添加动作", () => rule.Actions.Add(new RuleAction()), rule);
 
             NativeUi.Heading(editorContent, "限制");
             var limitRow = NativeUi.Row(editorContent, 44f, 12f);
             NativeUi.Label(limitRow, "冷却", 22, 60f);
-            Number(limitRow, rule.Cooldown, 110f, v => rule.Cooldown = v, rule);
+            Widgets.Number(limitRow, rule.Cooldown, 110f, v => rule.Cooldown = v, () => Changed(rule));
             NativeUi.Label(limitRow, "秒", 22, 50f);
             NativeUi.Label(limitRow, "每局最多", 22, 100f);
-            Number(limitRow, rule.MaxPerBattle, 110f, v => rule.MaxPerBattle = (int)Math.Round(v), rule, whole: true);
+            Widgets.Number(limitRow, rule.MaxPerBattle, 110f, v => rule.MaxPerBattle = (int)Math.Round(v), () => Changed(rule), whole: true);
             NativeUi.Label(limitRow, "次（0 = 不限）", 22, -1f);
         }
 
@@ -219,53 +223,17 @@ namespace DBStudio.Pages
         {
             var row = NativeUi.Row(editorContent, 44f, 12f);
             var (_, unit) = RuleText.Label(c.Type);
-            Choice(row, RuleText.Conditions.Select(x => x.label), Array.FindIndex(RuleText.Conditions, x => x.value == c.Type), 300f, i =>
+            Widgets.Choice(row, RuleText.Conditions.Select(x => x.label), Array.FindIndex(RuleText.Conditions, x => x.value == c.Type), 300f, i =>
             {
                 c.Type = RuleText.Conditions[i].value;
                 Changed(rule, structure: true);
             });
-            Number(row, c.Value, 110f, v => c.Value = v, rule);
+            Widgets.Number(row, c.Value, 110f, v => c.Value = v, () => Changed(rule));
             NativeUi.Label(row, unit, 22, 40f);
-            Spacer(row);
+            Widgets.Spacer(row);
             NativeUi.Button(row, "删除", false, 100f, () =>
             {
                 rule.Conditions.Remove(c);
-                Changed(rule, structure: true);
-            });
-        }
-
-        private void ActionRow(Rule rule, RuleAction a)
-        {
-            var row = NativeUi.Row(editorContent, 44f, 12f);
-            var (_, unit) = RuleText.Label(a.Type);
-            Choice(row, RuleText.Actions.Select(x => x.label), Array.FindIndex(RuleText.Actions, x => x.value == a.Type), 260f, i =>
-            {
-                a.Type = RuleText.Actions[i].value;
-                Changed(rule, structure: true);
-            });
-            if (a.Type == ActionType.Notice)
-            {
-                NativeUi.Input(row, "要显示的文字", -1f, v =>
-                {
-                    a.Text = v ?? "";
-                    Changed(rule);
-                }).SetTextWithoutNotify(a.Text);
-            }
-            else
-            {
-                Number(row, a.Value, 110f, v => a.Value = v, rule);
-                NativeUi.Label(row, unit, 22, 30f);
-                if (RuleText.IsStat(a.Type))
-                {
-                    NativeUi.Label(row, "持续", 22, 50f);
-                    Number(row, a.Seconds, 90f, v => a.Seconds = v, rule);
-                    NativeUi.Label(row, "秒（0 = 本局）", 18, 130f, NativeUi.DimText);
-                }
-                Spacer(row);
-            }
-            NativeUi.Button(row, "删除", false, 100f, () =>
-            {
-                rule.Actions.Remove(a);
                 Changed(rule, structure: true);
             });
         }
@@ -280,36 +248,6 @@ namespace DBStudio.Pages
             });
         }
 
-        // ---- 控件 ----
-
-        private static void Choice(Transform parent, IEnumerable<string> options, int index, float width, Action<int> onChange)
-        {
-            var dd = NativeUi.Dropdown(parent, options, width, onChange);
-            dd.SetValueWithoutNotify(Mathf.Max(0, index));
-        }
-
-        // 非负数输入框；set 返回实际存下的值（可能被限制过），输入框显示它；输入无效时恢复原来的值
-        private void Number(Transform parent, double value, float width, Func<double, double> set, Rule rule, bool whole = false)
-        {
-            double current = value;
-            InputField field = null;
-            field = NativeUi.Input(parent, "", width, text =>
-            {
-                if (double.TryParse((text ?? "").Trim().Replace('，', '.').Replace(',', '.'), NumberStyles.Float, CultureInfo.InvariantCulture, out double v)
-                    && !double.IsNaN(v) && !double.IsInfinity(v))
-                {
-                    v = Math.Max(0.0, whole ? Math.Round(v) : v);
-                    if (v != current)
-                    {
-                        current = set(v);
-                        Changed(rule);
-                    }
-                }
-                field.SetTextWithoutNotify(RuleText.Num(current));
-            }, InputField.ContentType.DecimalNumber);
-            field.SetTextWithoutNotify(RuleText.Num(current));
-        }
-
         // ---- 修改 ----
 
         private void Changed(Rule rule, bool structure = false)
@@ -320,13 +258,24 @@ namespace DBStudio.Pages
             if (structure) RequestRebuild(list: false);
         }
 
-        private void UpdateSummary() => summary.text = selected == null ? "" : RuleText.Sentence(selected) + "。";
+        private void UpdateSummary()
+        {
+            if (selected == null)
+            {
+                summary.text = "";
+                return;
+            }
+            var owner = AugmentEngine.OwnerOf(selected);
+            summary.text = RuleText.Sentence(selected) + "。" + (owner == null ? ""
+                : $"\n<size=18><color=#a6a6a6>这条规则属于强化「{owner.Name}」，选到这个强化之后才生效。</color></size>");
+        }
 
         private void Duplicate()
         {
             if (selected == null) return;
             var copy = Newtonsoft.Json.JsonConvert.DeserializeObject<Rule>(Newtonsoft.Json.JsonConvert.SerializeObject(selected));
             copy.Name = selected.Name + " 副本";
+            copy.Id = Rule.NewId();
             Rules.Insert(Rules.IndexOf(selected) + 1, copy);
             selected = copy;
             Packs.MarkDirty();
@@ -357,19 +306,6 @@ namespace DBStudio.Pages
         {
             deleteArmedUntil = 0f;
             if (deleteButton != null) deleteButton.GetComponentInChildren<Text>().text = "删除规则";
-        }
-
-        private static void Spacer(Transform parent)
-        {
-            var go = new GameObject("spacer", typeof(RectTransform), typeof(LayoutElement));
-            go.transform.SetParent(parent, false);
-            go.GetComponent<LayoutElement>().flexibleWidth = 1f;
-        }
-
-        private static void Clear(Transform t)
-        {
-            for (int i = t.childCount - 1; i >= 0; i--)
-                UnityEngine.Object.Destroy(t.GetChild(i).gameObject);
         }
     }
 }

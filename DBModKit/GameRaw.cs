@@ -141,6 +141,56 @@ namespace DBModKit
             p.addBagItemEvent -= b.BagItem;
         }
 
+        // ---- 遗物：bcry（ItemType → RemainsData），名字/图标在原始 remains 表和本地化 "pickitem_" + 编号 ----
+        public static List<RelicInfo> ReadRelics()
+        {
+            var list = new List<RelicInfo>();
+            foreach (var kv in cj.boyl.bcry.OrderBy(kv => (int)kv.Key))
+            {
+                int id = (int)kv.Key;
+                string icon = null;
+                if (cx.zyc.TryGetValue("remains", out var t) && t is Dictionary<string, object> rows
+                    && rows.TryGetValue(id.ToString(), out var r) && r is Dictionary<string, object> row)
+                    icon = Cell(row, "icon");
+                list.Add(new RelicInfo(id, cj.boyi.dff("pickitem_" + id, kv.Key.ToString()), kv.Value.grade, IconPath("Remains/", icon)));
+            }
+            return list;
+        }
+
+        // bbe.kqk(编号, 等级)：游戏的遗物三选一（ez.dzv）就调它；超过本局获取上限、或王者模式禁用时返回 null
+        public static bool GiveRelic(Component p, int id) => cj.boyl.bcry.ContainsKey((ItemType)id) && ((bbe)p).kqk(id, 0) != null;
+
+        // ---- 三选一界面 bqa（ui_roguelike）----
+        // 和游戏自己弹遗物前的判断一致（MyServerNetworkManager.qhz）：三选一界面开着，或技能栏的子面板（bpe.bprr）开着
+        public static bool ChoiceBusy()
+        {
+            var ui = cj.boyb?.dqr<bqa>();
+            if (ui != null && ui.bacf) return true;
+            var bar = cj.boyb?.dqr<bpe>();
+            return bar != null && bar.bprr;
+        }
+
+        // bqa.osj(选项, 选中回调, 标题, 刷新(null = 不能刷新), 关闭回调, 延迟, 队伍数据, 来源)：ez.dzu 用的真方法。
+        // 来源传 null：非空时 cs.dfx 会把选项计入游戏的统计
+        public static void ShowChoice(string title, IList<ChoiceOption> options, Action<int> onPick)
+        {
+            var data = new RoguelikeUIData[options.Count];
+            for (int i = 0; i < options.Count; i++)
+            {
+                var o = options[i];
+                data[i] = new RoguelikeUIData
+                {
+                    name = o.Name ?? "",
+                    dec = o.Description ?? "",
+                    icon = o.IconPath ?? "",
+                    quality = o.Quality >= 0 && o.Quality <= 4 ? o.Quality : -1,
+                    data = i.ToString(),
+                };
+            }
+            var ui = (bqa)cj.boyb.dqk<bqa>();
+            ui.osj(data, d => onPick(int.TryParse(d.data, out int i) ? i : 0), title, null, null, 0f, null, null);
+        }
+
         // ---- 联机（Mirror：ciy = NetworkServer，cik = NetworkClient）----
         public static bool ServerActive() => ciy.bmyj;
         public static bool ClientActive() => cik.bqcb;
