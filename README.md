@@ -71,6 +71,18 @@ public class Plugin : BaseUnityPlugin
 | `HeroSkins` | 给每个英雄选一套工坊或本地的模型（或原版），可以只换本地玩家；Steam 联机时通过大厅成员数据同步 |
 | `JsonConfig<T>` | `BepInEx/config` 下的 JSON 配置，自动延迟保存 |
 | `ScreenNotice` | 屏幕顶部临时提示 |
+| `RunLog` | 运行记录：所有 Mod 共用、带波次和帧号的结构化日志，写进 `BepInEx/DBModKit/trace.log`；可以加标记、导出诊断报告（见下） |
+
+### 运行记录（RunLog）
+用来确认功能有没有生效、出了问题能定位到当时发生了什么。
+```csharp
+mod.RunLog.Info("规则", "触发了", ("生命", player.Hp), ("目标", "Boss"));   // 来源自动是 Mod 名
+mod.RunLog.Debug("躲避", "换落脚点");                                      // 高频细节用 Debug
+```
+- 每条记录：时间、级别、`[来源/分类]`、内容、`键=值`、波次、帧号。内存保留最近 3000 条，调试页（F9）能看，同时写进 `BepInEx/DBModKit/trace.log`，上一次启动的记录在 `trace.prev.log`。Warning/Error 也会进 `LogOutput.log`。
+- ModKit 自动记录：Mod 加载/卸载、进出战斗、房间人数、`Player` 的回血/加蓝/加金币/发遗物/改属性（前后数值，以及是哪个 Mod 调的）、配置表修改、三选一、被拦下的异常；Debug 级：每个战斗事件、自动释放决策变化、输入屏蔽和暂停。所以 Mod 自己只需要记"为什么这么做"。
+- 测试时：在 Mod 页把 DBModKit 的 `FileLevel` 改成 `Debug`，文件里就有全部细节。看到问题按 **Ctrl+F10** 加一个编号标记（调试页也有按钮），之后说"标记 3 附近"就能在文件里找到。
+- 反馈问题：调试页点"导出"，生成 `BepInEx/DBModKit/report-时间.txt`（版本、插件列表、兼容检查、当前状态、全部记录），把它发过来。
 
 ## 开发
 需要 .NET SDK 8+，游戏目录已装 BepInEx 5。

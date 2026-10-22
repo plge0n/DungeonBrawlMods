@@ -1,5 +1,14 @@
 # DBModKit 更新日志
 
+## 0.11.0
+- 运行记录 `RunLog`：所有 Mod 共用的结构化日志（时间、来源 Mod、分类、级别、键=值数据、波次、帧号），
+  内存保留最近 3000 条，同时写进 `BepInEx/DBModKit/trace.log`（上一次启动的在 trace.prev.log）。
+  Mod 用 `mod.RunLog.Info("分类", "内容", ("键", 值))` 写；Warning/Error 同时进 BepInEx 日志
+- ModKit 自动记录：Mod 加载/卸载/启动失败、进出战斗（带初始属性）、房间人数变化、
+  `Player` 的回血/加蓝/加金币/发遗物/改属性（前后对比，自动标出是哪个 Mod 调用的）、配置表修改、三选一的弹出和选择、
+  所有被拦下的异常；Debug 级：每个战斗事件、自动释放决策变化、输入屏蔽和暂停的获取/释放
+- `RunLog.Mark()` 插带编号的标记（默认 Ctrl+F10），`RunLog.ExportReport()` 导出诊断报告（版本、兼容、状态、全部记录）
+- 配置 `RunLog.FileLevel`（写文件的最低级别，测试时改 Debug）、`RunLog.MarkHotkey`
 ## 0.10.1
 - 修复：`Player.Enemies()` / `EnemiesWithin()` / `PickEnemy()` 始终返回空（误用了只认玩家的 `Player.Wrap`）。
   受影响：SmartSkill 的选目标和按敌人判断的条件、SmartMove、DBStudio 的附近敌人和规则条件

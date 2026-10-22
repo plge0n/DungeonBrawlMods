@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 
 namespace DBModKit
 {
@@ -73,10 +74,22 @@ namespace DBModKit
 
         internal static void Raise(GameEvent e)
         {
+            RunLog.Debug(ModKitPlugin.Name, "事件", e.Kind.ToString(), Describe(e));
             var evt = Raised;
             if (evt == null) return;
             foreach (Action<GameEvent> handler in evt.GetInvocationList())
                 Safe.Run($"GameEvents.{e.Kind} → {handler.Method.DeclaringType?.FullName}.{handler.Method.Name}", () => handler(e));
+        }
+
+        private static (string, object)[] Describe(GameEvent e)
+        {
+            var d = new List<(string, object)>();
+            if (e.Target != null) d.Add(("目标", e.Target.IsBoss ? "Boss" : e.Target.IsElite ? "精英" : "普通"));
+            if (e.Skill != null) d.Add(("技能", e.Skill.Name));
+            if (e.Amount != 0) d.Add(("数值", e.Amount));
+            if (e.ItemId != 0) d.Add(("物品", e.ItemId));
+            if (e.Kind == GameEventKind.Damaged && GameRaw.LocalPlayer() is UnityEngine.Component p) d.Add(("生命", $"{GameRaw.Hp(p)}/{GameRaw.MaxHp(p)}"));
+            return d.ToArray();
         }
 
         // 每帧（Runner）：本地玩家换了就重新挂游戏的回调；比较血量得出掉血事件

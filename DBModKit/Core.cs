@@ -9,9 +9,10 @@ namespace DBModKit
     {
         internal static ManualLogSource Source;
 
-        public static void Info(string msg) => Source?.LogInfo(msg);
-        public static void Warning(string msg) => Source?.LogWarning(msg);
-        public static void Error(string msg) => Source?.LogError(msg);
+        // 同时进 BepInEx 日志和运行记录
+        public static void Info(string msg) { Source?.LogInfo(msg); RunLog.WriteCore(ModKitPlugin.Name, "", RunLogLevel.Info, msg, null, mirror: false); }
+        public static void Warning(string msg) { Source?.LogWarning(msg); RunLog.WriteCore(ModKitPlugin.Name, "", RunLogLevel.Warning, msg, null, mirror: false); }
+        public static void Error(string msg) { Source?.LogError(msg); RunLog.WriteCore(ModKitPlugin.Name, "", RunLogLevel.Error, msg, null, mirror: false); }
     }
 
     /// <summary>游戏生命周期事件。每个订阅者单独做异常保护：一个 Mod 出错不影响其他 Mod，同一处错误只记一次日志。</summary>
@@ -89,10 +90,12 @@ namespace DBModKit
     internal class Runner : MonoBehaviour
     {
         private bool wasInBattle;
+        private int lastPlayers = 1;
 
         private void Update()
         {
             GamePause.Tick();
+            RunLog.Tick();
             if (!ModKit.Compatible) return;
             // 第一帧：Chainloader 已经加载完 plugins 目录，再加载工坊插件（依赖检查才准）
             Workshop.Start();
@@ -102,16 +105,36 @@ namespace DBModKit
                 wasInBattle = inBattle;
                 if (inBattle)
                 {
+                    Safe.Run("运行记录（进入战斗）", LogBattleStarted);
                     // gad 的补丁没装上时，怪物行在主菜单还不存在，进入战斗时补写倍率
                     Safe.Run("怪物倍率（进入战斗）", GameData.OnEnemyTableLoaded);
                     ModEvents.RaiseBattleStarted();
                 }
-                else ModEvents.RaiseBattleEnded();
+                else
+                {
+                    RunLog.Info(ModKitPlugin.Name, "战斗", "离开战斗");
+                    ModEvents.RaiseBattleEnded();
+                }
+            }
+            int players = Game.PlayerCount;
+            if (players != lastPlayers)
+            {
+                RunLog.Info(ModKitPlugin.Name, "房间", players < 0 ? "加入了别人的房间" : players > lastPlayers ? "有玩家加入" : "有玩家离开",
+                    ("人数", players), ("单人", Game.IsSolo));
+                lastPlayers = players;
             }
             Safe.Run("GameEvents", GameEvents.Tick);
             ModEvents.RaiseUpdate();
             Safe.Run("皮肤同步", HeroSkinSync.Tick);
             JsonConfigRegistry.Tick();
+        }
+
+        private static void LogBattleStarted()
+        {
+            var p = Game.LocalPlayer;
+            RunLog.Info(ModKitPlugin.Name, "战斗", "进入战斗",
+                ("单人", Game.IsSolo), ("人数", Game.PlayerCount), ("生命", p.MaxHp), ("蓝", p.MaxMana), ("攻击", p.Attack),
+                ("力/敏/体", $"{p.Strength}/{p.Agility}/{p.Stamina}"), ("自动战斗", Game.AutoBattle));
         }
 
         private void OnApplicationQuit()

@@ -33,6 +33,9 @@ namespace DBModKit
         public BepInPlugin Metadata { get; }
         public ManualLogSource Logger { get; }
 
+        /// <summary>写运行记录（见 <see cref="DBModKit.RunLog"/>），来源是这个 Mod 的名字。</summary>
+        public ModRunLog RunLog { get; }
+
         /// <summary>Mod 已启动（ModKit 兼容且 onLoad 成功）。</summary>
         public bool Loaded { get; private set; }
 
@@ -40,6 +43,7 @@ namespace DBModKit
         {
             Metadata = metadata;
             Logger = logger;
+            RunLog = new ModRunLog(metadata.Name);
             this.onUnload = onUnload;
         }
 
@@ -60,10 +64,12 @@ namespace DBModKit
                 onLoad(ctx);
                 ctx.Loaded = true;
                 logger.LogInfo($"{ctx.Metadata.Name} {ctx.Metadata.Version} 已加载");
+                ctx.RunLog.Info("生命周期", "已加载", ("版本", ctx.Metadata.Version.ToString()));
             }
             catch (Exception e)
             {
                 logger.LogError($"{ctx.Metadata.Name} 启动失败：{e}");
+                DBModKit.RunLog.WriteCore(ctx.Metadata.Name, "生命周期", RunLogLevel.Error, "启动失败", new (string, object)[] { ("异常", e.ToString()) }, mirror: false);
                 ctx.RunCleanups();
             }
             return ctx;
@@ -72,6 +78,7 @@ namespace DBModKit
         /// <summary>在插件的 OnDestroy 里调用。</summary>
         public void Dispose()
         {
+            if (Loaded) RunLog.Info("生命周期", "卸载");
             if (Loaded && onUnload != null) Safe.Run($"{Metadata.Name} 卸载", onUnload);
             Loaded = false;
             RunCleanups();

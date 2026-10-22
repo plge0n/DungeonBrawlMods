@@ -8,15 +8,16 @@ namespace SmartMove
 {
     // 没按方向键时自动躲避地面预警（敌人技能、陷阱）
     [BepInPlugin(Guid, Name, Version)]
-    [BepInDependency(ModKitPlugin.Guid, "0.3.0")]
+    [BepInDependency(ModKitPlugin.Guid, "0.11.0")]
     public class Plugin : BaseUnityPlugin
     {
         public const string Guid = "plge0n.dungeonbrawl.smartmove";
         public const string Name = "SmartMove";
         // 发布时同步修改 CHANGELOG.md；pack.ps1 从这里读取版本号
-        public const string Version = "0.1.0";
+        public const string Version = "0.2.0";
 
         internal static ManualLogSource Log;
+        internal static ModRunLog RunLogger;
 
         internal static ConfigEntry<bool> Enabled;
         internal static ConfigEntry<KeyboardShortcut> ToggleKey;
@@ -34,6 +35,7 @@ namespace SmartMove
         private void OnLoad(ModContext mod)
         {
             Log = Logger;
+            RunLogger = mod.RunLog;
             if (!MoveControl.Available) throw new System.Exception("ModKit 的走位钩子不可用");
 
             Enabled = Config.Bind("General", "Enabled", true, "躲避地面红色预警（敌人技能、陷阱）");
@@ -50,6 +52,7 @@ namespace SmartMove
                 if (!ToggleKey.Value.IsDown()) return;
                 Enabled.Value = !Enabled.Value;
                 ScreenNotice.Show(Enabled.Value ? "SmartMove：自动躲避已开启" : "SmartMove：自动躲避已关闭", 3f);
+                RunLogger.Info("开关", Enabled.Value ? "自动躲避已开启" : "自动躲避已关闭");
             });
         }
 

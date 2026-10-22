@@ -1,3 +1,4 @@
+using System.Linq;
 using System.Collections.Generic;
 using DBModKit;
 using UnityEngine;
@@ -20,6 +21,7 @@ namespace DBStudio
             public int Str, Agi, Sta;
             public long Attack;
             public float Until; // PositiveInfinity = 本局一直有效
+            public string Rule;
         }
 
         private static readonly Dictionary<Rule, State> states = new Dictionary<Rule, State>();
@@ -64,6 +66,7 @@ namespace DBStudio
             for (int i = bonuses.Count - 1; i >= 0; i--)
             {
                 if (now < bonuses[i].Until) continue;
+                Plugin.RunLogger.Info("规则", $"「{bonuses[i].Rule}」的限时加成到期");
                 Apply(p, bonuses[i], -1);
                 bonuses.RemoveAt(i);
             }
@@ -114,18 +117,58 @@ namespace DBStudio
         private static void TryFire(Rule rule, Player p, GameEvent e)
         {
             // 死了就别回血、加属性了（复活事件除外，那时已经活了）
-            if (!p.IsAlive) return;
+            if (!p.IsAlive)
+            {
+                Skipped(rule, "角色已死亡");
+                return;
+            }
             var s = StateOf(rule);
             float now = Time.time;
-            if (now < s.ReadyAt) return;
-            if (rule.MaxPerBattle > 0 && s.Count >= rule.MaxPerBattle) return;
+            if (now < s.ReadyAt)
+            {
+                Skipped(rule, $"冷却中，还剩 {s.ReadyAt - now:0.0} 秒");
+                return;
+            }
+            if (rule.MaxPerBattle > 0 && s.Count >= rule.MaxPerBattle)
+            {
+                Skipped(rule, $"本局已触发 {s.Count} 次，达到上限");
+                return;
+            }
             foreach (var c in rule.Conditions)
-                if (!Check(c, p)) return;
+                if (!Check(c, p))
+                {
+                    Skipped(rule, "条件不满足：" + Describe(c, p));
+                    return;
+                }
 
             s.ReadyAt = now + (float)rule.Cooldown;
             s.Count++;
-            foreach (var a in rule.Actions) Run(a, p);
-            EventLog.Add($"规则「{rule.Name}」触发");
+            // 先记触发，动作的效果（回血前后的血量等）由 ModKit 紧接着记录
+            Plugin.RunLogger.Info("规则", $"规则「{rule.Name}」触发",
+                ("触发", rule.Trigger.ToString()), ("事件", e.Kind == default && rule.Trigger == Trigger.Interval ? "定时" : e.Kind.ToString()),
+                ("条件", rule.Conditions.Count == 0 ? "无" : string.Join("；", rule.Conditions.Select(c => Describe(c, p)))),
+                ("本局第", s.Count));
+            foreach (var a in rule.Actions) Run(a, p, rule.Name);
+        }
+
+        // 没触发的原因记成 Debug（调试页勾"详细"能看到）
+        private static void Skipped(Rule rule, string reason) => Plugin.RunLogger.Debug("规则", $"规则「{rule.Name}」没触发", ("原因", reason));
+
+        // 条件和当前值，例如"HpBelow 30（当前 20.4）"
+        private static string Describe(Condition c, Player p)
+        {
+            double? now;
+            switch (c.Type)
+            {
+                case ConditionType.HpBelow:
+                case ConditionType.HpAbove: now = p.HpPercent * 100.0; break;
+                case ConditionType.ManaBelow:
+                case ConditionType.ManaAbove: now = ManaPercent(p); break;
+                case ConditionType.EnemiesNear: now = p.EnemiesWithin(RuleText.NearRange).Count; break;
+                case ConditionType.WaveAtLeast: now = Game.Wave; break;
+                default: now = null; break;
+            }
+            return $"{c.Type} {c.Value:0.#}" + (now.HasValue ? $"（当前 {now.Value:0.#}）" : "");
         }
 
         private static bool Check(Condition c, Player p)
@@ -147,7 +190,7 @@ namespace DBStudio
         private static double ManaPercent(Player p) => p.MaxMana > 0 ? p.Mana * 100.0 / p.MaxMana : 0.0;
 
         // 强化也用它执行"获得时"的效果
-        internal static void Run(RuleAction a, Player p)
+        internal static void Run(RuleAction a, Player p, string source)
         {
             double v = System.Math.Max(0.0, a.Value);
             switch (a.Type)
@@ -157,18 +200,19 @@ namespace DBStudio
                 case ActionType.Mana: p.AddMana(ToInt(v)); break;
                 case ActionType.Gold: p.AddGold(ToInt(v)); break;
                 case ActionType.Relic:
-                    if (!p.GiveRelic(ToInt(v))) Plugin.Log.LogInfo($"遗物 {ToInt(v)} 没有发出（可能超过本局获取上限）");
+                    // 发没发出由 ModKit 记录
+                    p.GiveRelic(ToInt(v));
                     break;
                 case ActionType.Notice:
                     if (!string.IsNullOrEmpty(a.Text)) ScreenNotice.Show(a.Text, 3f);
                     break;
                 default:
-                    AddBonus(p, a.Type, ToInt(v), a.Seconds);
+                    AddBonus(p, a.Type, ToInt(v), a.Seconds, source);
                     break;
             }
         }
 
-        private static void AddBonus(Player p, ActionType type, int v, double seconds)
+        private static void AddBonus(Player p, ActionType type, int v, double seconds, string source)
         {
             if (v == 0) return;
             if (bonusOwner != p)
@@ -177,7 +221,8 @@ namespace DBStudio
                 bonuses.Clear();
                 bonusOwner = p;
             }
-            var b = new StatBonus { Until = seconds > 0 ? Time.time + (float)seconds : float.PositiveInfinity };
+            var b = new StatBonus { Until = seconds > 0 ? Time.time + (float)seconds : float.PositiveInfinity, Rule = source };
+            Plugin.RunLogger.Info("规则", seconds > 0 ? $"「{source}」限时加成 {seconds:0.#} 秒" : $"「{source}」本局加成", ("属性", type.ToString()), ("数值", v));
             switch (type)
             {
                 case ActionType.Attack: b.Attack = v; break;
