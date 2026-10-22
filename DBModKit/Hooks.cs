@@ -9,7 +9,7 @@ namespace DBModKit
     // Harmony 补丁统一在这里按签名查找并安装；找不到或安装失败只停用对应功能，不影响其他部分
     internal static class Hooks
     {
-        /// <summary>安装补丁。排行榜拦截装不上时返回 false，ModKit 整体停用。</summary>
+        /// <summary>安装补丁。排行榜拦截（上传、国王快照）装不上时返回 false，ModKit 整体停用。</summary>
         public static bool Install(Harmony harmony)
         {
             if (!TryPatch(harmony, typeof(LeaderboardHooks), "排行榜上传拦截",
@@ -19,6 +19,11 @@ namespace DBModKit
                         typeof(Action<LeaderboardUploadStage>), typeof(string),
                     }),
                     prefix: nameof(LeaderboardHooks.UploadPrefix)))
+                return false;
+            // 在别人的房间里：不把自己的构筑快照发给房主（房主没装 Mod 时会替我们上传）
+            if (!TryPatch(harmony, typeof(LeaderboardHooks), "国王快照拦截",
+                    AccessTools.Method(typeof(bbe), "ktb", new[] { typeof(int), typeof(int) }),
+                    prefix: nameof(LeaderboardHooks.KingSnapshotPrefix)))
                 return false;
 
             AutoCast.Available =
@@ -193,6 +198,7 @@ namespace DBModKit
     }
 
     // 游戏作者的规则：装了 Mod 不能上传排行榜（违规可能被拉进按 Steam 账号判定的黑名单，连累整队）。
+    // 两道拦截：自己上传（bwu.quj），以及在别人房间里把构筑快照交给房主上传（bbe.ktb）。
     // bwu.quj 是排行榜上传入口（由主机 MyServerNetworkManager 调用；bwu.nlq 是同签名的诱饵）。
     // 强制拦截，不提供开关；按游戏自己的失败流程回调，结算界面会显示上传失败。
     internal static class LeaderboardHooks
@@ -207,6 +213,19 @@ namespace DBModKit
             if (__3 != null)
                 Safe.Run("排行榜拦截回调", () =>
                     __3((bws)makeFailure.Invoke(null, new object[] { LeaderboardUploadFailure.InvalidData, "Mods installed: leaderboard upload disabled." })));
+            return false;
+        }
+
+        // bbe.ktb(局, 回合)：国王对决结算时把本地玩家的构筑快照（ez.ebj）用 CmdUploadLocalKingData 发给房主（ody/gif/hjf 是诱饵副本）。
+        // 房主（MyServerNetworkManager.qiy）把各人的快照汇总进队伍数据，再用 bwu.quj 一起上传排行榜，只要求有房主自己的快照
+        // （qlk），别人的可以缺。房主装了 ModKit 时 quj 已被拦截；房主没装时我们拦不住它的上传，所以在这里不发，
+        // 队伍照常上传，只是不带我们。自己当房主时照常发给自己（最后的上传会被 quj 拦截，提示和原来一样）
+        internal static bool KingSnapshotPrefix()
+        {
+            if (GameRaw.ServerActive()) return true;
+            Log.Warning("已安装 Mod：按游戏作者的规则，本局构筑不提交给房主上传排行榜");
+            ScreenNotice.Show("已安装 Mod：按游戏作者的规则，本局构筑不提交排行榜（队友的成绩照常上传）。", 8f);
+            RunLog.WriteCore(ModKitPlugin.Name, "排行榜", RunLogLevel.Info, "不发送国王快照", new (string, object)[0], mirror: false);
             return false;
         }
     }
