@@ -46,6 +46,7 @@ namespace DBStudio
         Agility,
         Stamina,
         Notice,       // 屏幕上显示一句话
+        Relic,        // 获得遗物（Value = 遗物编号）
     }
 
     internal sealed class Condition
@@ -65,6 +66,8 @@ namespace DBStudio
 
     internal sealed class Rule
     {
+        // 强化用它引用规则；老存档里没有，读档时会生成新的（被引用后就会存下来）
+        public string Id = NewId();
         public string Name = "新规则";
         public bool Enabled = true;
         [JsonConverter(typeof(StringEnumConverter))] public Trigger Trigger = Trigger.EnemyKilled;
@@ -75,6 +78,8 @@ namespace DBStudio
         public List<RuleAction> Actions = new List<RuleAction>();
         // 触发后多少秒内不再触发
         public double Cooldown;
+
+        public static string NewId() => System.Guid.NewGuid().ToString("N").Substring(0, 8);
         // 每局最多触发几次，0 = 不限
         public int MaxPerBattle;
     }
@@ -124,6 +129,7 @@ namespace DBStudio
             (ActionType.Agility, "敏捷加", ""),
             (ActionType.Stamina, "体力加", ""),
             (ActionType.Notice, "屏幕提示", ""),
+            (ActionType.Relic, "获得遗物", ""),
         };
 
         public static bool IsStat(ActionType t) => t == ActionType.Attack || t == ActionType.Strength || t == ActionType.Agility || t == ActionType.Stamina;
@@ -151,6 +157,7 @@ namespace DBStudio
         public static string ActionText(RuleAction a)
         {
             if (a.Type == ActionType.Notice) return $"提示「{a.Text}」";
+            if (a.Type == ActionType.Relic) return $"获得遗物「{DBModKit.RelicInfo.Get((int)a.Value)?.Name ?? "未选择"}」";
             var (label, unit) = Label(a.Type);
             string text = $"{label} {Num(a.Value)}{unit}";
             if (IsStat(a.Type)) text += a.Seconds > 0 ? $"，持续 {Num(a.Seconds)} 秒" : "，本局有效";

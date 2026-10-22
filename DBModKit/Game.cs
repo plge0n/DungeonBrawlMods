@@ -137,6 +137,13 @@ namespace DBModKit
             return amount > 0 ? GameRaw.AddGold(Native, amount) : 0;
         }
 
+        /// <summary>获得一个遗物（ItemType 编号，见 RelicInfo）。超过本局获取上限等情况下返回 false。</summary>
+        public bool GiveRelic(int relicId)
+        {
+            RequireLocal();
+            return GameRaw.GiveRelic(Native, relicId);
+        }
+
         /// <summary>
         /// 加力量、敏捷、体力、攻击（负数为减），加在加成上而不是基础值上，不会触发防篡改校验；体力会同步生命上限。
         /// 本局有效，下一局英雄重新生成时清零。要临时加成就到时间后用相反数调用一次。

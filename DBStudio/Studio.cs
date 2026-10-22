@@ -35,6 +35,9 @@ namespace DBStudio
 
         public static bool IsOpen => window != null && window.IsOpen;
 
+        // 弹出层（选择器等）挂在这里，盖在窗口上面；窗口没开时为 null
+        public static Transform ModalHost => IsOpen ? canvas.transform : null;
+
         public static void Init(params IStudioPage[] all) => pages = all;
 
         // 下一帧就刷新当前页（页面要在控件回调之外重建自己时用）
@@ -52,7 +55,9 @@ namespace DBStudio
             // 战斗中 ESC 已被输入屏蔽挡住，不会打开游戏菜单
             if (Input.GetKeyDown(KeyCode.Escape) && !NativeUi.IsTyping)
             {
-                Close();
+                // 先关弹出层
+                if (Picker.IsOpen) Picker.Close();
+                else Close();
                 return;
             }
             UpdatePause();
@@ -89,6 +94,7 @@ namespace DBStudio
 
         public static void Close()
         {
+            Picker.Close();
             window?.Destroy();
             window = null;
             pageRoot = null;

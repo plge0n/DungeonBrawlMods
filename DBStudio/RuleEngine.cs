@@ -69,7 +69,7 @@ namespace DBStudio
             }
             foreach (var rule in Packs.Current.Rules)
             {
-                if (!rule.Enabled || rule.Trigger != Trigger.Interval) continue;
+                if (!rule.Enabled || rule.Trigger != Trigger.Interval || AugmentEngine.IsLocked(rule)) continue;
                 var s = StateOf(rule);
                 if (s.NextTick == 0f) s.NextTick = now + Interval(rule);
                 if (now < s.NextTick) continue;
@@ -86,7 +86,7 @@ namespace DBStudio
             var p = Game.LocalPlayer;
             if (p == null) return;
             foreach (var rule in Packs.Current.Rules.ToArray())
-                if (rule.Enabled && Matches(rule.Trigger, e))
+                if (rule.Enabled && Matches(rule.Trigger, e) && !AugmentEngine.IsLocked(rule))
                     TryFire(rule, p, e);
         }
 
@@ -146,7 +146,8 @@ namespace DBStudio
 
         private static double ManaPercent(Player p) => p.MaxMana > 0 ? p.Mana * 100.0 / p.MaxMana : 0.0;
 
-        private static void Run(RuleAction a, Player p)
+        // 强化也用它执行"获得时"的效果
+        internal static void Run(RuleAction a, Player p)
         {
             double v = System.Math.Max(0.0, a.Value);
             switch (a.Type)
@@ -155,6 +156,9 @@ namespace DBStudio
                 case ActionType.Heal: p.Heal(v); break;
                 case ActionType.Mana: p.AddMana(ToInt(v)); break;
                 case ActionType.Gold: p.AddGold(ToInt(v)); break;
+                case ActionType.Relic:
+                    if (!p.GiveRelic(ToInt(v))) Plugin.Log.LogInfo($"遗物 {ToInt(v)} 没有发出（可能超过本局获取上限）");
+                    break;
                 case ActionType.Notice:
                     if (!string.IsNullOrEmpty(a.Text)) ScreenNotice.Show(a.Text, 3f);
                     break;

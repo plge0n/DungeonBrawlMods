@@ -1,5 +1,11 @@
 # DBModKit 更新日志
 
+## 0.6.0
+- 新增 `ChoicePanel`：用游戏自己的肉鸽三选一界面（ui_roguelike）显示自定义选项（名字、描述、图标、品质色）；
+  界面忙时不打开，避免把游戏待选的遗物随机选掉；不计入游戏的选项统计
+- 新增 `RelicInfo`：所有遗物的编号、名字、品质、图标；`Player.GiveRelic` 发遗物（游戏自己的 `bbe.kqk`）
+- `DataEntry.IconPath` 公开
+
 ## 0.5.0
 - 新增 `GameEvents`：本地玩家的战斗事件（击杀（区分精英/Boss）、放技能、暴击、闪避、掉血、升级、复活、捡东西），
   以及波次开始、波次结束、Boss 出场、本局结束（补丁 `MyServerNetworkManager.qhu`）。用 `ModContext.OnGameEvent` 订阅
