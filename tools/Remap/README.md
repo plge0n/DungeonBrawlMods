@@ -1,0 +1,39 @@
+# Remap：混淆名映射重建
+
+游戏用 GUPS 混淆，每次更新混淆名（`yb`、`bbe.kqi`、`k896ff…`）都会全部改变。DBModKit 是唯一直接引用游戏代码的项目，
+这个工具把它源码里的旧名字对应到新版，其他 Mod 不用动。
+
+```powershell
+dotnet build tools/Remap -c Release
+$remap = "tools/Remap/bin/Release/net8.0/Remap.dll"
+dotnet $remap update --old ../_DungeonBrawl_backup/6.45                 # 只检查，报告在 tools/Remap/out/report.md
+dotnet $remap update --old ../_DungeonBrawl_backup/6.45 --write         # 写回 DBModKit 源码
+dotnet $remap snapshot --version 6.46                                   # 适配完新版本后保存，作为下次的 --old
+dotnet $remap selftest --old ../_DungeonBrawl_backup/6.45 --mutate 0.03 # 自测
+```
+`dotnet $remap help` 查看全部选项。`--notes ../_DungeonBrawl_tools/NOTES.md` 会同时改笔记里反引号中的 `类型.成员`。
+
+## 原理
+处理 DBModKit 引用的三个会被混淆的程序集：Assembly-CSharp、Mirror、com.rlabrecque.steamworks.net。
+
+1. **对应**（`Matcher`）：旧版每个类型、方法、字段、属性、事件找新版里的同一个。
+   - 锚点：不像混淆名的名字（`ActiveSkillData`、`heroType`、Unity 消息方法）同名即对应；P/Invoke 入口名；事件和同名的后备字段。
+   - 打分：解密后的字符串常量、外部调用（Unity、mscorlib）、数字常量、指令分布、签名，以及"引用了 / 被谁引用了哪些已对应的成员"。只接受双方互为最优、领先次优足够多的配对，先严后宽。
+   - 传播：已对应的两个方法按指令顺序对齐各自引用的成员，同一位置上还没对应的成员就是一对（所有投票一致才接受）。
+   - 等价副本：混淆器的诱饵里有逐字节相同、又都没人调用的方法（如 `cft.tqi` / `cft.kcv`），实在分不出时按顺序配对，报告里标 ⚠。
+2. **改写**（`SourceScan`）：用 Roslyn 按旧版编译源码，找出所有绑定到游戏成员的标识符、命名参数，
+   `Compat.cs` 清单和 `AccessTools.Method(typeof(X), "名字")` 里的字符串，以及注释里的 `类型.成员`，换成新名字。
+3. **检查**：改写后的源码按新版程序集再编译一遍（引用和 `Directory.Build.props` 一致），报告错误。
+
+## 结果怎么看
+- 报告"需要人工处理"：没有对应的成员、编译错误。代码里缺对应的标识符保持原样，编译会在那里报错。
+- 标 ⚠ 的：分数领先不多，或是等价副本。如果是 Harmony 补丁的目标，要对照反编译代码确认补丁打在被调用的那一个上（诱饵没有调用者）。
+- "提示"里的字符串（`"hp"`、`"cost"` 等反射用的字段名、表格列名）工具找不到所属类型，只有新版里同名成员真的改了名才列出，需要人工确认。
+
+## 自测
+`selftest` 把旧版随机重新混淆一遍（改名、打乱顺序、随机改动一部分方法的常量），用标准答案检查准确率，再检查 DBModKit 改写后能否编译。
+在 6.45 上（3 个种子各改动 3% 的方法，另测 1 个种子改动 10%）：DBModKit 用到的 346 个成员全部正确，改写后编译 0 错误；
+整个程序集 0 错配（代码相同、没人调用的诱饵副本互换单独统计），约 9.5% 的成员没有对应（多是没人引用、又被改动过的），会如实列在报告里。
+
+局限：模拟改名不等于真实更新。真实更新还可能增删大量代码、换字符串加密方式（`Side.DecryptStrings` 读不出时会警告）。
+所以每次仍要看报告、编译、实机测试后再发版。
