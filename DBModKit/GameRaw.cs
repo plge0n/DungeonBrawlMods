@@ -32,6 +32,9 @@ namespace DBModKit
         public static float HitRadius(Component r) => ((yb)r).bpia != null ? ((yb)r).bpia.addRange : 0f;
         public static bool IsBoss(Component r) => r is xo e && e.isBoss;
         public static bool IsElite(Component r) => r is xo e && e.isElite;
+        // 召唤物 roleType = Summon，authorityId = 召唤者的 netId（xo.hkr）
+        public static bool IsSummon(Component r) => ((yb)r).roleType == RoleType.Summon;
+        public static uint AuthorityId(Component r) => ((yb)r).authorityId;
         public static List<yb> Enemies(Component r) => ((yb)r).izk();
         // 护盾 bpgz；无敌 beqd（受到的伤害记为 0）
         public static long Shield(Component r) => ((yb)r).bpgz;
@@ -85,7 +88,7 @@ namespace DBModKit
         // 体力变化会自动同步生命上限。游戏的卡牌、装备也用它
         public static void AddStats(Component p, int str, int agi, int sta, long attack) => ((bbe)p).kkl(str, agi, sta, attack);
 
-        // 当前波次
+        // 当前波次，从 0 开始（游戏显示 nn.bbsr + 1）
         public static int Wave() => nn.bbsr;
 
         // ---- 本地玩家的战斗回调（多播委托字段，只在拥有者客户端触发）----
@@ -329,10 +332,10 @@ namespace DBModKit
         }
 
         // ---- 命中事件 bdc.bgfu：攻击方客户端上每次造成伤害时触发 ----
-        public static void SubscribeHits(System.Action<Component, Component, long, long, long, int, bool, bool> handler)
+        public static void SubscribeHits(System.Action<Component, Component, long, long, long, int, bool, bool, bool> handler)
         {
             bdc.bgfu += hit => handler(hit.source, hit.target, hit.fact.Amount + System.Math.Max(0L, hit.fact.ShieldDamage),
-                hit.targetHp, hit.targetShield, hit.fact.SkillId, hit.fact.Active, hit.fact.Critical);
+                hit.targetHp, hit.targetShield, hit.fact.SkillId, hit.fact.Active, hit.fact.Critical, hit.fact.Normal);
         }
 
         // ---- 技能数据 ActiveSkillData，表在 cj.boyl.bcrw ----
