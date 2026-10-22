@@ -1,5 +1,14 @@
 # DBModKit 更新日志
 
+## 0.19.0
+- 主菜单"创意工坊"下面加了"Mod"按钮（照抄原版按钮的样式和悬停效果），后面显示正在运行的 Mod 数，有要处理的问题时显示红色"!"。
+  点开是 Mod 列表：游戏版本和兼容状态、排行榜规则、已安装的 Mod 和运行状态、BepInEx 没能加载的插件（缺前置、版本旧）、
+  创意工坊插件（有等确认的可以直接去确认）、其他插件；"打开 Mod 文件夹"打开 BepInEx/plugins。
+  ModKit 和游戏版本不兼容时照样显示，告诉玩家 Mod 已停用；没装 DBStudio 也能用
+- `ModList.Plugins()`：已加载的插件和状态（`ModInfo.State` 运行中 / 已停用 / 启动出错 / 不用 ModKit）、是否热重载、来自哪个工坊条目；
+  `ModList.LoadErrors`、`ModList.ProblemCount()`；`ModContext.Failed`
+- `ModSettings.SetOpener` / `Open(guid)` / `CanOpen`：设置界面登记打开方法，Mod 列表的"设置"按钮跳过去
+
 ## 0.18.0
 - 新增自定义被动技能（`PassiveSkills`）：`mod.RegisterPassive(new PassiveSkillDef { … })` 注册后和游戏的被动一样，
   会出现在技能书三选一里（按品级进池，可关）、占一个技能格、图鉴里能看到；名字和说明走 Mod 的 `Text`（键 `passive.<Key>.name/desc`），
