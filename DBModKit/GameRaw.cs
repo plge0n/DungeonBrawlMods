@@ -351,7 +351,8 @@ namespace DBModKit
                     {
                         string id = Cell(row, "id");
                         if (id == null) continue;
-                        list.Add(new DataEntry(table, id, cj.boyi.dff(Cell(row, "name") ?? id, id), IconPath("HeadIcon/Enemy_", Cell(row, "model"))));
+                        // 怪物名的本地化 key 就是 id（EnemyType 名字，见 EnemyDragonBoss 的 Boss 提示）；没有翻译的（多半是没用到的怪）显示 id
+                        list.Add(new DataEntry(table, id, cj.boyi.dff(id, id), IconPath("HeadIcon/Enemy_", Cell(row, "model"))));
                     }
                     break;
             }

@@ -155,7 +155,7 @@ namespace DBStudio.Pages
             h.childForceExpandWidth = false;
             h.childForceExpandHeight = false;
             var bg = go.GetComponent<Image>();
-            NativeUi.ListItemBackground(bg);
+            bg = NativeUi.ListItemBackground(bg);
             bg.color = augment == selected ? NativeUi.BoxColor : new Color(0f, 0f, 0f, 0f);
             var btn = go.GetComponent<Button>();
             btn.targetGraphic = bg;

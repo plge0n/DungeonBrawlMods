@@ -144,14 +144,26 @@ namespace DBModKit
         public static readonly Color BoxColor = new Color(0.133f, 0.153f, 0.196f, 1f);
 
         /// <summary>
-        /// 列表项、卡片的背景（游戏的方框贴图）。贴图的九宫格边框很宽（约 110 像素），直接用的话 Unity 会把边框当成最小尺寸，
-        /// 列表项至少 220 高；这里把边框按 1/4 绘制，高度就能跟着内容走。
+        /// 列表项、卡片的背景（游戏的方框贴图），返回显示背景的 Image（改颜色、当按钮的 targetGraphic 都用它）。
+        /// 贴图的九宫格边框很宽（约 110 像素），直接挂在列表项上的话 Unity 会把边框当成首选尺寸，列表项至少 220 高；
+        /// 所以背景放在一个不参与布局的子物体上，item 自己的 Image 只留着接收点击，高度跟着内容走。
         /// </summary>
-        public static void ListItemBackground(Image img)
+        public static Image ListItemBackground(Image item)
         {
-            img.sprite = BoxSprite;
-            img.type = Image.Type.Sliced;
-            img.pixelsPerUnitMultiplier = 4f;
+            item.sprite = null;
+            item.color = new Color(0f, 0f, 0f, 0f);
+            var go = new GameObject("background", typeof(RectTransform), typeof(Image), typeof(LayoutElement));
+            go.transform.SetParent(item.transform, false);
+            go.transform.SetAsFirstSibling();
+            go.GetComponent<LayoutElement>().ignoreLayout = true;
+            Stretch((RectTransform)go.transform);
+            var bg = go.GetComponent<Image>();
+            bg.sprite = BoxSprite;
+            bg.type = Image.Type.Sliced;
+            // 边框按 1/4 画，矮的列表项也不会被边框挤满
+            bg.pixelsPerUnitMultiplier = 4f;
+            bg.raycastTarget = false;
+            return bg;
         }
 
         private static void StyleBox(Image img, float outlineAlpha = 0.6f)
