@@ -45,6 +45,8 @@ namespace DBModKit
     {
         // 出错时日志里的位置，例如 "雷霆套装/skills.json activeSkills[0].onCast[1]"
         public string Where = "";
+        // 内容包的名字：运行记录的来源
+        public string Source;
         public ContentExpr Chance;
         public ContentExpr HpBelow;
         public bool? IsBoss;
@@ -61,7 +63,16 @@ namespace DBModKit
                 if (s.Host.Cooldowns.TryGetValue(this, out float ready) && Time.time < ready) return;
                 s.Host.Cooldowns[this] = Time.time + Cooldown;
             }
-            Safe.Run(Where, () => Run(s));
+            string previous = RunLog.CallerOverride;
+            RunLog.CallerOverride = Source;
+            try
+            {
+                Safe.Run(Where, () => Run(s));
+            }
+            finally
+            {
+                RunLog.CallerOverride = previous;
+            }
         }
 
         public static void RunAll(List<EffectAction> actions, EffectScope s)

@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using BepInEx.Logging;
 using UnityEngine;
+using UnityEngine.UI;
 
 namespace DBModKit
 {
@@ -136,7 +137,7 @@ namespace DBModKit
             int players = Game.PlayerCount;
             if (players != lastPlayers)
             {
-                RunLog.Info(ModKitPlugin.Name, "房间", players < 0 ? "加入了别人的房间" : players > lastPlayers ? "有玩家加入" : "有玩家离开",
+                RunLog.Info(ModKitPlugin.Name, "房间", players < 0 ? "加入了别人的房间" : lastPlayers < 0 ? "离开了别人的房间" : players > lastPlayers ? "有玩家加入" : "有玩家离开",
                     ("人数", players), ("单人", Game.IsSolo));
                 lastPlayers = players;
             }
@@ -182,23 +183,84 @@ namespace DBModKit
     {
         private static string text;
         private static float until;
+        private static int version;
 
         public static void Show(string message, float seconds = 6f)
         {
             text = message;
             until = Time.realtimeSinceStartup + seconds;
+            version++;
         }
 
+        // 用 uGUI 画：这个游戏里 OnGUI 画的东西显示不出来（2026-10-22 联机测试发现，组件在、启用着，就是看不到）。
+        // 画布是单独的对象（不挂在隐藏的 Host 上），切场景时可能被游戏销毁，下次要显示时重建
         internal class Renderer : MonoBehaviour
         {
-            private GUIStyle style;
+            private GameObject root;
+            private Text label;
+            private int shown = -1;
 
-            private void OnGUI()
+            private void Update()
             {
-                if (text == null || Time.realtimeSinceStartup > until) return;
-                style ??= new GUIStyle(GUI.skin.box) { fontSize = 20, wordWrap = true, alignment = TextAnchor.MiddleCenter };
-                float w = Mathf.Min(900f, Screen.width - 40f);
-                GUI.Box(new Rect((Screen.width - w) / 2f, 20f, w, 60f), text, style);
+                bool visible = text != null && Time.realtimeSinceStartup <= until;
+                if (!visible)
+                {
+                    if (root != null && root.activeSelf) root.SetActive(false);
+                    return;
+                }
+                if (root == null) Build();
+                // 游戏的字体（能显示中文、和界面一致）加载好之后换上
+                if (NativeUi.Font != null && label.font != NativeUi.Font) label.font = NativeUi.Font;
+                if (shown != version)
+                {
+                    shown = version;
+                    label.text = text;
+                }
+                if (!root.activeSelf) root.SetActive(true);
+            }
+
+            private void Build()
+            {
+                root = new GameObject("DBModKit.ScreenNotice", typeof(RectTransform), typeof(Canvas), typeof(CanvasScaler));
+                DontDestroyOnLoad(root);
+                var canvas = root.GetComponent<Canvas>();
+                canvas.renderMode = RenderMode.ScreenSpaceOverlay;
+                canvas.sortingOrder = 32000;
+                var scaler = root.GetComponent<CanvasScaler>();
+                scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
+                scaler.referenceResolution = new Vector2(1920f, 1080f);
+                scaler.matchWidthOrHeight = 0.5f;
+
+                // 半透明底框，宽度固定、高度随文字；不挡点击
+                var panel = new GameObject("panel", typeof(RectTransform), typeof(Image), typeof(VerticalLayoutGroup), typeof(ContentSizeFitter));
+                panel.transform.SetParent(root.transform, false);
+                var rt = (RectTransform)panel.transform;
+                rt.anchorMin = rt.anchorMax = new Vector2(0.5f, 1f);
+                rt.pivot = new Vector2(0.5f, 1f);
+                rt.anchoredPosition = new Vector2(0f, -24f);
+                rt.sizeDelta = new Vector2(1000f, 0f);
+                var bg = panel.GetComponent<Image>();
+                bg.color = new Color(0.08f, 0.09f, 0.12f, 0.85f);
+                bg.raycastTarget = false;
+                var layout = panel.GetComponent<VerticalLayoutGroup>();
+                layout.padding = new RectOffset(24, 24, 12, 12);
+                layout.childControlWidth = layout.childControlHeight = true;
+                layout.childForceExpandWidth = true;
+                layout.childForceExpandHeight = false;
+                panel.GetComponent<ContentSizeFitter>().verticalFit = ContentSizeFitter.FitMode.PreferredSize;
+
+                var go = new GameObject("text", typeof(RectTransform), typeof(Text));
+                go.transform.SetParent(panel.transform, false);
+                label = go.GetComponent<Text>();
+                // 游戏字体还没加载时先用系统字体（雅黑等能显示中文）
+                label.font = NativeUi.Font != null ? NativeUi.Font : Font.CreateDynamicFontFromOSFont(new[] { "Microsoft YaHei", "SimHei", "Arial" }, 26);
+                label.fontSize = 26;
+                label.color = new Color(0.95f, 0.93f, 0.88f, 1f);
+                label.alignment = TextAnchor.MiddleCenter;
+                label.horizontalOverflow = HorizontalWrapMode.Wrap;
+                label.verticalOverflow = VerticalWrapMode.Overflow;
+                label.raycastTarget = false;
+                shown = -1;
             }
         }
     }

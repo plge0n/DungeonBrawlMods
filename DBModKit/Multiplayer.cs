@@ -27,7 +27,7 @@ namespace DBModKit
     /// <list type="bullet">
     /// <item>改玩法的内容：自定义被动、主动技能和遗物、改了属性或专属技能的变体英雄，以及用 <see cref="ModContext.DeclareGameplay"/> 声明过的 Mod（比如 DBStudio 的玩法包）。
     /// 只换外观的（皮肤、变体的模型和名字）不受限制。</item>
-    /// <item>进入战斗时锁定，本局只会降级（有人中途进房、房主取消）不会升级。</item>
+    /// <item>进入战斗时锁定，本局只会降级（有人中途进房、房主取消）不会升级。降级只挡之后的内容，已经拿到的不收回。</item>
     /// <item>握手结果只决定本机启不启用，不会往别人那边发任何东西；没装 ModKit 的人收不到提示。</item>
     /// <item>别人公布的内容可以造假，造假的后果由对方自己承担；排行榜不受影响（装了 ModKit 一律不上传）。</item>
     /// </list>
@@ -49,6 +49,9 @@ namespace DBModKit
         private static RoomPolicy room = RoomPolicy.Blocked;
         private static string roomStatus = "";
         private static RoomPolicy? locked;
+        // 进战斗时的提示晚几秒再弹：刚生成英雄时加载画面可能还没结束
+        private static string pendingNotice;
+        private static float pendingSeconds, noticeAt;
         // 房主勾选"允许"时所在的大厅；换了大厅自动失效
         private static ulong allowLobby;
 
@@ -120,6 +123,11 @@ namespace DBModKit
         // Runner 每帧调用，在 ModEvents.Update 之前，Mod 读到的总是这一帧的结果
         internal static void Tick()
         {
+            if (pendingNotice != null && Time.unscaledTime >= noticeAt)
+            {
+                ScreenNotice.Show(pendingNotice, pendingSeconds);
+                pendingNotice = null;
+            }
             bool solo = Game.IsSolo;
             // 有人进出房间时立即重新检查，不等下一秒
             if (solo != wasSolo)
@@ -146,7 +154,7 @@ namespace DBModKit
             if (Signature.Count > 0 || want == RoomPolicy.HostAllowed)
             {
                 if (want == RoomPolicy.HostAllowed) ScreenNotice.Show("房主允许了这个房间使用改玩法的 Mod 内容（不是每个人都装了同样的 Mod）。", 8f);
-                else if (want == RoomPolicy.Blocked && locked.HasValue) ScreenNotice.Show("有人进了房间或房主取消了允许，改玩法的 Mod 内容本局停用。", 8f);
+                else if (want == RoomPolicy.Blocked && locked.HasValue) ScreenNotice.Show($"{roomStatus}。之后的改玩法内容本局停用（已经拿到的不收回）。", 8f);
             }
             var evt = Changed;
             if (evt != null) Safe.InvokeEach(evt, nameof(Changed));
@@ -161,18 +169,29 @@ namespace DBModKit
             switch (Policy)
             {
                 case RoomPolicy.AllHaveSame:
-                    ScreenNotice.Show("联机：房间里每个人都装了同样的 Mod，改玩法的内容本局可用。", 6f);
+                    Later("联机：房间里每个人都装了同样的 Mod，改玩法的内容本局可用。", 6f);
                     break;
                 case RoomPolicy.HostAllowed:
-                    ScreenNotice.Show("房主允许本局使用改玩法的 Mod 内容（不是每个人都装了同样的 Mod）。", 8f);
+                    Later("房主允许本局使用改玩法的 Mod 内容（不是每个人都装了同样的 Mod）。", 8f);
                     break;
                 case RoomPolicy.Blocked:
-                    ScreenNotice.Show($"{roomStatus}。改玩法的 Mod 内容（自定义技能、变体属性、玩法包等）本局停用，外观照常。", 10f);
+                    Later($"{roomStatus}。改玩法的 Mod 内容（自定义技能、变体属性、玩法包等）本局停用，外观照常。", 10f);
                     break;
             }
         }
 
-        internal static void Unlock() => locked = null;
+        private static void Later(string message, float seconds)
+        {
+            pendingNotice = message;
+            pendingSeconds = seconds;
+            noticeAt = Time.unscaledTime + 3f;
+        }
+
+        internal static void Unlock()
+        {
+            locked = null;
+            pendingNotice = null;
+        }
 
         private static void Refresh(bool solo)
         {
@@ -267,7 +286,7 @@ namespace DBModKit
 
         private static bool IsSafe(char c) => c < 128 && (char.IsLetterOrDigit(c) || c == '.' || c == '_' || c == '-' || c == '+');
 
-        private static bool IsSafeEntry(char c) => IsSafe(c) || c == '@' || c == '#';
+        private static bool IsSafeEntry(char c) => IsSafe(c) || c == '@' || c == '#' || c == ':';
 
         // 按 GUID 比较：缺了哪些、多了哪些、哪些版本或玩法包不同
         private static void Describe(HashSet<string> mine, HashSet<string> theirs, SortedSet<string> output)

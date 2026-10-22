@@ -44,7 +44,7 @@ namespace DBModKit
             {
                 // 换了大厅时旧大厅已经离开，写不了也无所谓
                 ulong old = last.lobby;
-                Safe.Run("清除大厅数据", () => GameRaw.SetLobbyMemberData(old, key, ""));
+                Safe.Run("清除大厅数据", () => GameRaw.TryClearLobbyMemberData(old, key));
             }
             if (lobby == 0)
             {

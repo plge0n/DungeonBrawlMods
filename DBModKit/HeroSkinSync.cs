@@ -69,7 +69,7 @@ namespace DBModKit
             {
                 // 关掉同步时清掉自己写过的数据；换了大厅时旧大厅已经离开，写不了也无所谓
                 ulong old = publishedLobby;
-                Safe.Run("清除皮肤同步数据", () => GameRaw.SetLobbyMemberData(old, Key, ""));
+                Safe.Run("清除皮肤同步数据", () => GameRaw.TryClearLobbyMemberData(old, Key));
             }
             if (lobby == 0)
             {

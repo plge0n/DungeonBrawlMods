@@ -342,6 +342,8 @@ namespace DBModKit
                 var img = itemBg.GetComponent<Image>();
                 img.sprite = null;
                 img.color = Color.white;
+                // 模板里整行背景不接收点击，只有左边的勾选标记能点；背景铺满整行，让它接收点击
+                img.raycastTarget = true;
                 var colors = item.colors;
                 colors.normalColor = new Color(1f, 1f, 1f, 0f);
                 colors.highlightedColor = new Color(Gold.r, Gold.g, Gold.b, 0.25f);

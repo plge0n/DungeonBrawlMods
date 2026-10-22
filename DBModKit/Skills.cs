@@ -122,7 +122,7 @@ namespace DBModKit
         internal static SkillSlot Wrap(object native) => native == null ? null : cache.GetValue(native, n => new SkillSlot(n));
 
         public SkillInfo Info => SkillInfo.Get(GameRaw.SkillId(Native));
-        /// <summary>技能编号（ActiveSkillEnum 的值）。</summary>
+        /// <summary>技能编号（ActiveSkillEnum 的值）；被动格是 -1（None），这时 <see cref="Info"/> 为 null。</summary>
         public int SkillId => GameRaw.SkillId(Native);
         /// <summary>冷却总时长（技能实例上的值，已含 <see cref="SkillTuning"/> 的调整）。</summary>
         public float CooldownTotal => GameRaw.CooldownTotal(Native);

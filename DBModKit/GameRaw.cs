@@ -727,6 +727,18 @@ namespace DBModKit
         public static void SetLobbyMemberData(ulong lobby, string key, string value)
             => cft.tqj(new Steamworks.CSteamID(lobby), key, value);
 
+        // 离开房间时游戏会先关掉 Steam 联机（Player.log 里的"steam结束"），之后写成员数据会抛异常；那时已经离开大厅，不用清
+        public static void TryClearLobbyMemberData(ulong lobby, string key)
+        {
+            try
+            {
+                cft.tqj(new Steamworks.CSteamID(lobby), key, "");
+            }
+            catch (InvalidOperationException)
+            {
+            }
+        }
+
         public static string LobbyMemberData(ulong lobby, ulong member, string key)
             => cft.tqi(new Steamworks.CSteamID(lobby), new Steamworks.CSteamID(member), key);
 
@@ -1055,7 +1067,7 @@ namespace DBModKit
         public static string SkillText(string key)
         {
             // 自定义遗物："pickitem_<编号>" 是名字，后面加 "_m" 是说明
-            if (key != null && key.Length > 16 && key.StartsWith("pickitem_"))
+            if (key != null && key.Length >= 16 && key.StartsWith("pickitem_"))
             {
                 bool desc = key.EndsWith("_m");
                 string rest = desc ? key.Substring(9, key.Length - 11) : key.Substring(9);
@@ -1472,7 +1484,8 @@ namespace DBModKit
         }
 
         // ---- 技能实例 bht ----
-        public static int SkillId(object s) => (int)((bht)s).bhne;
+        // 被动（qp）的 bhne 是默认值 0，而 0 是 D_SpellThunder，所以被动返回 None（-1）
+        public static int SkillId(object s) => s is qp ? (int)ActiveSkillEnum.None : (int)((bht)s).bhne;
         public static bool IsAutoCastOn(object s) => ((bht)s).bhny;
         public static float CooldownRemaining(object s) => ((bht)s).k896ff3548b31472b8b2cf8f649c25e65;
         public static int Cost(object s, Component p) => ((bht)s).kacb7d091b5904139a602f04ed9552242((bbe)p);
