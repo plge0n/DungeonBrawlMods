@@ -65,6 +65,7 @@ public class Plugin : BaseUnityPlugin
 | 自己的图标、特效、动作 | [AssetBundle](docs/AssetBundle.md)、示例 [samples/BundleSkill](samples/BundleSkill) |
 | 不写代码做 Mod（技能、被动、遗物、变体） | [内容包](docs/内容包.md)、示例 [templates/ContentPack](templates/ContentPack) |
 | 联机时该怎么办 | [联机](docs/api/联机.md) |
+| 依赖别的 Mod、和别的 Mod 抢功能 | [依赖和冲突](docs/api/依赖和冲突.md) |
 | 设置界面、窗口 | [界面](docs/api/界面.md)、[生命周期与基础设施](docs/api/生命周期.md) |
 
 `samples/` 下的示例不在解决方案里，单独编译、默认不部署：`dotnet build samples/Frieren -c Release`（要放进游戏试就加 `-p:DeployToGame=true`）。

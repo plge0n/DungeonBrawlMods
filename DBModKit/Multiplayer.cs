@@ -284,7 +284,18 @@ namespace DBModKit
             foreach (var guid in b.Keys.Where(g => !a.ContainsKey(g))) output.Add("多了 " + NameOf(guid));
         }
 
-        private static string NameOf(string guid) => mods.TryGetValue(guid, out var m) ? m.name : guid;
+        private static string NameOf(string guid) => ModName(guid);
+
+        // 启动过的 Mod 的名字（ScriptEngine 加载的不在 Chainloader 里，所以先查这里）；不认识时返回 GUID
+        internal static string ModName(string guid)
+        {
+            if (guid == null) return "?";
+            if (mods.TryGetValue(guid, out var m)) return m.name;
+            return BepInEx.Bootstrap.Chainloader.PluginInfos.TryGetValue(guid, out var info) ? info.Metadata.Name : guid;
+        }
+
+        // 启动过的 Mod 的版本；没启动时为 null
+        internal static string ModVersion(string guid) => guid != null && mods.TryGetValue(guid, out var m) ? m.version : null;
     }
 
     // DBStudio Mod 页 → DBModKit 里的"联机"一栏

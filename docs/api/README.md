@@ -16,6 +16,7 @@
 | [界面](界面.md) | `NativeUi` `NativeWindow` `NativeTabs` `GameInput` `GamePause` `NativeTip` |
 | [联机](联机.md) | `Multiplayer` `LobbySync` |
 | [创意工坊与内容包](工坊.md) | `Workshop` `ContentPacks` |
+| [依赖和冲突](依赖和冲突.md) | `ModConflicts` `ManifestDependency`，`AutoCast` / `MoveControl` 的接管规则 |
 
 另见：[AssetBundle 打包](../AssetBundle.md)、[内容包写法](../内容包.md)。
 

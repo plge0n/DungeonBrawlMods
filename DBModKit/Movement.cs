@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace DBModKit
@@ -49,33 +50,32 @@ namespace DBModKit
     /// <summary>
     /// 接管本地玩家没有移动输入时的走位：处理器每帧返回一个方向，效果等同于玩家按住这个方向键
     /// （游戏自己的转向、移速、碰撞、打断攻击逻辑都照常生效）。玩家一按方向键就完全听玩家的。
-    /// 同一时间只有一个处理器生效。
+    /// 同一时间只有一个处理器生效，规则和 <see cref="AutoCast"/> 一样：先注册的优先，玩家可以指定（<see cref="Prefer"/>）。
     /// </summary>
     public static class MoveControl
     {
-        private static string owner;
+        internal static readonly HandlerSlot<MoveHandler> Slot = new HandlerSlot<MoveHandler>("MoveControl", "走位");
 
         /// <summary>钩子已安装。</summary>
         public static bool Available { get; internal set; }
 
-        internal static MoveHandler Handler { get; private set; }
+        internal static MoveHandler Handler => Slot.Active;
+
+        /// <summary>现在由哪个 Mod 处理（GUID）；没有时为 null。</summary>
+        public static string Owner => Slot.Owner;
+
+        /// <summary>注册了处理器的 Mod（GUID，按注册顺序）。</summary>
+        public static IReadOnlyList<string> Contenders => Slot.Owners;
+
+        /// <summary>指定由哪个 Mod 处理（玩家的选择，会保存）；null 表示恢复"先注册的优先"。</summary>
+        public static void Prefer(string ownerGuid) => Slot.Preferred = ownerGuid;
 
         /// <summary>上一次生效的移动指令（调试用）。</summary>
         public static MoveCommand Last { get; internal set; }
 
-        public static void SetHandler(string ownerGuid, MoveHandler handler)
-        {
-            if (Handler != null && owner != ownerGuid)
-                Log.Warning($"移动处理器被 {ownerGuid} 覆盖（原来是 {owner}），两个 Mod 可能冲突");
-            owner = ownerGuid;
-            Handler = handler;
-        }
+        /// <summary>注册处理器。已有别的 Mod 注册时排在后面，同一个 Mod 再注册时替换自己的。</summary>
+        public static void SetHandler(string ownerGuid, MoveHandler handler) => Slot.Set(ownerGuid, handler);
 
-        public static void ClearHandler(string ownerGuid)
-        {
-            if (owner != ownerGuid) return;
-            owner = null;
-            Handler = null;
-        }
+        public static void ClearHandler(string ownerGuid) => Slot.Clear(ownerGuid);
     }
 }
