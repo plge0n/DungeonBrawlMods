@@ -332,11 +332,38 @@ namespace DBModKit
         }
 
         // ---- 命中事件 bdc.bgfu：攻击方客户端上每次造成伤害时触发 ----
-        public static void SubscribeHits(System.Action<Component, Component, long, long, long, int, bool, bool, bool> handler)
+        // 伤害类型、来源、技能实例取自外层的 yb.iwk / yb.iwr（DamageContextHooks）：bgfu 在 iwk → iwl → bdc.lvz 里触发，
+        // fact 只有来源标成 ActiveSkill 时才带技能，很多技能结算伤害时没标
+        public static void SubscribeHits(System.Action<RawHit> handler)
         {
-            bdc.bgfu += hit => handler(hit.source, hit.target, hit.fact.Amount + System.Math.Max(0L, hit.fact.ShieldDamage),
-                hit.targetHp, hit.targetShield, hit.fact.SkillId, hit.fact.Active, hit.fact.Critical, hit.fact.Normal);
+            bdc.bgfu += hit =>
+            {
+                var raw = new RawHit
+                {
+                    Source = hit.source,
+                    Target = hit.target,
+                    Damage = hit.fact.Amount + System.Math.Max(0L, hit.fact.ShieldDamage),
+                    Hp = hit.targetHp,
+                    Shield = hit.targetShield,
+                    SkillId = hit.fact.Active ? hit.fact.SkillId : (int?)null,
+                    Critical = hit.fact.Critical,
+                    Normal = hit.fact.Normal,
+                    Type = HitType.Unknown,
+                    Origin = HitOrigin.Unknown,
+                };
+                if (DamageContextHooks.TryGet(hit.target, hit.source, out var ctx))
+                {
+                    raw.Type = MapEnum(ctx.Type, HitType.Unknown);
+                    raw.Origin = MapEnum(ctx.Source, HitOrigin.Unknown);
+                    if (ctx.Skill != null && ctx.Skill.bgwi != ActiveSkillEnum.None) raw.SourceSkillId = (int)ctx.Skill.bgwi;
+                }
+                handler(raw);
+            };
         }
+
+        // 按名字对应游戏的枚举：游戏更新时就算调整了顺序也不会对错
+        private static TOut MapEnum<TIn, TOut>(TIn value, TOut fallback) where TOut : struct
+            => Enum.TryParse(value.ToString(), out TOut result) ? result : fallback;
 
         // ---- 技能数据 ActiveSkillData，表在 cj.boyl.bcrw ----
         public static SkillInfo ReadSkillInfo(int id)

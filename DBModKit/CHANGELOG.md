@@ -1,5 +1,11 @@
 # DBModKit 更新日志
 
+## 0.15.0
+- `HitInfo.SourceSkillId`：造成这次伤害的技能实例的技能编号。游戏的命中记录只在来源标成"主动技能"时带技能编号（`SkillId`），
+  但很多技能结算伤害时没标，这些伤害以前看起来像被动；现在补丁 `yb.iwk` / `yb.iwr`，在调用期间记下技能实例
+- `HitInfo.Type`（`HitType`：普攻、技能、持续伤害、普攻特效、真实伤害）和 `HitInfo.Origin`（`HitOrigin`：光环、异常状态、反伤、被动触发、幻影武器……）；
+  钩子没装上时为 Unknown（`Combat.ContextAvailable`）
+
 ## 0.14.0
 - 新增 `LobbySync`：通过 Steam 大厅成员数据和其他装了 Mod 的玩家交换少量文字数据（`Publish` / `Read` / `Clear`）。
   皮肤同步用的同一个通道，没装 Mod 的玩家不受影响；局域网模式没有大厅，不可用

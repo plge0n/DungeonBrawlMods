@@ -6,13 +6,13 @@ namespace DamageMeter
 {
     // 伤害统计：按普攻、技能、召唤物分开统计本波和本局的伤害与 DPS。只看自己打出的伤害，不改游戏，联机也能用
     [BepInPlugin(Guid, Name, Version)]
-    [BepInDependency(ModKitPlugin.Guid, "0.14.0")]
+    [BepInDependency(ModKitPlugin.Guid, "0.15.0")]
     public class Plugin : BaseUnityPlugin
     {
         public const string Guid = "plge0n.dungeonbrawl.damagemeter";
         public const string Name = "DamageMeter";
         // 发布时同步修改 CHANGELOG.md；pack.ps1 从这里读取版本号
-        public const string Version = "0.2.0";
+        public const string Version = "0.3.0";
 
         internal static ConfigEntry<bool> Enabled;
         internal static ConfigEntry<KeyboardShortcut> ToggleKey;

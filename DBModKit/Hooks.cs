@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Reflection;
 using HarmonyLib;
 using UnityEngine;
@@ -68,6 +69,19 @@ namespace DBModKit
                 && TryPatch(harmony, typeof(MoveHooks), "走位（攻击中）",
                     AccessTools.Method(typeof(bbe), "kqh", new Type[0]),
                     prefix: nameof(MoveHooks.AttackPrefix), postfix: nameof(MoveHooks.Postfix));
+
+            // 伤害上下文：没装上时命中事件照常，只是没有类型、来源和技能实例
+            Combat.ContextAvailable =
+                TryPatch(harmony, typeof(DamageContextHooks), "伤害上下文（iwk）",
+                    AccessTools.Method(typeof(yb), "iwk", new[]
+                    {
+                        typeof(yb), typeof(double), typeof(float), typeof(AttackType), typeof(bool), typeof(float?),
+                        typeof(ActiveSkillEnum), typeof(DamageSourceKind), typeof(bfe), typeof(PlayerDamageFeedbackKind),
+                    }),
+                    prefix: nameof(DamageContextHooks.HitPrefix), finalizer: nameof(DamageContextHooks.Pop))
+                & TryPatch(harmony, typeof(DamageContextHooks), "伤害上下文（iwr）",
+                    AccessTools.Method(typeof(yb), "iwr", new[] { typeof(AttackType), typeof(double), typeof(bool), typeof(yb), typeof(bool) }),
+                    prefix: nameof(DamageContextHooks.DotPrefix), finalizer: nameof(DamageContextHooks.Pop));
 
             try
             {
@@ -410,6 +424,49 @@ namespace DBModKit
             {
                 owner = previous;
             }
+        }
+    }
+
+    // yb.iwk(攻击者, 伤害, 角度, AttackType, 暴击, …, ActiveSkillEnum, DamageSourceKind, 技能实例 bfe, …)：目标受到伤害的入口
+    //   （doi、hon 是同签名的诱饵）；yb.iwr(AttackType, 伤害, 暴击, 攻击者, …)：Buff 持续伤害、真实伤害，直接调 iwl。
+    // 两者里面都会走到 bdc.lvz 触发命中事件 bgfu，这里在调用期间记下伤害的类型、来源和技能实例。可能嵌套（命中触发别的伤害），用栈
+    internal static class DamageContextHooks
+    {
+        internal struct Context
+        {
+            public yb Target, Attacker;
+            public AttackType Type;
+            public DamageSourceKind Source;
+            public bfe Skill;
+        }
+
+        private static readonly List<Context> stack = new List<Context>();
+
+        internal static void HitPrefix(yb __instance, yb __0, AttackType __3, DamageSourceKind __7, bfe __8, out bool __state)
+        {
+            stack.Add(new Context { Target = __instance, Attacker = __0, Type = __3, Source = __7, Skill = __8 });
+            __state = true;
+        }
+
+        internal static void DotPrefix(yb __instance, AttackType __0, yb __3, out bool __state)
+        {
+            stack.Add(new Context { Target = __instance, Attacker = __3, Type = __0, Source = DamageSourceKind.Default });
+            __state = true;
+        }
+
+        // 用 finalizer：原方法抛异常时也要出栈
+        internal static void Pop(bool __state)
+        {
+            if (__state && stack.Count > 0) stack.RemoveAt(stack.Count - 1);
+        }
+
+        // 最内层的调用对得上这次命中的目标和攻击者才算
+        internal static bool TryGet(yb target, yb attacker, out Context ctx)
+        {
+            ctx = default;
+            if (stack.Count == 0) return false;
+            ctx = stack[stack.Count - 1];
+            return ctx.Target == target && ctx.Attacker == attacker;
         }
     }
 }
