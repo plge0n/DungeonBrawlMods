@@ -256,7 +256,7 @@ namespace DBModKit
         {
             try
             {
-                return ModKit.Compatible && GameRaw.LocalPlayer() != null ? GameRaw.Wave() : -1;
+                return ModKit.Compatible && GameRaw.LocalPlayer() != null ? GameRaw.Wave() + 1 : -1;
             }
             catch
             {
