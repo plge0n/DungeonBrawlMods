@@ -18,6 +18,11 @@ namespace DamageMeter
         private static Text scopeLabel;
         private static readonly List<(GameObject row, Text name, Text damage, Text share)> rows = new List<(GameObject, Text, Text, Text)>();
         private static float nextRefresh;
+        // 队伍部分（场上有别的玩家时显示）
+        private static GameObject teamSection;
+        private static Text teamNote;
+        private static readonly List<(GameObject row, Text name, Text damage, Text share)> teamRows = new List<(GameObject, Text, Text, Text)>();
+        private const int MaxPlayers = 4;
 
         public static void Tick()
         {
@@ -41,6 +46,8 @@ namespace DamageMeter
             canvas = null;
             root = null;
             rows.Clear();
+            teamRows.Clear();
+            teamSection = null;
         }
 
         // 位置、大小、行数改了就重建
@@ -79,25 +86,70 @@ namespace DamageMeter
             scopeLabel = scope.GetComponentInChildren<Text>();
             scopeLabel.fontSize = 16;
 
-            for (int i = 0; i < Plugin.MaxRows.Value; i++)
-            {
-                var row = NativeUi.Row(root, 26f, 8f);
-                var name = NativeUi.Label(row, "", 18);
-                // 名字太长就截断，不换行挤到下一行
-                name.horizontalOverflow = HorizontalWrapMode.Wrap;
-                name.verticalOverflow = VerticalWrapMode.Truncate;
-                var damage = NativeUi.Label(row, "", 18, 90f);
-                damage.alignment = TextAnchor.MiddleRight;
-                var share = NativeUi.Label(row, "", 18, 56f, NativeUi.DimText);
-                share.alignment = TextAnchor.MiddleRight;
-                rows.Add((row.gameObject, name, damage, share));
-            }
+            for (int i = 0; i < Plugin.MaxRows.Value; i++) rows.Add(StatRow(root));
             footer = NativeUi.Label(root, "", 16, -1, NativeUi.DimText);
+
+            teamSection = NativeUi.Column(root, -1f, 2f).gameObject;
+            NativeUi.Label(teamSection.transform, "队伍", 20, -1, NativeUi.Gold);
+            for (int i = 0; i < MaxPlayers; i++) teamRows.Add(StatRow(teamSection.transform));
+            teamNote = NativeUi.Label(teamSection.transform, "", 15, -1, NativeUi.DimText);
+            teamSection.SetActive(false);
 
             // 只有按钮接收点击
             foreach (var g in root.GetComponentsInChildren<Graphic>(true))
                 g.raycastTarget = g.GetComponentInParent<Button>() != null;
             return true;
+        }
+
+        // 一行：名字、伤害、占比
+        private static (GameObject, Text, Text, Text) StatRow(Transform parent)
+        {
+            var row = NativeUi.Row(parent, 26f, 8f);
+            var name = NativeUi.Label(row, "", 18);
+            // 名字太长就截断，不换行挤到下一行
+            name.horizontalOverflow = HorizontalWrapMode.Wrap;
+            name.verticalOverflow = VerticalWrapMode.Truncate;
+            var damage = NativeUi.Label(row, "", 18, 90f);
+            damage.alignment = TextAnchor.MiddleRight;
+            var share = NativeUi.Label(row, "", 18, 56f, NativeUi.DimText);
+            share.alignment = TextAnchor.MiddleRight;
+            return (row.gameObject, name, damage, share);
+        }
+
+        private static void RefreshTeam(bool run)
+        {
+            bool show = Plugin.ShowTeam.Value && Team.HasTeammates;
+            teamSection.SetActive(show);
+            if (!show) return;
+
+            var members = Team.Members(run);
+            long total = members.Where(m => m.HasData).Sum(m => m.Damage);
+            for (int i = 0; i < teamRows.Count; i++)
+            {
+                var r = teamRows[i];
+                bool has = i < members.Count;
+                r.row.SetActive(has);
+                if (!has) continue;
+                var m = members[i];
+                string name = m.IsMe ? $"<color=#d6b67d>{m.Name}</color>" : m.Name;
+                if (!m.HasData)
+                {
+                    r.name.text = name + " <size=14><color=#a6a6a6>无数据</color></size>";
+                    r.damage.text = "—";
+                    r.share.text = "";
+                    continue;
+                }
+                string top = string.IsNullOrEmpty(m.Top) ? "" : $" · {m.Top}";
+                r.name.text = $"{name} <size=14><color=#a6a6a6>DPS {Meter.Format(m.Dps)}{top}</color></size>";
+                r.damage.text = Meter.Format(m.Damage);
+                r.share.text = total > 0 ? $"{100.0 * m.Damage / total:0}%" : "";
+            }
+            bool missing = members.Any(m => !m.HasData);
+            teamNote.gameObject.SetActive(missing);
+            if (missing)
+                teamNote.text = LobbySync.InLobby
+                    ? "无数据：队友没装 DamageMeter 或关了共享，不计入占比"
+                    : "局域网模式无法同步队友的伤害";
         }
 
         private static void Refresh()
@@ -130,6 +182,7 @@ namespace DamageMeter
             long maxHit = sources.Count > 0 ? sources.Max(s => s.MaxHit) : 0;
             footer.text = $"总计 {Meter.Format(total)}   DPS {Meter.Format(period.Dps)}   用时 {Meter.FormatTime(period.Seconds)}\n"
                 + $"最高一击 {Meter.Format(maxHit)}   承受 {Meter.Format(period.Taken)}   击杀 {period.Kills}";
+            RefreshTeam(run);
         }
     }
 }
