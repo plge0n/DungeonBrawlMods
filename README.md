@@ -66,6 +66,7 @@ public class Plugin : BaseUnityPlugin
 | `GameInput` / `GamePause` | 打开自己的窗口时屏蔽游戏输入、暂停游戏（都要 Dispose 释放） |
 | `GameEvents` | 战斗事件：击杀、放技能、暴击、受伤、升级、波次开始/结束等 |
 | `ChoicePanel` / `RelicInfo` | 用游戏的三选一界面显示自定义选项；遗物列表、发遗物 |
+| `ModSettings` | 往 DBStudio 的 Mod 页里挂自定义设置区块 |
 | `GameData` | 改技能、英雄、怪物配置表里的数值，可随时整体恢复原版 |
 | `HeroSkins` | 给每个英雄选一套工坊或本地的模型（或原版），可以只换本地玩家 |
 | `JsonConfig<T>` | `BepInEx/config` 下的 JSON 配置，自动延迟保存 |
@@ -90,6 +91,18 @@ pwsh ./pack.ps1                                 # 生成 dist/ 下的发布包�
 - 游戏不在默认位置：设置环境变量 `GameDir`，或加 `-p:GameDir="X:\...\地下城竞技场"`。
 - 公共构建配置在 `Directory.Build.props/.targets`：Mod 项目只需写 `AssemblyName` 和对 DBModKit 的 `ProjectReference`（`Private="false"`）。模板在 `templates/DBMod`。
 - 发布新版本：改源码里的 `Version` 常量 → 在对应目录的 `CHANGELOG.md` 加条目 → `pack.ps1`（缺少更新日志条目时会报错）。
+
+## 创意工坊
+游戏的工坊不加载 dll。DBModKit 自带加载器：订阅的条目里有 `dbmod.json`（`"Type": "plugin"`）就当成 BepInEx 插件加载，
+第一次加载前会弹窗让玩家确认。BepInEx 和 DBModKit 本身仍要装进游戏目录（Doorstop 的 `winhttp.dll` 只能放在那里）。
+
+```json
+{ "Format": 1, "Type": "plugin", "Name": "SmartSkill", "Author": "…", "Version": "0.7.0",
+  "Description": "…", "MinModKit": "0.9.0", "Assemblies": ["SmartSkill.dll"] }
+```
+- `pack.ps1` 会在 `dist/workshop/<插件>/` 生成条目文件夹（dll + dbmod.json）。
+- 上传前测试：把条目文件夹复制到 `BepInEx/workshop-dev/`，并把 `plugins`/`scripts` 里同名的插件挪走（本地已装的优先）。
+- 条目里不要放 `manifest.json`：那是游戏自己的格式（英雄模型等），游戏会去读它。
 
 ## 游戏更新后
 1. 进游戏看 `BepInEx/LogOutput.log`：DBModKit 会列出找不到的成员。

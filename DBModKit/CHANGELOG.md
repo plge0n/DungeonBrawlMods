@@ -1,5 +1,20 @@
 # DBModKit 更新日志
 
+## 0.9.0
+- 创意工坊加载器 `Workshop`：游戏的工坊不加载 dll，ModKit 扫描已订阅条目（`steamapps/workshop/content/4246640/`），
+  把带 `dbmod.json`（`Type = "plugin"`）的条目当成 BepInEx 插件加载
+  - 每个条目第一次加载前弹窗确认（工坊 dll 就是别人写的程序），选择记在 `BepInEx/config/DBModKit.workshop.json`
+  - 检查最低 DBModKit 版本、`BepInDependency`（含版本）、`BepInIncompatibility`；本地已装同一插件时用本地那份
+  - 只在 ModKit 兼容、排行榜拦截已安装时加载；插件挂在自己的常驻对象上（游戏切场景会销毁 BepInEx 的管理对象）
+  - 条目里不放 `manifest.json`，游戏会跳过它
+  - 本地测试目录 `BepInEx/workshop-dev/`：放进来的条目不用确认，方便上传前测试
+- DBStudio 的 Mod 页 → DBModKit 里列出工坊插件，可以改成允许或不加载
+
+## 0.8.0
+- 新增 `ModSettings` / `ModContext.AddSettings`：Mod 往设置界面（DBStudio 的 Mod 页）里挂自定义设置区块，卸载时自动撤下；
+  设置界面和 Mod 都只依赖 ModKit，互不引用
+- `SkillInfo.Find(key)`、`SkillInfo.All()`
+
 ## 0.7.0
 - 新增 `ChoicePanel`：用游戏自己的肉鸽三选一界面（ui_roguelike）显示自定义选项（名字、描述、图标、品质色）；
   界面忙时不打开，避免把游戏待选的遗物随机选掉；不计入游戏的选项统计

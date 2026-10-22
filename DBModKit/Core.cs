@@ -94,6 +94,8 @@ namespace DBModKit
         {
             GamePause.Tick();
             if (!ModKit.Compatible) return;
+            // 第一帧：Chainloader 已经加载完 plugins 目录，再加载工坊插件（依赖检查才准）
+            Workshop.Start();
             bool inBattle = InBattle();
             if (inBattle != wasInBattle)
             {

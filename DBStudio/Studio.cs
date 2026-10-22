@@ -45,7 +45,10 @@ namespace DBStudio
 
         public static void Tick()
         {
-            if (Plugin.Hotkey.Value.IsDown() && !NativeUi.IsTyping)
+            // 正在录快捷键时，按键都交给它（ESC 是取消录制，不是关窗口），页面照常刷新
+            bool capturing = KeyCapture.Active;
+            if (capturing) KeyCapture.Tick();
+            else if (Plugin.Hotkey.Value.IsDown() && !NativeUi.IsTyping)
             {
                 if (IsOpen) Close();
                 else Open();
@@ -53,7 +56,7 @@ namespace DBStudio
             }
             if (!IsOpen) return;
             // 战斗中 ESC 已被输入屏蔽挡住，不会打开游戏菜单
-            if (Input.GetKeyDown(KeyCode.Escape) && !NativeUi.IsTyping)
+            if (!capturing && Input.GetKeyDown(KeyCode.Escape) && !NativeUi.IsTyping)
             {
                 // 先关弹出层
                 if (Picker.IsOpen) Picker.Close();
@@ -94,6 +97,7 @@ namespace DBStudio
 
         public static void Close()
         {
+            KeyCapture.Cancel();
             Picker.Close();
             window?.Destroy();
             window = null;
@@ -115,6 +119,7 @@ namespace DBStudio
 
         private static void ShowPage(int index)
         {
+            KeyCapture.Cancel();
             lastTab = index;
             current = pages[index];
             for (int i = pageRoot.childCount - 1; i >= 0; i--)
