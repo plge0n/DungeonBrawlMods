@@ -438,20 +438,53 @@ namespace DBModKit
             public AttackType Type;
             public DamageSourceKind Source;
             public bfe Skill;
+            // 没有技能实例时，调用栈里发起这次伤害的被动 / 装备特效 / 遗物 / Buff 的类型
+            public Type Caller;
         }
+
+        // 往上最多看这么多层（调用者 → ez.dxt 之类的中转 → iwk）
+        private const int MaxFrames = 10;
 
         private static readonly List<Context> stack = new List<Context>();
 
         internal static void HitPrefix(yb __instance, yb __0, AttackType __3, DamageSourceKind __7, bfe __8, out bool __state)
         {
-            stack.Add(new Context { Target = __instance, Attacker = __0, Type = __3, Source = __7, Skill = __8 });
+            var ctx = new Context { Target = __instance, Attacker = __0, Type = __3, Source = __7, Skill = __8 };
+            if (__8 == null && __3 != AttackType.Normal && ShouldTrace(__0)) ctx.Caller = FindCaller();
+            stack.Add(ctx);
             __state = true;
         }
 
         internal static void DotPrefix(yb __instance, AttackType __0, yb __3, out bool __state)
         {
-            stack.Add(new Context { Target = __instance, Attacker = __3, Type = __0, Source = DamageSourceKind.Default });
+            var ctx = new Context { Target = __instance, Attacker = __3, Type = __0, Source = DamageSourceKind.Default };
+            if (ShouldTrace(__3)) ctx.Caller = FindCaller();
+            stack.Add(ctx);
             __state = true;
+        }
+
+        // 取调用栈有开销：只在有人订阅命中事件、而且是本地玩家打出的伤害时取
+        private static bool ShouldTrace(yb attacker)
+            => attacker != null && attacker == nn.bpbu && Combat.HasSubscribers;
+
+        private static Type FindCaller()
+        {
+            try
+            {
+                var trace = new System.Diagnostics.StackTrace(2, false);
+                int n = Math.Min(trace.FrameCount, MaxFrames);
+                for (int i = 0; i < n; i++)
+                {
+                    // 协程、闭包是编译器生成的嵌套类，要看外层的类
+                    for (var t = trace.GetFrame(i)?.GetMethod()?.DeclaringType; t != null; t = t.DeclaringType)
+                        if (GameRaw.IsEffectType(t)) return t;
+                }
+            }
+            catch (Exception)
+            {
+                // 取不到就当识别不出
+            }
+            return null;
         }
 
         // 用 finalizer：原方法抛异常时也要出栈

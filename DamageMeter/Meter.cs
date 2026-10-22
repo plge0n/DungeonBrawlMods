@@ -149,6 +149,16 @@ namespace DamageMeter
         {
             if (hit.SourceSkillId is int id) return SkillName(id);
             if (hit.IsNormalAttack) return NormalAttack;
+            if (hit.EffectName != null)
+            {
+                switch (hit.EffectKind)
+                {
+                    case HitEffectKind.Passive: return hit.EffectName + "（被动）";
+                    case HitEffectKind.Equipment: return hit.EffectName + "（装备）";
+                    case HitEffectKind.Relic: return hit.EffectName + "（遗物）";
+                    case HitEffectKind.Buff: return hit.EffectName + "（持续）";
+                }
+            }
             switch (hit.Origin)
             {
                 case HitOrigin.Aura: return "光环";

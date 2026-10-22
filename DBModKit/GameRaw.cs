@@ -356,9 +356,92 @@ namespace DBModKit
                     raw.Type = MapEnum(ctx.Type, HitType.Unknown);
                     raw.Origin = MapEnum(ctx.Source, HitOrigin.Unknown);
                     if (ctx.Skill != null && ctx.Skill.bgwi != ActiveSkillEnum.None) raw.SourceSkillId = (int)ctx.Skill.bgwi;
+                    else if (ctx.Caller != null) ResolveEffect(ctx.Caller, ctx.Target, ref raw);
                 }
                 handler(raw);
             };
+        }
+
+        // ---- 伤害来自哪个被动 / 装备特效 / 遗物 / Buff ----
+        // DamageContextHooks 在调用栈里找到的类型是下面这几类之一；到本地玩家身上（Buff 在目标身上）找这个类型的实例取名字
+        // 只认这几个基类：qp（被动，bht 子类）、ke / lm（装备特效）、rn（遗物）、hm（Buff）
+        public static bool IsEffectType(Type t)
+            => typeof(qp).IsAssignableFrom(t) || typeof(ke).IsAssignableFrom(t) || typeof(lm).IsAssignableFrom(t)
+               || typeof(rn).IsAssignableFrom(t) || typeof(hm).IsAssignableFrom(t);
+
+        // 被动、装备、遗物的名字按类型缓存（Buff 每次按目标查）；进战斗时清空
+        private static readonly Dictionary<Type, (HitEffectKind kind, string name)> effectNames = new Dictionary<Type, (HitEffectKind, string)>();
+        private static Component effectNamesFor;
+
+        private static void ResolveEffect(Type t, yb target, ref RawHit raw)
+        {
+            if (typeof(hm).IsAssignableFrom(t))
+            {
+                raw.EffectKind = HitEffectKind.Buff;
+                // 同一个目标身上同类型的 Buff 只有一个（localRoleBuffDic 以 LocalBuffType 为键）
+                foreach (var b in target.localRoleBuffDic.Values)
+                    if (b != null && b.GetType() == t)
+                    {
+                        raw.EffectName = cj.boyi.dff("Buff_" + b.baqz, b.baqz.ToString());
+                        return;
+                    }
+                return;
+            }
+            var me = nn.bpbu;
+            if (me != effectNamesFor)
+            {
+                effectNames.Clear();
+                effectNamesFor = me;
+            }
+            if (!effectNames.TryGetValue(t, out var found))
+            {
+                found = FindEffect(me, t);
+                // 没找到（比如刚换了装备）不缓存，下次再找
+                if (found.name != null) effectNames[t] = found;
+            }
+            raw.EffectKind = found.kind;
+            raw.EffectName = found.name;
+        }
+
+        private static (HitEffectKind, string) FindEffect(bbe me, Type t)
+        {
+            if (me == null) return (HitEffectKind.None, null);
+            // 被动：bht.bhnu 是本地化后的名字（"p_" + 编号）
+            if (typeof(qp).IsAssignableFrom(t))
+            {
+                foreach (var s in me.roleSkillList)
+                    if (s != null && s.GetType() == t) return (HitEffectKind.Passive, s.bhnu);
+                return (HitEffectKind.Passive, null);
+            }
+            var attr = me.playerAttribute;
+            if (attr == null) return (HitEffectKind.None, null);
+            // 装备技能 lm：同类型全身共享一个，用技能名（"equipSkill_" + EquipSkillType）
+            if (typeof(lm).IsAssignableFrom(t))
+            {
+                foreach (var kv in attr.bfnc)
+                    if (kv.Value != null && kv.Value.GetType() == t)
+                        return (HitEffectKind.Equipment, cj.boyi.dff("equipSkill_" + kv.Key, kv.Key.ToString()));
+                return (HitEffectKind.Equipment, null);
+            }
+            // 装备特效 ke：属于某件装备（bbcl），用装备名 jy.baxw
+            if (typeof(ke).IsAssignableFrom(t))
+            {
+                foreach (var equip in attr.bfmz)
+                {
+                    if (equip == null) continue;
+                    foreach (var k in equip.etb())
+                        if (k != null && k.GetType() == t) return (HitEffectKind.Equipment, equip.baxw);
+                }
+                return (HitEffectKind.Equipment, null);
+            }
+            // 遗物：名字是 "pickitem_" + 编号
+            if (typeof(rn).IsAssignableFrom(t))
+            {
+                foreach (var r in attr.bfna)
+                    if (r != null && r.GetType() == t) return (HitEffectKind.Relic, cj.boyi.dff("pickitem_" + r.bdgp, r.bdgp));
+                return (HitEffectKind.Relic, null);
+            }
+            return (HitEffectKind.None, null);
         }
 
         // 按名字对应游戏的枚举：游戏更新时就算调整了顺序也不会对错
