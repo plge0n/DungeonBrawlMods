@@ -18,8 +18,13 @@ namespace DBModKit
         public const int CurrentFormat = 1;
 
         public int Format = CurrentFormat;
-        /// <summary>"plugin"（BepInEx 插件，由加载器加载）或 "runtime"（BepInEx + DBModKit 安装包，只检查版本）。</summary>
+        /// <summary>
+        /// "plugin"（BepInEx 插件，由加载器加载）、"runtime"（BepInEx + DBModKit 安装包，只检查版本）
+        /// 或 "content"（内容包：JSON + 图片，不含代码，见 <see cref="ContentPacks"/>）。
+        /// </summary>
         public string Type = "plugin";
+        /// <summary>内容包的标识（只用字母、数字和 . _ - +）。技能编号由它和技能的 key 算出，联机时按它比对；不写时用文件夹名。</summary>
+        public string Id = "";
         public string Name = "";
         public string Author = "";
         public string Version = "";
@@ -28,6 +33,15 @@ namespace DBModKit
         public string MinModKit = "";
         /// <summary>要加载的 dll（相对条目根目录）；为空时加载根目录下所有 dll。</summary>
         public List<string> Assemblies = new List<string>();
+        /// <summary>内容包的 JSON 文件（相对条目根目录）。</summary>
+        public List<string> Content = new List<string>();
+        /// <summary>内容包的翻译文件夹（相对条目根目录，格式见 <see cref="ModText"/>）。</summary>
+        public string Lang = "lang";
+        /// <summary>
+        /// 依赖：缺了就不加载，并在 Mod 设置里提示（有工坊物品号时给打开页面的按钮）。插件条目只能依赖插件
+        /// （BepInDependency 也照常检查），内容包可以依赖插件和别的内容包，会排在依赖的后面加载。
+        /// </summary>
+        public List<ManifestDependency> Dependencies = new List<ManifestDependency>();
     }
 
     public enum WorkshopStatus
@@ -55,6 +69,8 @@ namespace DBModKit
         public string Message { get; internal set; } = "";
         /// <summary>加载出来的插件 GUID。</summary>
         public List<string> Plugins { get; } = new List<string>();
+        /// <summary>缺的依赖（dbmod.json 的 Dependencies 里没满足的）。</summary>
+        public List<ManifestDependency> MissingDependencies { get; } = new List<ManifestDependency>();
         /// <summary>dbmod.json 读不了或需要更新的 DBModKit：不能允许加载。</summary>
         public bool Broken { get; internal set; }
         // 因为缺依赖没加载：之后允许了别的条目时再试一次
@@ -144,6 +160,7 @@ namespace DBModKit
             item.Status = WorkshopStatus.Pending;
             item.Message = "";
             item.WaitingForDependency = false;
+            item.MissingDependencies.Clear();
         }
 
         private static void Scan()
@@ -198,7 +215,7 @@ namespace DBModKit
             }
             if (item.Manifest.Type != "plugin")
             {
-                item.Status = WorkshopStatus.Ignored; // 以后的玩法包等由各自的 Mod 读取
+                item.Status = WorkshopStatus.Ignored; // 内容包由 ContentPacks 读取，其他类型由各自的 Mod 读取
                 return item;
             }
             if (item.Manifest.Format > WorkshopManifest.CurrentFormat)
@@ -334,6 +351,17 @@ namespace DBModKit
                 }
                 if (batch.Any(o => o != c && o.Metadata.GUID == dep.DependencyGUID)) return "";
                 return $"缺少依赖 {dep.DependencyGUID}";
+            }
+            // dbmod.json 的依赖：在同一批里就等它，否则查已经加载的插件
+            foreach (var dep in c.Item.Manifest.Dependencies)
+            {
+                if (string.IsNullOrEmpty(dep.Guid)) continue;
+                if (batch.Any(o => o != c && o.Metadata.GUID == dep.Guid)) return "";
+                string why = ModConflicts.Check(dep);
+                if (why == null) continue;
+                if (!c.Item.MissingDependencies.Contains(dep)) c.Item.MissingDependencies.Add(dep);
+                ModConflicts.Touch();
+                return why;
             }
             return null;
         }

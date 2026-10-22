@@ -1,0 +1,64 @@
+{
+  "activeSkills": [
+    {
+      "key": "nova",
+      "name": "雷暴",
+      "description": "对范围内敌人造成 {0} 点伤害，之后 2 秒内每 0.5 秒再造成一次",
+      "icon": "SpellBook01_66",
+      "quality": "B",
+      "indicator": "Range",
+      "cost": 20,
+      "cooldown": 8,
+      "castingRange": 8,
+      "range": 3,
+      "duration": 2,
+      "interval": 0.5,
+      "damageBase": 100,
+      "damageValue": 1.5,
+      "tags": ["Area"],
+      "animation": { "game": "Frank_RPG_2Hand_Skill01_WhirlWind", "duration": 2 },
+      "onCast": [
+        { "effect": "Effect/SpellThunder", "duration": 1.5 },
+        { "damage": "area" }
+      ],
+      "onTick": { "every": 0.5, "do": [ { "damage": "area", "scale": 0.25 } ] }
+    }
+  ],
+  "passiveSkills": [
+    {
+      "key": "blade",
+      "name": "饮血之刃",
+      "description": "力量 +{0}；命中时回复伤害 {1}% 的生命",
+      "quality": "C",
+      "values": [20, 5],
+      "levelUp": [10, 1],
+      "tags": ["Buff", "Heal"],
+      "onAdded": [ { "addStats": { "str": "{0}" } } ],
+      "onHit": [ { "heal": "damage * {1} / 100", "cooldown": 0.2 } ],
+      "onKill": [ { "mana": 5, "chance": 50 } ]
+    }
+  ],
+  "relics": [
+    {
+      "key": "thunder_heart",
+      "name": "雷霆之心",
+      "description": "攻击力 +{0}；击杀敌人回复 {1} 点法力",
+      "icon": "remain_str",
+      "quality": "B",
+      "values": [30, 5],
+      "levelUp": [15, 2],
+      "onAdded": [ { "addStats": { "attack": "{0}" } } ],
+      "onKill": [ { "mana": "{1}" } ]
+    }
+  ],
+  "heroVariants": [
+    {
+      "key": "storm_knight",
+      "name": "雷霆骑士",
+      "description": "力量更高，专属技能换成雷暴",
+      "baseHero": 1,
+      "strength": 30,
+      "activeSkill": "nova"
+    }
+  ]
+}

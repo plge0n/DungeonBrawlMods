@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 namespace DBModKit
@@ -158,6 +159,7 @@ namespace DBModKit
             if (tune.IsNone) entries.Remove((owner, skillId));
             else entries[(owner, skillId)] = tune;
             Recombine(skillId);
+            ModConflicts.Touch();
             RunLog.Info(owner, "技能调整", tune.IsNone ? "撤销" : "设置", ("技能", SkillInfo.Get(skillId)?.Name ?? skillId.ToString()), ("合计", Get(skillId).ToString()));
         }
 
@@ -171,7 +173,13 @@ namespace DBModKit
                 entries.Remove((owner, id));
                 Recombine(id);
             }
+            if (ids.Count > 0) ModConflicts.Touch();
         }
+
+        // 被两个以上 Mod 调整的技能（倍率相乘），给 ModConflicts
+        internal static List<(int skill, List<string> owners)> Shared()
+            => entries.Keys.GroupBy(k => k.id).Where(g => g.Count() > 1)
+                .Select(g => (g.Key, g.Select(k => k.owner).OrderBy(o => o, StringComparer.Ordinal).ToList())).ToList();
 
         private static void Recombine(int skillId)
         {

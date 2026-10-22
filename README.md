@@ -53,66 +53,33 @@ public class Plugin : BaseUnityPlugin
     private void OnUnload() { }                   // 销毁自己挂在游戏对象上的东西
 }
 ```
-| 类型 | 作用 |
+完整的接口文档按模块分页放在 **[docs/api/](docs/api/README.md)**（用途、示例、联机时的行为、限制），包括接口约定（1.0 之后只增不改）。
+
+| 想做什么 | 看哪里 |
 |---|---|
-| `Game` | 本地玩家、是否在战斗、房间状态（`IsSolo` 等）、本地化文本 |
-| `Role` / `Player` | 血量、属性、位置、Boss/精英、距离判定；玩家的蓝量、金币、范围内敌人、按评分选敌人；本地玩家回血/加蓝/加金币 |
-| `SkillInfo` | 技能表数据：名字、标签、指示器、施法范围、冷却 |
-| `HeroSkill` | 英雄的专属技能（主动或被动）和它的表数据 |
-| `SkillTuning` | 只对本地玩家生效的技能调整（伤害、冷却、蓝耗、持续时间、充能），用 `mod.TuneSkill` 设置 |
-| `SkillSlot` / `SkillBar` | 技能栏里的技能：自动释放开关、剩余冷却、消耗、图标 |
-| `AutoCast` | 接管自动释放：决定放不放、打谁；`Resolved` 事件报告结果 |
-| `MoveControl` | 接管没有方向键输入时的走位（等同按住方向键） |
-| `Arena` | 地面预警（形状、剩余时间）、场地边界 |
-| `Combat` | 命中事件：伤害、是否打死、来源技能、是不是普攻；本地玩家放技能（`Cast`） |
-| `ModContext` | Mod 运行上下文：`OnUpdate`、`OnBattleStarted`、`UseAutoCast`、`LoadJson` 等，卸载时自动清理 |
-| `ModEvents` | 每帧、进入/离开战斗、退出游戏 |
-| `NativeUi` | 用游戏素材拼的面板、开关、滑条、下拉框、按钮，以及大窗口、页签、滚动列表、输入框 |
-| `GameInput` / `GamePause` | 打开自己的窗口时屏蔽游戏输入、暂停游戏（都要 Dispose 释放） |
-| `GameEvents` | 战斗事件：击杀、放技能、暴击、受伤、升级、波次开始/结束等 |
-| `Loot` | 地上的掉落物（类别、位置、自己能不能捡）；替本地玩家拾取，范围和按 C 一样不超过 5 米 |
-| `ChoicePanel` / `RelicInfo` | 用游戏的三选一界面显示自定义选项；遗物列表、发遗物 |
-| `ModSettings` | 往 DBStudio 的 Mod 页里挂自定义设置区块 |
-| `GameData` | 改技能、英雄、怪物配置表里的数值，可随时整体恢复原版 |
-| `PassiveSkills` | 自定义被动技能：注册后进技能书三选一、占技能格，行为由 Mod 写（`mod.RegisterPassive`） |
-| `ActiveSkills` | 自定义主动技能：蓝耗、冷却、瞄准等按游戏的表填，生效时的效果由 Mod 写，伤害走游戏结算（`mod.RegisterSkill`） |
-| `HeroVariants` | 变体英雄：基于已有英雄换属性、专属技能、模型和名字（`mod.RegisterHeroVariant`；改玩法的部分按 `Multiplayer` 决定是否生效） |
-| `ModAssets` / `ModBundle` | Mod 自己的图标（图片或 AssetBundle）和特效，用法和游戏资源一样（`mod.LoadIcon`、`RegisterEffect`、`LoadBundle`） |
-| `HeroSkins` | 给每个英雄选一套工坊或本地的模型（或原版），可以只换本地玩家；Steam 联机时通过大厅成员数据同步 |
-| `LobbySync` | 通过 Steam 大厅成员数据和其他装了 Mod 的玩家交换少量文字数据（局域网不可用） |
-| `Multiplayer` | 联机握手：公布各自改玩法的内容，`Policy` = 单人 / 每个人装的一样 / 房主允许 / 停用，改玩法的功能看 `GameplayAllowed`；自定义技能和变体自动计入，其他 Mod 用 `mod.DeclareGameplay(指纹)` 声明 |
-| `JsonConfig<T>` | `BepInEx/config` 下的 JSON 配置，自动延迟保存 |
-| `ScreenNotice` | 屏幕顶部临时提示 |
-| `ModText` / `Localization` | 多语言文本：代码里写中文原文，翻译放在插件旁的 `lang/<语言>.json`，跟随游戏语言（见下） |
-| `RunLog` | 运行记录：所有 Mod 共用、带波次和帧号的结构化日志，写进 `BepInEx/DBModKit/trace.log`；可以加标记、导出诊断报告（见下） |
+| 读游戏状态、改本地玩家数值 | [游戏状态](docs/api/游戏状态.md)、[战斗事件](docs/api/战斗事件.md) |
+| 自动释放、走位、调技能 | [自动释放与走位](docs/api/自动释放与走位.md) |
+| 新技能、新被动 | [自定义技能](docs/api/自定义技能.md)、示例 [samples/SkillSample](samples/SkillSample) |
+| 新遗物 | [自定义遗物](docs/api/遗物.md)、示例 [samples/SkillSample](samples/SkillSample)（铁壁徽章） |
+| "新英雄" | [英雄](docs/api/英雄.md)、示例 [samples/Frieren](samples/Frieren)（芙莉莲：无限魔力 + 杀人魔法） |
+| 自己的图标、特效、动作 | [AssetBundle](docs/AssetBundle.md)、示例 [samples/BundleSkill](samples/BundleSkill) |
+| 不写代码做 Mod（技能、被动、遗物、变体） | [内容包](docs/内容包.md)、示例 [templates/ContentPack](templates/ContentPack) |
+| 联机时该怎么办 | [联机](docs/api/联机.md) |
+| 依赖别的 Mod、和别的 Mod 抢功能 | [依赖和冲突](docs/api/依赖和冲突.md) |
+| 设置界面、窗口 | [界面](docs/api/界面.md)、[生命周期与基础设施](docs/api/生命周期.md) |
+
+`samples/` 下的示例不在解决方案里，单独编译、默认不部署：`dotnet build samples/Frieren -c Release`（要放进游戏试就加 `-p:DeployToGame=true`）。
 
 ### 运行记录（RunLog）
-用来确认功能有没有生效、出了问题能定位到当时发生了什么。
-```csharp
-mod.RunLog.Info("规则", "触发了", ("生命", player.Hp), ("目标", "Boss"));   // 来源自动是 Mod 名
-mod.RunLog.Debug("躲避", "换落脚点");                                      // 高频细节用 Debug
-```
-- 每条记录：时间、级别、`[来源/分类]`、内容、`键=值`、波次、帧号。内存保留最近 3000 条，调试页（F9）能看，同时写进 `BepInEx/DBModKit/trace.log`，上一次启动的记录在 `trace.prev.log`。Warning/Error 也会进 `LogOutput.log`。
-- ModKit 自动记录：Mod 加载/卸载、进出战斗、房间人数、`Player` 的回血/加蓝/加金币/发遗物/改属性（前后数值，以及是哪个 Mod 调的）、配置表修改、三选一、被拦下的异常；Debug 级：每个战斗事件、自动释放决策变化、输入屏蔽和暂停。所以 Mod 自己只需要记"为什么这么做"。
-- 测试时：在 Mod 页把 DBModKit 的 `FileLevel` 改成 `Debug`，文件里就有全部细节。看到问题按 **Ctrl+F10** 加一个编号标记（调试页也有按钮），之后说"标记 3 附近"就能在文件里找到。
-- 反馈问题：调试页点"导出"，生成 `BepInEx/DBModKit/report-时间.txt`（版本、插件列表、兼容检查、当前状态、全部记录），把它发过来。
-
-### 多语言（ModText）
-代码里直接写中文原文当默认值；要支持其他语言时，在插件 dll 旁边放 `lang/en.json`、`lang/ja.json` 等（平铺的 键 → 文本）。
-`csharp
-NativeUi.Label(parent, mod.Text["debug.title", "调试"]);
-mod.Text.Format("rule.fired", "规则「{0}」触发", rule.Name);
-`
-- 语言跟随游戏设置（`Localization.Language`：zh-CN、zh-TW、en、ja……），玩家换语言时触发 `Localization.Changed`。
-- 查找顺序：当前语言 → 英文（游戏不是中文时）→ 代码里的中文。没有翻译文件时一切照旧。
-- 现有 Mod 的界面文字还没有改成这种写法，以后翻译时逐步替换。
+功能有没有生效、出了问题当时发生了什么，看 `BepInEx/DBModKit/trace.log`。测试时把 DBModKit 的 `FileLevel` 改成 `Debug`，
+看到问题按 **Ctrl+F10** 加标记；反馈问题时在调试页点"导出"，把生成的 `report-时间.txt` 发过来。详见[生命周期与基础设施](docs/api/生命周期.md#runlog)。
 
 ## 开发
 需要 .NET SDK 8+，游戏目录已装 BepInEx 5。
 
 ```powershell
 pwsh tools/devtools.ps1                         # 一次性：安装 UnityExplorer + ScriptEngine（-Remove 卸载）
-pwsh tools/new-mod.ps1 MyMod -Description "…"   # 新建依赖 DBModKit 的 Mod 并加入解决方案
+pwsh tools/new-mod.ps1 MyMod -Description "…"   # 新建依赖 DBModKit 的 Mod 并加入解决方案（-WithSkills 带技能示例）
 dotnet build DungeonBrawlMods.sln -c Release    # 编译并部署到游戏
 pwsh ./pack.ps1                                 # 生成 dist/ 下的发布包（包含解决方案里的所有插件）
 ```

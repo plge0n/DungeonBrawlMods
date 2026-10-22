@@ -25,7 +25,7 @@ namespace DBModKit
     /// </summary>
     /// <remarks>
     /// <list type="bullet">
-    /// <item>改玩法的内容：自定义被动和主动技能、改了属性或专属技能的变体英雄，以及用 <see cref="ModContext.DeclareGameplay"/> 声明过的 Mod（比如 DBStudio 的玩法包）。
+    /// <item>改玩法的内容：自定义被动、主动技能和遗物、改了属性或专属技能的变体英雄，以及用 <see cref="ModContext.DeclareGameplay"/> 声明过的 Mod（比如 DBStudio 的玩法包）。
     /// 只换外观的（皮肤、变体的模型和名字）不受限制。</item>
     /// <item>进入战斗时锁定，本局只会降级（有人中途进房、房主取消）不会升级。</item>
     /// <item>握手结果只决定本机启不启用，不会往别人那边发任何东西；没装 ModKit 的人收不到提示。</item>
@@ -232,6 +232,7 @@ namespace DBModKit
             var owners = new HashSet<string>(declared.Keys);
             foreach (var p in PassiveSkills.All) owners.Add(p.Owner);
             foreach (var s in ActiveSkills.All) owners.Add(s.Owner);
+            foreach (var r in CustomRelics.All) owners.Add(r.Owner);
             foreach (var v in HeroVariants.All)
                 if (v.ChangesGameplay) owners.Add(v.Owner);
             var list = new List<string>();
@@ -240,7 +241,8 @@ namespace DBModKit
                 string version = mods.TryGetValue(guid, out var m) ? m.version : "?";
                 string entry = guid + "@" + version;
                 if (declared.TryGetValue(guid, out var fp) && fp != "") entry += "#" + fp;
-                if (entry.All(IsSafeEntry)) list.Add(entry);
+                // 不合格的字符换掉而不是丢掉整条：丢掉的话装的不一样也会被当成一样
+                list.Add(new string(entry.Select(c => IsSafeEntry(c) ? c : '_').ToArray()));
             }
             list.Sort(StringComparer.Ordinal);
             return list;
@@ -282,7 +284,18 @@ namespace DBModKit
             foreach (var guid in b.Keys.Where(g => !a.ContainsKey(g))) output.Add("多了 " + NameOf(guid));
         }
 
-        private static string NameOf(string guid) => mods.TryGetValue(guid, out var m) ? m.name : guid;
+        private static string NameOf(string guid) => ModName(guid);
+
+        // 启动过的 Mod 的名字（ScriptEngine 加载的不在 Chainloader 里，所以先查这里）；不认识时返回 GUID
+        internal static string ModName(string guid)
+        {
+            if (guid == null) return "?";
+            if (mods.TryGetValue(guid, out var m)) return m.name;
+            return BepInEx.Bootstrap.Chainloader.PluginInfos.TryGetValue(guid, out var info) ? info.Metadata.Name : guid;
+        }
+
+        // 启动过的 Mod 的版本；没启动时为 null
+        internal static string ModVersion(string guid) => guid != null && mods.TryGetValue(guid, out var m) ? m.version : null;
     }
 
     // DBStudio Mod 页 → DBModKit 里的"联机"一栏

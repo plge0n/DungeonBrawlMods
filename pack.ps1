@@ -1,9 +1,11 @@
 # 打包发布包到 dist/
 #   完整包：BepInEx + DBModKit + SmartSkill，首次安装用
 #   仅插件：DBModKit + SmartSkill，已装过 BepInEx 的人更新用
-# 用法：pwsh ./pack.ps1 [-GameDir "X:\...\地下城竞技场"]
+#   内容包：仓库 content/ 下的每个内容包，加上 -Content 指定的文件夹，原样做成工坊条目
+# 用法：pwsh ./pack.ps1 [-GameDir "X:\...\地下城竞技场"] [-Content "X:\我的内容包", ...]
 param(
-    [string]$GameDir = "D:\Steam\steamapps\common\地下城竞技场"
+    [string]$GameDir = "D:\Steam\steamapps\common\地下城竞技场",
+    [string[]]$Content = @()
 )
 $ErrorActionPreference = "Stop"
 
@@ -103,6 +105,24 @@ foreach ($plugin in $plugins | Where-Object { $_ -ne "DBModKit" }) {
         Assemblies  = @("$plugin.dll")
     } | ConvertTo-Json | Set-Content (Join-Path $itemDir "dbmod.json") -Encoding utf8
     Write-Host "  -> $itemDir"
+}
+
+# 内容包条目：不用编译，检查 dbmod.json 后整个文件夹复制过去
+$contentDirs = @($Content | ForEach-Object { Get-Item $_ })
+$contentRoot = Join-Path $root "content"
+if (Test-Path $contentRoot) { $contentDirs += @(Get-ChildItem $contentRoot -Directory) }
+foreach ($dir in $contentDirs) {
+    $manifestPath = Join-Path $dir.FullName "dbmod.json"
+    if (-not (Test-Path $manifestPath)) { throw "$($dir.FullName) 里没有 dbmod.json" }
+    $manifest = Get-Content $manifestPath -Raw -Encoding utf8 | ConvertFrom-Json
+    if ($manifest.Type -ne "content") { throw "$manifestPath 的 Type 不是 content" }
+    if (-not $manifest.Id) { Write-Warning "$($dir.Name)：dbmod.json 没写 Id，会用工坊条目编号当 Id，和本地测试时的技能编号不一样" }
+    foreach ($file in $manifest.Content) {
+        if (-not (Test-Path (Join-Path $dir.FullName $file))) { throw "$($dir.Name)：找不到 Content 里列出的 $file" }
+    }
+    $itemDir = Join-Path $workshop $dir.Name
+    Copy-Item -Recurse $dir.FullName $itemDir
+    Write-Host "  -> $itemDir（内容包 $($manifest.Name) $($manifest.Version)）"
 }
 
 # 运行环境条目：BepInEx + DBModKit 的安装包（游戏工坊不加载 dll，玩家订阅后运行 install.bat 复制进游戏目录）

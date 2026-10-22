@@ -1,5 +1,36 @@
 # DBModKit 更新日志
 
+## 0.23.0
+- dbmod.json 新增 `Dependencies`（GUID 或内容包 Id、最低版本、工坊物品号）：工坊插件条目和内容包按依赖排序加载，缺依赖时不加载，
+  在 Mod 设置里提示并给出"订阅"按钮（打开工坊页面）。内容包关掉时依赖它的包跟着停用，互相依赖时报循环
+- **注意**：`AutoCast` / `MoveControl` 的处理器改为"玩家指定的优先，否则先注册的优先"，后注册的排队、生效的卸载后自动轮到下一个
+  （原来是后注册的覆盖先注册的）。新增 `Owner`、`Contenders`、`Prefer`
+- 新增 `ModConflicts` 和 Mod 设置 → DBModKit → 依赖和冲突：列出缺的依赖、抢处理器的 Mod（可以在这里指定）、
+  两个 Mod 改了同一项数值（`GameData`，后改的生效；载入时清掉别人的改动也会提示）、内容包 Id 重复、同一个技能被几个 Mod 调整（倍率相乘）
+
+## 0.22.0
+- 新增自定义遗物（`CustomRelics`）：`mod.RegisterRelic(new RelicDef { … })` 注册后和游戏的遗物一样，按品级进遗物三选一、显示在遗物栏、可以升级；
+  名字和说明走 Mod 的 `Text`（键 `relic.<Key>.name/desc`），说明里的 `{0}` 由游戏换成数值（`ValueTypes` 决定显示成原值还是百分比）。
+  行为继承 `RelicBehaviour`，重写 `OnAdded` / `OnRemoved` / `OnLevelChanged` / `OnUpdate` / `OnGameEvent` / `OnHit`；`CustomRelics.Give` 直接发放。
+  编号由 Mod 的 GUID 和 Key 算出（3000000 起）
+- 联机：遗物只在自己的客户端生效；不是团队遗物、没有获取次数上限，选遗物时不会给房主发消息。算改玩法的内容，联机握手不允许时不进三选一。
+  同步给队友、国王对决、镜像 Boss 的构筑数据会去掉自定义遗物
+- 内容包支持 `relics`：字段同 `RelicDef`，触发器和被动一样；升级时自动按新等级重新生效
+- `RelicInfo.All` 包括自定义遗物（注册、注销后重新读）
+
+## 0.21.0
+- 新增内容包（`ContentPacks`）：不写代码的 Mod。文件夹里放 `dbmod.json`（`"Type": "content"`）、JSON、图片和翻译，
+  ModKit 从创意工坊、`BepInEx/workshop-dev/`、`BepInEx/content/` 读取，注册主动技能、被动和变体英雄，不用逐个确认。
+  写法见 `docs/内容包.md`，示例在 `templates/ContentPack/`
+- 内置效果库：伤害（范围 / 锁定目标）、治疗、回蓝、金币（只在单人时给）、加属性 / 攻速 / 护甲（可限时，否则跟着技能走）、特效、换动作、屏幕提示；
+  触发器 onCast / onTick / onEnd（主动），onAdded / onRemoved / onHit / onKill / onCrit / onHurt / onWaveStart / onCast / onTick（被动）；
+  条件 chance / hpBelow / isBoss / cooldown；数值可以写表达式（`{n}`、damage、maxHp、str 等和四则运算）
+- JSON 写错时只跳过写错的条目，错误带文件和位置，显示在 Mod 设置 → DBModKit → 内容包，也写进运行记录；不认识的字段也算错
+- 内容包可以在 Mod 设置里关掉、重新启用（重新读文件）；战斗中不能切换
+- 联机：内容包里的技能和改了属性的变体算改玩法的内容，按包的 Id、版本和 JSON 内容的哈希参与联机握手
+- `dbmod.json` 新增 `Id`、`Content`、`Lang` 字段；`pack.ps1 -Content <文件夹>` 和仓库 `content/` 下的内容包会做成工坊条目
+- 联机握手：签名里不合格的字符换成下划线，不再整条丢掉（丢掉会把装的不一样当成一样）
+
 ## 0.20.0
 （0.19.0 留给 feat/mod-menu）
 - 新增联机握手（`Multiplayer`）：装了 ModKit 的玩家通过 Steam 大厅成员数据（键 `dbmods.mods`）公布 ModKit 版本和自己改玩法的内容，
