@@ -19,7 +19,7 @@ namespace DBModKit
         public string Path { get; }
         public T Data { get; private set; }
 
-        /// <param name="fileName">文件名，例如 "SmartSkill.rules.json"</param>
+        /// <param name="fileName">文件名，例如 "SmartSkill.rules.json"；可以带子目录，保存时自动创建</param>
         public JsonConfig(string fileName)
         {
             Path = System.IO.Path.Combine(Paths.ConfigPath, fileName);
@@ -53,6 +53,7 @@ namespace DBModKit
             lastSave = Time.unscaledTime;
             try
             {
+                Directory.CreateDirectory(System.IO.Path.GetDirectoryName(Path));
                 File.WriteAllText(Path, JsonConvert.SerializeObject(Data, Formatting.Indented));
             }
             catch (Exception e)

@@ -35,6 +35,9 @@ namespace DBModKit
             Tags = tags;
         }
 
+        // 技能表被 GameData 改动后丢掉缓存
+        internal static void Invalidate(int id) => cache.Remove(id);
+
         public static SkillInfo Get(int id)
         {
             if (!ModKit.Compatible) return null;

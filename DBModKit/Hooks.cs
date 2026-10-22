@@ -26,6 +26,14 @@ namespace DBModKit
                 && TryPatch(harmony, typeof(AutoCastHooks), "自动释放选目标",
                     AccessTools.Method(typeof(ez), "dxy", new[] { typeof(bbe), typeof(ActiveSkillData) }),
                     prefix: nameof(AutoCastHooks.TargetPrefix));
+
+            // 分开打：gad 失败时 ModKit 在进入战斗时补写倍率，gaf 失败时出场覆盖的数值不乘倍率
+            GameData.Available = TryPatch(harmony, typeof(GameDataHooks), "怪物倍率（出场覆盖）",
+                AccessTools.Method(typeof(oo), "gaf", new[] { typeof(EnemyType), typeof(EnemySpawnKind), typeof(int) }),
+                postfix: nameof(GameDataHooks.EnemyAttributePostfix));
+            TryPatch(harmony, typeof(GameDataHooks), "怪物倍率（表加载）",
+                AccessTools.Method(typeof(oo), "gad", Type.EmptyTypes),
+                postfix: nameof(GameDataHooks.EnemyTablePostfix));
             return true;
         }
 
@@ -142,5 +150,35 @@ namespace DBModKit
             __result = (yb)target?.Native;
             return false;
         }
+    }
+
+    // oo.gad()：每局开始把 enemy 表里还没有的怪物加进 bcru（已有的不覆盖），加完后补上倍率
+    // oo.gaf(EnemyType, EnemySpawnKind, int 出场次数)：刷怪时取属性。bcru 里的值已乘过倍率，
+    // 但命中 enemyOccurrence（bcrv）时会用表里的值直接覆盖生命、攻击、护盾，这几项要再乘一次（gii、qy 是同签名的诱饵）
+    internal static class GameDataHooks
+    {
+        internal static void EnemyTablePostfix() => Safe.Run("怪物倍率（表加载）", GameData.OnEnemyTableLoaded);
+
+        internal static void EnemyAttributePostfix(oo __instance, EnemyType __0, EnemySpawnKind __1, int __2, ref RoleAttribute __result)
+        {
+            string key = __0.ToString();
+            if (!GameData.HasEnemyScale(key) || !OccurrenceOverrides(__instance, __0, __1, __2)) return;
+            __result.hp = ScaleInt(__result.hp, GameData.EnemyScale(key, "hp"));
+            __result.attackPower = ScaleInt(__result.attackPower, GameData.EnemyScale(key, "attackPower"));
+            __result.shiled *= (float)GameData.EnemyScale(key, "shiled");
+        }
+
+        // 与 gaf 的判断一致：出场类型不是 None、出场次数 ≥ 0，且 bcrv 里有出场次数不超过它的条目
+        private static bool OccurrenceOverrides(oo table, EnemyType enemy, EnemySpawnKind kind, int occurrence)
+        {
+            if (kind == EnemySpawnKind.None || occurrence < 0 || table?.bcrv == null) return false;
+            // 键的格式同 oo.gag：(int)怪物 + "_" + (int)出场类型
+            if (!table.bcrv.TryGetValue((int)enemy + "_" + (int)kind, out var list) || list == null) return false;
+            foreach (var n in list)
+                if (n != null && n.bcec <= occurrence) return true;
+            return false;
+        }
+
+        private static int ScaleInt(int v, double scale) => (int)Math.Round(Math.Min(int.MaxValue, v * scale));
     }
 }

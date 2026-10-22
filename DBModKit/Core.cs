@@ -91,7 +91,12 @@ namespace DBModKit
             if (inBattle != wasInBattle)
             {
                 wasInBattle = inBattle;
-                if (inBattle) ModEvents.RaiseBattleStarted();
+                if (inBattle)
+                {
+                    // gad 的补丁没装上时，怪物行在主菜单还不存在，进入战斗时补写倍率
+                    Safe.Run("怪物倍率（进入战斗）", GameData.OnEnemyTableLoaded);
+                    ModEvents.RaiseBattleStarted();
+                }
                 else ModEvents.RaiseBattleEnded();
             }
             ModEvents.RaiseUpdate();

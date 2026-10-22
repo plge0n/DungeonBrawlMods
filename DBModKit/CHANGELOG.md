@@ -1,5 +1,13 @@
 # DBModKit 更新日志
 
+## 0.4.0
+- 新增 `GameData`：改技能、英雄、怪物配置表里的数值。改动先记在内存里，`Active` 为 true 时写进游戏的表，
+  为 false 时表恢复原版；第一次改某一行时记下原版，恢复时写回
+- 怪物按倍率调整（`DataField.IsScale`），出场次数表覆盖的生命、攻击、护盾也会乘上倍率（补丁 `oo.gaf`、`oo.gad`）
+- `GameData.Entries` 列出表里的每一行（本地化名字、图标）
+- `JsonConfig` 的文件名可以带子目录，保存时自动创建
+- 技能表改动后 `SkillInfo` 会重新读取
+
 ## 0.3.0
 - 新增房间状态：`Game.IsSolo`（房间里只有自己）、`Game.IsHost`、`Game.PlayerCount`
 - `Role` 新增属性：攻击、力量、敏捷、体力、攻速、暴击率、暴伤、护甲、闪避、吸血、移速

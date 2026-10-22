@@ -1,5 +1,7 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
+using System.Reflection;
 using UnityEngine;
 
 namespace DBModKit
@@ -78,6 +80,134 @@ namespace DBModKit
                 foreach (var t in d.tags) tags.Add(t.ToString());
             return new SkillInfo(id, skill.ToString(), d.indicator, d.castingRange, d.range, d.cd, d.canAuto, tags);
         }
+
+        // ---- 可改数值的配置表：技能 bcrw、英雄/怪物 bcru（都是 struct，改完要写回字典）----
+        // 第一次改某一行时记下原版，之后每次都从原版重新计算，恢复时写回原版
+        private static readonly Dictionary<(DataTable, string), object> originals = new Dictionary<(DataTable, string), object>();
+        private static readonly Dictionary<(DataTable, string), FieldInfo> fieldInfos = new Dictionary<(DataTable, string), FieldInfo>();
+
+        // 配置表在 cj.Init 里创建（bz.ddr 不会懒创建，之前是 null）
+        public static bool TablesReady() => cj.boyl != null && cx.zyc.Count > 0;
+
+        public static List<DataEntry> ReadEntries(DataTable table)
+        {
+            var list = new List<DataEntry>();
+            switch (table)
+            {
+                case DataTable.Skill:
+                    foreach (var kv in cj.boyl.bcrw.OrderBy(kv => (int)kv.Key))
+                    {
+                        if (kv.Key == ActiveSkillEnum.None) continue;
+                        string name = cj.boyi.dff("a_" + (int)kv.Key, kv.Key.ToString());
+                        list.Add(new DataEntry(table, kv.Key.ToString(), name, IconPath("Skill/", kv.Value.icon)));
+                    }
+                    break;
+                case DataTable.Hero:
+                    // 英雄的键是 HeroType 的数字，头像是 Player_<HeroType 名字最后一段>
+                    foreach (var row in RawRows("hero"))
+                    {
+                        string id = Cell(row, "id");
+                        if (id == null || !cj.boyl.bcru.ContainsKey(id) || !int.TryParse(id, out int n)) continue;
+                        string head = ((HeroType)n).ToString().Split('_').Last();
+                        list.Add(new DataEntry(table, id, cj.boyi.dff(Cell(row, "name") ?? id, id), IconPath("HeadIcon/Player_", head)));
+                    }
+                    break;
+                case DataTable.Enemy:
+                    // 怪物在每局开始时才加入 bcru，这里从原始表列出
+                    foreach (var row in RawRows("enemy"))
+                    {
+                        string id = Cell(row, "id");
+                        if (id == null) continue;
+                        list.Add(new DataEntry(table, id, cj.boyi.dff(Cell(row, "name") ?? id, id), IconPath("HeadIcon/Enemy_", Cell(row, "model"))));
+                    }
+                    break;
+            }
+            return list;
+        }
+
+        public static double ReadOriginal(DataTable table, string key, string field)
+        {
+            if (!originals.TryGetValue((table, key), out var row) && !TryGetRow(table, key, out row)) return double.NaN;
+            var fi = Field(table, field);
+            return fi == null ? double.NaN : Convert.ToDouble(fi.GetValue(row));
+        }
+
+        // fields 为空表示恢复原版；怪物的值是倍率
+        public static void WriteRow(DataTable table, string key, Dictionary<string, double> fields)
+        {
+            if (!TryGetRow(table, key, out var current)) return; // 怪物表还没加载，等 gad 之后再写
+            bool restore = fields == null || fields.Count == 0;
+            if (!originals.TryGetValue((table, key), out var original))
+            {
+                if (restore) return;
+                originals[(table, key)] = original = current;
+            }
+            var row = CopyRow(original);
+            if (!restore)
+            {
+                foreach (var f in fields)
+                {
+                    var fi = Field(table, f.Key);
+                    if (fi == null) continue;
+                    double v = table == DataTable.Enemy ? Convert.ToDouble(fi.GetValue(row)) * f.Value : f.Value;
+                    fi.SetValue(row, ToFieldType(v, fi.FieldType));
+                }
+            }
+            if (table == DataTable.Skill) cj.boyl.bcrw[(ActiveSkillEnum)Enum.Parse(typeof(ActiveSkillEnum), key)] = (ActiveSkillData)row;
+            else cj.boyl.bcru[key] = (RoleAttribute)row;
+            if (restore) originals.Remove((table, key));
+        }
+
+        private static bool TryGetRow(DataTable table, string key, out object row)
+        {
+            row = null;
+            if (table == DataTable.Skill)
+            {
+                if (!Enum.TryParse(key, out ActiveSkillEnum skill) || !cj.boyl.bcrw.TryGetValue(skill, out var d)) return false;
+                row = d;
+                return true;
+            }
+            if (!cj.boyl.bcru.TryGetValue(key, out var r)) return false;
+            row = r;
+            return true;
+        }
+
+        public static int? SkillIdOf(string key) => Enum.TryParse(key, out ActiveSkillEnum skill) ? (int)skill : (int?)null;
+
+        // 拆箱再装箱得到独立的副本，改它不会影响记下的原版
+        private static object CopyRow(object row) => row is ActiveSkillData a ? (object)a : (RoleAttribute)row;
+
+        private static FieldInfo Field(DataTable table, string name)
+        {
+            if (!fieldInfos.TryGetValue((table, name), out var fi))
+            {
+                var type = table == DataTable.Skill ? typeof(ActiveSkillData) : typeof(RoleAttribute);
+                fi = type.GetField(name, BindingFlags.Public | BindingFlags.Instance);
+                fieldInfos[(table, name)] = fi;
+            }
+            return fi;
+        }
+
+        private static object ToFieldType(double v, Type type)
+        {
+            if (type == typeof(int)) return (int)Math.Round(Math.Max(int.MinValue, Math.Min(int.MaxValue, v)));
+            if (type == typeof(long)) return (long)Math.Round(Math.Max(long.MinValue, Math.Min(long.MaxValue, v)));
+            if (type == typeof(float)) return (float)v;
+            return Convert.ChangeType(v, type);
+        }
+
+        // 原始表 cx.zyc[表名]：id → 行（列名 → 值）
+        private static IEnumerable<Dictionary<string, object>> RawRows(string table)
+        {
+            if (!cx.zyc.TryGetValue(table, out var t) || !(t is Dictionary<string, object> rows)) yield break;
+            foreach (var row in rows.Values)
+                if (row is Dictionary<string, object> r) yield return r;
+        }
+
+        private static string Cell(Dictionary<string, object> row, string column)
+            => row.TryGetValue(column, out var v) && v != null && v.ToString() != "" ? v.ToString() : null;
+
+        private static string IconPath(string folder, string name) => string.IsNullOrEmpty(name) ? null : "Bundles/UI/Icon/" + folder + name;
 
         // ---- 技能实例 bht ----
         public static int SkillId(object s) => (int)((bht)s).bhne;

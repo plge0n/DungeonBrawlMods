@@ -35,14 +35,28 @@ namespace DBModKit
             ["ciy"] = new[] { "bmyj", "bmyc" },
             ["cik"] = new[] { "bqcb" },
             ["xo"] = new[] { "isBoss", "isElite" },
-            ["oo"] = new[] { "bcrw" },
+            ["oo"] = new[] { "bcrw", "bcru", "bcrv", "gaf", "gad" },
+            ["nr"] = new[] { "bcec" },
+            ["cx"] = new[] { "zyc" },
+            ["HeroType"] = new string[0],
+            ["EnemyType"] = new string[0],
+            ["EnemySpawnKind"] = new string[0],
+            ["RoleAttribute"] = new[]
+            {
+                "hp", "mp", "attackPower", "armor", "STR", "STRadd", "AGI", "AGIadd", "STA", "STAadd",
+                "attackSpeed", "moveSpeed", "hpRecover", "mpRecover", "shiled",
+            },
             ["du"] = new[] { "dqr", "bact" },
             ["cl"] = new[] { "dff" },
             ["bpe"] = new[] { "bjes" },
             ["bpf"] = new[] { "bjgk", "bjgm" },
             ["bht"] = new[] { "bhne", "bhny", "bpqi", "k896ff3548b31472b8b2cf8f649c25e65", "kacb7d091b5904139a602f04ed9552242" },
             ["RoleModeBase"] = new[] { "addRange" },
-            ["ActiveSkillData"] = new[] { "tags", "indicator", "castingRange", "range", "cd", "canAuto" },
+            ["ActiveSkillData"] = new[]
+            {
+                "tags", "indicator", "castingRange", "range", "cd", "canAuto", "icon",
+                "damageBase", "damageValue", "cost", "duration", "interval", "chargingNum", "chargingCd",
+            },
             ["ActiveSkillEnum"] = new[] { "None" },
             ["SkillTag"] = new[] { "Heal", "Revive", "Shield", "Defense", "Buff", "Summon", "Aura", "Area", "Move", "Control" },
         };
