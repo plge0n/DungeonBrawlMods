@@ -92,8 +92,89 @@ namespace DBModKit
             return result;
         }
 
-        /// <summary>位置在场地边界内，且离边缘至少 margin。不检查场内障碍物。</summary>
+        /// <summary>位置在场地边界内，且离边缘至少 margin。不检查场内障碍物（用 <see cref="FreeDistance"/> / <see cref="ObstacleClearance"/>）。</summary>
         public static bool IsInside(Vector3 position, float margin = 0f)
             => !ModKit.Compatible || GameRaw.InsideArena(position, margin);
+
+        private static readonly RaycastHit[] castHits = new RaycastHit[32];
+        private static readonly Collider[] overlapHits = new Collider[64];
+
+        /// <summary>
+        /// 玩家沿 direction 最多能走多远（≤ max）才会撞上场景碰撞体（墙、柱子、石头等）。
+        /// 用玩家自己的碰撞体形状和碰撞层检测，所以和实际移动时挡不挡一致；角色、触发器、脚下的地面不算。
+        /// </summary>
+        public static float FreeDistance(Player player, Vector3 direction, float max)
+        {
+            if (!ModKit.Compatible || !Probe(player, out var cc, out int mask, out float feet)) return max;
+            direction.y = 0f;
+            if (direction.sqrMagnitude < 1e-6f) return max;
+            direction.Normalize();
+
+            // 胶囊底部抬高到台阶高度以上，免得擦到地面
+            float r = cc.radius * 0.9f;
+            Vector3 center = cc.bounds.center;
+            Vector3 bottom = new Vector3(center.x, feet + cc.stepOffset + r, center.z);
+            Vector3 top = new Vector3(center.x, Mathf.Max(bottom.y, cc.bounds.max.y - r), center.z);
+
+            int n = Physics.CapsuleCastNonAlloc(bottom, top, r, direction, castHits, max, mask, QueryTriggerInteraction.Ignore);
+            float best = max;
+            for (int i = 0; i < n; i++)
+            {
+                var hit = castHits[i];
+                if (!IsObstacle(hit.collider, cc, feet)) continue;
+                // 一开始就重叠的碰撞体 distance 为 0：已经贴着它了，只挡朝它走的方向
+                if (hit.distance <= 0f)
+                {
+                    Vector3 toward = hit.collider.ClosestPoint(center) - center;
+                    toward.y = 0f;
+                    if (toward.sqrMagnitude > 1e-6f && Vector3.Dot(toward, direction) <= 0f) continue;
+                }
+                if (hit.distance < best) best = hit.distance;
+            }
+            return best;
+        }
+
+        /// <summary>位置离最近的场景障碍物（墙、柱子、石头等）的水平距离，最多算到 max。不含场地边界（用 <see cref="IsInside"/>）。</summary>
+        public static float ObstacleClearance(Player player, Vector3 position, float max)
+        {
+            if (!ModKit.Compatible || !Probe(player, out var cc, out int mask, out float feet)) return max;
+            float height = cc.bounds.center.y - player.Position.y;
+            Vector3 center = new Vector3(position.x, position.y + height, position.z);
+
+            int n = Physics.OverlapSphereNonAlloc(center, max, overlapHits, mask, QueryTriggerInteraction.Ignore);
+            float best = max;
+            for (int i = 0; i < n; i++)
+            {
+                var col = overlapHits[i];
+                if (!IsObstacle(col, cc, feet)) continue;
+                // 非凸网格不支持 ClosestPoint（会原样返回输入点），退而用包围盒
+                Vector3 p = col is MeshCollider mesh && !mesh.convex ? col.ClosestPointOnBounds(center) : col.ClosestPoint(center);
+                float d = new Vector2(p.x - center.x, p.z - center.z).magnitude;
+                if (d < best) best = d;
+            }
+            return best;
+        }
+
+        private static bool Probe(Player player, out CharacterController cc, out int mask, out float feet)
+        {
+            cc = player == null ? null : GameRaw.Controller(player.Native);
+            mask = 0;
+            feet = 0f;
+            if (cc == null || !cc.enabled) return false;
+            // 和玩家所在层发生碰撞的层，就是会挡住移动的层
+            int layer = cc.gameObject.layer;
+            for (int i = 0; i < 32; i++)
+                if (!Physics.GetIgnoreLayerCollision(layer, i)) mask |= 1 << i;
+            feet = cc.bounds.min.y;
+            return true;
+        }
+
+        // 地面、矮于台阶高度的东西能直接走过去；角色之间的碰撞不算障碍物（敌人会动）
+        private static bool IsObstacle(Collider col, CharacterController self, float feet)
+        {
+            if (col == null || col == self || col.isTrigger) return false;
+            if (col.bounds.max.y <= feet + self.stepOffset) return false;
+            return !GameRaw.IsRoleCollider(col);
+        }
     }
 }

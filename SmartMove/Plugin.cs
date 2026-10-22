@@ -44,6 +44,7 @@ namespace SmartMove
                 new ConfigDescription("躲避时离预警边缘多留的距离（米），联机延迟高时调大", new AcceptableValueRange<float>(0f, 3f)));
 
             mod.UseMovement(Planner.Decide);
+            mod.OnBattleEnded(Planner.Reset);
             mod.OnUpdate(() =>
             {
                 if (!ToggleKey.Value.IsDown()) return;

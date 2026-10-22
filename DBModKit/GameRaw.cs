@@ -68,6 +68,10 @@ namespace DBModKit
         public static bool IsKing(Component p) => ((yb)p).roleType == RoleType.King;
         // 场地边界（圆形/多边形/矩形）内且离边缘至少 margin
         public static bool InsideArena(Vector3 pos, float margin) => nn.fqr(pos, margin);
+        // 玩家的 CharacterController（bbe.bfrl，公开访问器 bpmb），移动时被场景碰撞体挡住
+        public static CharacterController Controller(Component p) => ((bbe)p).bpmb;
+        // 碰撞体属于某个角色（玩家、敌人、召唤物），不算障碍物
+        public static bool IsRoleCollider(Collider c) => c.GetComponentInParent<yb>() != null;
 
         // ---- 技能伤害估算（未计暴击、减伤、各种事件），各技能的实际公式见 NOTES.md ----
         public static long? BaseSkillDamage(int id, Component p, Component target)
