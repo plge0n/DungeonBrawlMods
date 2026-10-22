@@ -17,7 +17,7 @@ namespace DBModKit
         // 类型名 → Mod 用到的成员（字段/属性/方法，含继承自基类的）
         private static readonly Dictionary<string, string[]> Required = new Dictionary<string, string[]>
         {
-            ["nn"] = new[] { "bpbu", "bbtv", "bbtm", "fqr", "frk" },
+            ["nn"] = new[] { "bpbu", "bbsr", "bbtv", "bbtm", "fqr", "frk" },
             ["os"] = new[] { "gba", "bctl", "bctm" },
             ["cj"] = new[] { "boyb", "boyi", "boyj", "boyl", "boyn", "boyt" },
             ["ez"] = new[] { "dxx", "dxy", "dyk", "dvm" },
@@ -39,18 +39,27 @@ namespace DBModKit
             {
                 "hp", "maxHp", "izk", "iyn", "ivj", "bphx", "bpia", "bphc", "bqbx", "roleName", "bpgz", "beqd", "ivk", "bphy", "roleType",
                 "henShinSkillId", "timer", "iyi", "iyj", "isCheckAttack",
-                "bphz", "bphq", "bphp", "bpho", "bphb", "bphl", "bphm", "bphk", "bphr", "bphv", "iwz", "iwh",
+                "enemyDefeatedEvent", "activeSkillCastEvent", "criticalEvent", "dogeEvent",
+                "bphz", "bphq", "bphp", "bpho", "bphb", "bphl", "bphm", "bphk", "bphr", "bphv", "bpgy", "iwz", "iwh",
             },
             ["bbe"] = new[]
             {
                 "heroType", "kzz", "bpnc", "bfru", "bfrv", "kqi", "kqh", "addDamagePercent", "addBossEnemy", "addEliteEnemy", "addNormalEnemy",
                 "ksd", "k4a25de8c63fe4a7192613346ae51af4e", "kfd63a19d353a42878846361e6af4f637",
+                "kqk", "kkl", "onPlayerLevelUp", "onPlayerRelife", "addBagItemEvent",
             },
+            ["EnemyDefeatContext"] = new[] { "IsBoss", "IsElite" },
+            ["MyServerNetworkManager"] = new[] { "qhu" },
+            ["ClientNetMessage"] = new[] { "clientNetOperation" },
+            ["ClientNetOperation"] = new[] { "OnStartGame", "OnStartRest", "EnemyEnterTip", "OnGameOver" },
+            ["RemainsData"] = new[] { "grade" },
+            ["bqa"] = new[] { "osj", "bacf" },
+            ["RoguelikeUIData"] = new[] { "name", "dec", "icon", "quality", "data" },
             ["GoldIncomeSource"] = new[] { "Gameplay" },
             ["ciy"] = new[] { "bmyj", "bmyc" },
             ["cik"] = new[] { "bqcb" },
             ["xo"] = new[] { "isBoss", "isElite" },
-            ["oo"] = new[] { "bcrw", "bcru", "bcrv", "gaf", "gad" },
+            ["oo"] = new[] { "bcry", "bcrw", "bcru", "bcrv", "gaf", "gad" },
             ["nr"] = new[] { "bcec" },
             ["cx"] = new[] { "zyc" },
             ["HeroType"] = new string[0],
@@ -63,7 +72,7 @@ namespace DBModKit
             },
             ["du"] = new[] { "dqr", "bact" },
             ["cl"] = new[] { "dff" },
-            ["bpe"] = new[] { "bjes" },
+            ["bpe"] = new[] { "bjes", "bprr" },
             ["bpf"] = new[] { "bjgk", "bjgm" },
             ["bht"] = new[]
             {
