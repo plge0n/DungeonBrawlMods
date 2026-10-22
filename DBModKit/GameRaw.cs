@@ -1073,12 +1073,342 @@ namespace DBModKit
                 string rest = desc ? key.Substring(9, key.Length - 11) : key.Substring(9);
                 return int.TryParse(rest, out int rid) && rid >= CustomRelics.FirstId ? CustomRelics.Text(rid, desc) : null;
             }
+            // 自定义装备特效："equipSkill_<编号>"；自定义装备："equip_<编号>"。后面加 "_m" 是说明
+            if (key != null && key.Length >= 13 && key.StartsWith("equip"))
+            {
+                bool desc = key.EndsWith("_m");
+                if (key.StartsWith("equipSkill_"))
+                {
+                    string rest = desc ? key.Substring(11, key.Length - 13) : key.Substring(11);
+                    return int.TryParse(rest, out int eid) && eid >= CustomEquipEffects.FirstId ? CustomEquipEffects.Text(eid, desc) : null;
+                }
+                if (key.StartsWith("equip_"))
+                {
+                    string rest = desc ? key.Substring(6, key.Length - 8) : key.Substring(6);
+                    return int.TryParse(rest, out int qid) && qid >= CustomEquipment.FirstId ? CustomEquipment.Text(qid, desc) : null;
+                }
+                return null;
+            }
             if (key == null || key.Length < 9 || key[1] != '_' || key[0] != 'p' && key[0] != 'a') return null;
             bool description = key.EndsWith("_m");
             string id = description ? key.Substring(2, key.Length - 4) : key.Substring(2);
             if (!int.TryParse(id, out int n)) return null;
             if (key[0] == 'p') return n >= PassiveSkills.FirstId ? PassiveSkills.Text(n, description) : null;
             return n >= ActiveSkills.FirstId ? ActiveSkills.Text(n, description) : null;
+        }
+
+        // ---- 自定义装备（CustomEquipEffects、CustomEquipment）----
+        // 装备表 cx.zyc["equipment"]：编号 → 行。jy.Init(RoleType) 读行：skill 列 Enum.Parse 成 EquipSkillType（数字字符串也行，所以枚举外的编号可用）、
+        // skillValue / skillValueUp 是 "|" 分隔的数值；不是 King 时 etc() 读图标、说明（"equip_"+编号+"_m"）、强化配置，属性优先读 oo.bcsl（jy.erc(行)）。
+        // 特效配置表 cx.zyc["equipmentSkill"]：特效名 → 行（onlySkill、kingLock）。穿上 bba.k08fba…(jy)：对 jy.ese() 的每个特效 kdc → khf 按类型创建
+        // lm（全身共享）或 ke（每件装备一个，khh 设拥有者、等级、数值后 Init），卸下 bba.kb163…(jy) 对每个 ke 调 Clear。
+        // 特效说明 jy.etz 先查本地化表 cl.zuj 里有没有 "equipSkill_"+编号+"_m"（没有就不显示），再按 dfe 取文字，所以两边都要有
+        private static readonly Dictionary<int, Dictionary<string, object>> injectedEquipEffects = new Dictionary<int, Dictionary<string, object>>();
+        private static readonly Dictionary<int, Dictionary<string, object>> injectedEquipment = new Dictionary<int, Dictionary<string, object>>();
+        private static readonly Dictionary<int, List<jy.EquipAttributeData>> injectedEquipAttributes = new Dictionary<int, List<jy.EquipAttributeData>>();
+
+        private static Dictionary<string, object> EquipTable()
+            => cx.zyc.TryGetValue("equipment", out var t) ? t as Dictionary<string, object> : null;
+
+        private static Dictionary<string, object> EquipEffectTable()
+            => cx.zyc.TryGetValue("equipmentSkill", out var t) ? t as Dictionary<string, object> : null;
+
+        public static IReadOnlyList<string> EquipAttributeNames() => jy.bayh;
+
+        // 属性名的别名（例如 physicalDamage → normalAttackAddDamage），和游戏读表时一样
+        public static string NormalizeEquipAttribute(string name) => jy.erk(name);
+
+        public static bool IsGameEquipEffect(string name)
+            => !string.IsNullOrEmpty(name) && !char.IsDigit(name[0]) && name[0] != '-'
+               && Enum.TryParse(name, false, out EquipSkillType t) && t != EquipSkillType.None;
+
+        // 按模板行的类型写格子（表里同一列的类型一致，游戏读的时候按 dwb<T> 转换）
+        private static Dictionary<string, object> CopyRow(Dictionary<string, object> template, IEnumerable<(string column, object value)> cells)
+        {
+            var row = template != null ? new Dictionary<string, object>(template) : new Dictionary<string, object>();
+            foreach (var (column, raw) in cells)
+            {
+                object value = raw ?? "";
+                if (template != null && template.TryGetValue(column, out var old) && old != null && old.GetType() != value.GetType()
+                    && !(old is string) && !(value is string && ((string)value).Length == 0))
+                {
+                    try
+                    {
+                        value = Convert.ChangeType(value, old.GetType(), System.Globalization.CultureInfo.InvariantCulture);
+                    }
+                    catch (Exception)
+                    {
+                        // 类型转不过去就保留原值，游戏读的时候会再转换
+                    }
+                }
+                row[column] = value;
+            }
+            return row;
+        }
+
+        private static string JoinValues(IEnumerable<float> values) => values == null || !values.Any() ? ""
+            : string.Join("|", values.Select(v => v.ToString(System.Globalization.CultureInfo.InvariantCulture)));
+
+        private static void LocalizationKey(string key, string text)
+        {
+            var zuj = cj.boyi?.zuj;
+            // 只是让 jy.erq 认这个键；文字由 cl.dfg 的前缀（SkillText）给，这里写中文原文兜底
+            if (zuj != null) zuj[key] = new Dictionary<string, object> { ["Chinese"] = text ?? "" };
+        }
+
+        private static void RemoveLocalizationKey(string key)
+        {
+            var zuj = cj.boyi?.zuj;
+            if (zuj != null && zuj.TryGetValue(key, out var v) && v is Dictionary<string, object> d && d.Count == 1 && d.ContainsKey("Chinese"))
+                zuj.Remove(key);
+        }
+
+        public static void InjectEquipEffect(CustomEquipEffectInfo info)
+        {
+            var table = EquipEffectTable();
+            if (table == null || cj.boyi == null) return;
+            string key = info.Id.ToString();
+            var template = table.Values.OfType<Dictionary<string, object>>().FirstOrDefault();
+            // 国王对决里的拟人玩家不创建（kdc 里 King 且 kingLock 时跳过）
+            var row = CopyRow(template, new (string, object)[] { ("skill", key), ("onlySkill", false), ("kingLock", true), ("note", "") });
+            EjectEquipEffect(info.Id);
+            table[key] = row;
+            injectedEquipEffects[info.Id] = row;
+            LocalizationKey("equipSkill_" + key, info.Def.Name);
+            LocalizationKey("equipSkill_" + key + "_m", info.Def.Description);
+        }
+
+        public static bool EquipEffectInjected(int id)
+        {
+            if (!injectedEquipEffects.TryGetValue(id, out var row)) return false;
+            var table = EquipEffectTable();
+            string key = id.ToString();
+            return table != null && table.TryGetValue(key, out var current) && current == row
+                   && cj.boyi != null && cj.boyi.zuj.ContainsKey("equipSkill_" + key + "_m");
+        }
+
+        public static void EjectEquipEffect(int id)
+        {
+            var table = EquipEffectTable();
+            string key = id.ToString();
+            if (table != null && injectedEquipEffects.TryGetValue(id, out var ours) && table.TryGetValue(key, out var row) && row == ours)
+                table.Remove(key);
+            if (id >= CustomEquipEffects.FirstId)
+            {
+                RemoveLocalizationKey("equipSkill_" + key);
+                RemoveLocalizationKey("equipSkill_" + key + "_m");
+            }
+            injectedEquipEffects.Remove(id);
+        }
+
+        // 游戏特效的数值：用装备表里第一件带这个特效的装备的 skillValue / skillValueUp
+        private static (float[] values, float[] up) GameEquipEffectValues(Dictionary<string, object> table, string name)
+        {
+            float[] Parse(object cell)
+            {
+                string s = cell?.ToString();
+                if (string.IsNullOrEmpty(s)) return new float[0];
+                return s.Split('|').Select(x => float.TryParse(x, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out float f) ? f : 0f).ToArray();
+            }
+            foreach (var kv in table)
+                if (kv.Value is Dictionary<string, object> r && r.TryGetValue("skill", out var s) && s?.ToString() == name
+                    && !(int.TryParse(kv.Key, out int n) && n >= CustomEquipment.FirstId))
+                    return (Parse(r.TryGetValue("skillValue", out var v) ? v : null), Parse(r.TryGetValue("skillValueUp", out var u) ? u : null));
+            return (new float[0], new float[0]);
+        }
+
+        // 自定义装备的特效：(EquipSkillType 编号, 数值, 成长)，第一个写进 skill 列，其余在 jy.Init 的后缀里追加
+        private static List<(int type, float[] values, float[] up)> EquipmentEffects(CustomEquipmentInfo info, Dictionary<string, object> table)
+        {
+            var list = new List<(int, float[], float[])>();
+            foreach (var e in info.Effects)
+                if (CustomEquipEffects.IsCustom(e.Id))
+                    list.Add((e.Id, (e.Def.Values ?? new float[0]).ToArray(), (e.Def.LevelUp ?? new float[0]).ToArray()));
+            foreach (var name in info.GameEffects)
+                if (IsGameEquipEffect(name) && Enum.TryParse(name, false, out EquipSkillType t))
+                {
+                    var (values, up) = GameEquipEffectValues(table, name);
+                    list.Add(((int)t, values, up));
+                }
+            return list;
+        }
+
+        public static void InjectEquipment(CustomEquipmentInfo info)
+        {
+            var table = EquipTable();
+            if (table == null || cj.boyl == null) return;
+            var def = info.Def;
+            string key = info.Id.ToString();
+            var template = (table.TryGetValue("1", out var first) ? first as Dictionary<string, object> : null)
+                           ?? table.Values.OfType<Dictionary<string, object>>().FirstOrDefault();
+            var attributes = (def.Attributes ?? new Dictionary<string, float>()).Where(kv => !string.IsNullOrEmpty(kv.Key)).ToList();
+            var effects = EquipmentEffects(info, table);
+            var main = effects.Count > 0 ? effects[0] : (0, new float[0], new float[0]);
+            // 空格子写 ""（游戏读表的结果就是 ""，按 dwb<string> 读的地方遇到 null 会空引用）
+            var row = CopyRow(template, new (string, object)[]
+            {
+                ("id", key),
+                ("name", def.Name),
+                ("equipmentIcon", def.Icon ?? ""),
+                ("info", def.Description),
+                ("skill", effects.Count > 0 ? main.Item1.ToString() : ""),
+                ("skillValue", JoinValues(main.Item2)),
+                ("skillValueUp", JoinValues(main.Item3)),
+                // 第一版不能强化：maxLevel = 0；etc() 会把 levelUpGold 按 "|" 拆成 2 段、levelUpChance 拆成 3 段直接取下标，不能写空
+                ("maxLevel", 0),
+                ("levelUpData", ""),
+                ("levelUpValue", ""),
+                ("levelUpRatio", ""),
+                ("levelUpGold", "0|0"),
+                ("levelUpGem", 0),
+                ("levelUpChance", "0|0|0"),
+                ("shopStreng", false),
+                ("attributeType", string.Join("|", attributes.Select(kv => kv.Key))),
+                ("attributeValue", JoinValues(attributes.Select(kv => kv.Value))),
+                ("conflict", ""),
+                ("mapTypes", ""),
+                ("humanityType", ""),
+                ("humanityValue", 0),
+                ("isArtifact", def.Artifact),
+                ("artifactFaction", ""),
+                ("canTransmute", false),
+            });
+            EjectEquipment(info.Id);
+            table[key] = row;
+            // 和 oo 构造时一样，属性从原始行转换
+            var parsed = jy.erc(row);
+            cj.boyl.bcsl[key] = parsed;
+            injectedEquipment[info.Id] = row;
+            injectedEquipAttributes[info.Id] = parsed;
+        }
+
+        public static bool EquipmentInjected(int id)
+        {
+            if (!injectedEquipment.TryGetValue(id, out var row)) return false;
+            var table = EquipTable();
+            string key = id.ToString();
+            return table != null && table.TryGetValue(key, out var current) && current == row
+                   && cj.boyl != null && cj.boyl.bcsl.TryGetValue(key, out var attrs) && injectedEquipAttributes.TryGetValue(id, out var ours) && attrs == ours;
+        }
+
+        public static void EjectEquipment(int id)
+        {
+            var table = EquipTable();
+            string key = id.ToString();
+            if (table != null && injectedEquipment.TryGetValue(id, out var ours) && table.TryGetValue(key, out var row) && row == ours)
+                table.Remove(key);
+            // 只删我们自己的编号段（5000000 起），不会碰到游戏的装备
+            if (id >= CustomEquipment.FirstId && cj.boyl != null) cj.boyl.bcsl.Remove(key);
+            injectedEquipment.Remove(id);
+            injectedEquipAttributes.Remove(id);
+        }
+
+        // bba.khf 的后缀：特效编号是我们的时创建 ModEquipEffect（原版对未知类型两个都返回 null）
+        public static ke CreateModEquipEffect(EquipSkillType type)
+        {
+            int id = (int)type;
+            if (id < CustomEquipEffects.FirstId || !CustomEquipEffects.IsCustom(id)) return null;
+            return new ModEquipEffect(id);
+        }
+
+        // jy.Init(RoleType) 的后缀：自定义装备追加第二个起的特效；游戏装备追加 AttachTo 里写了它的自定义特效（联机握手允许时）
+        public static void AttachEquipEffects(jy item, RoleType role)
+        {
+            if (item == null || role == RoleType.King || !int.TryParse(item.baxt, out int id)) return;
+            if (id >= CustomEquipment.FirstId)
+            {
+                var info = CustomEquipment.Get(id);
+                var table = EquipTable();
+                if (info == null || table == null) return;
+                var effects = EquipmentEffects(info, table);
+                for (int i = 1; i < effects.Count; i++)
+                    item.k9326fabeadf343ea92814a2f3df04aac((EquipSkillType)effects[i].type, effects[i].values, effects[i].up);
+                return;
+            }
+            if (!Multiplayer.GameplayAllowed) return;
+            foreach (var e in CustomEquipEffects.AttachedTo(id))
+                // 一定要传数组（可以是空的）：esg 查不到时会退回主特效的数值
+                item.k9326fabeadf343ea92814a2f3df04aac((EquipSkillType)e.Id, (e.Def.Values ?? new float[0]).ToArray(), (e.Def.LevelUp ?? new float[0]).ToArray());
+        }
+
+        // pi.gho(编号, 行) 的后缀：神器三选一的候选条件，联机握手不允许时去掉自定义装备
+        public static bool ArtifactAllowed(int id) => id < CustomEquipment.FirstId || !CustomEquipment.IsCustom(id) || CustomEquipment.InPool(id);
+
+        // ez.ebg 的后缀：构筑数据（同步给队友、上传国王对决、镜像 Boss）去掉自定义装备；没有装备时原版返回 null
+        public static de.PlayerKingEquipData[] FilterKingEquip(de.PlayerKingEquipData[] equip)
+        {
+            if (equip == null) return null;
+            // 魔剑吞噬过的装备编号也会带上（km.ezs）
+            for (int i = 0; i < equip.Length; i++)
+            {
+                var devoured = equip[i].demonBladeDevouredEquipIds;
+                if (devoured != null && devoured.Any(CustomEquipment.IsCustom))
+                {
+                    equip[i].demonBladeDevouredEquipIds = devoured.Where(e => !CustomEquipment.IsCustom(e)).ToArray();
+                }
+            }
+            if (!equip.Any(e => CustomEquipment.IsCustom(e.equip))) return equip;
+            var kept = equip.Where(e => !CustomEquipment.IsCustom(e.equip)).ToArray();
+            return kept.Length == 0 ? null : kept;
+        }
+
+        // pi.ghk("equip_"+编号)：new jy → Init → 穿上 → 刷新装备栏。它不检查装备栏满没满（上限 nn.MaxEquipNum）
+        public static bool GiveEquipment(int id)
+        {
+            var p = nn.bpbu;
+            if (p == null || p.playerAttribute == null || p.playerAttribute.bfmz.Count >= nn.MaxEquipNum) return false;
+            return pi.ghk("equip_" + id) != null;
+        }
+
+        public static int LocalEquipmentCount(int id)
+        {
+            var p = nn.bpbu;
+            if (p == null || p.playerAttribute == null) return 0;
+            string key = id.ToString();
+            return p.playerAttribute.bfmz.Count(e => e != null && e.baxt == key);
+        }
+
+        // bba.kb163…：游戏的卸下（对每个 ke 调 Clear，再同步），然后刷新装备栏
+        public static void RemoveLocalEquipment(int id)
+        {
+            var p = nn.bpbu;
+            if (p == null || p.playerAttribute == null) return;
+            string key = id.ToString();
+            var list = p.playerAttribute.bfmz.Where(e => e != null && e.baxt == key).ToList();
+            foreach (var e in list) p.playerAttribute.kb163cadd39ce47f38866dd8c2caf5f3c(e);
+            if (list.Count > 0) cj.boyb?.dqr<bpe>()?.omt();
+        }
+
+        public static void LocalModEquipEffects(List<object> output)
+        {
+            output.Clear();
+            var p = nn.bpbu;
+            if (p == null || p.playerAttribute == null) return;
+            foreach (var equip in p.playerAttribute.bfmz)
+            {
+                if (equip == null) continue;
+                foreach (var k in equip.etb())
+                    if (k is ModEquipEffect m && m.Instance != 0) output.Add(m);
+            }
+        }
+
+        public static int ModEquipEffectInstance(object native) => ((ModEquipEffect)native).Instance;
+        public static Component EquipEffectOwner(object native) => ((ke)native).bbcm;
+        public static int EquipEffectLevel(object native) => ((ke)native).bbcn;
+
+        public static int EquipEffectEquipment(object native)
+        {
+            var equip = ((ke)native).bbcl;
+            return equip != null && int.TryParse(equip.baxt, out int id) ? id : 0;
+        }
+
+        // 同 jy.euh：数值 bbco[i] + 成长 bbcp[i] × 等级（khh 从 esg / esh 填）
+        public static float EquipEffectValue(object native, int i, int level)
+        {
+            var k = (ke)native;
+            if (k.bbco == null || i < 0 || i >= k.bbco.Length) return 0f;
+            float up = k.bbcp != null && i < k.bbcp.Length ? k.bbcp[i] : 0f;
+            return k.bbco[i] + up * level;
         }
 
         // ---- 自定义主动技能（ActiveSkills）----
@@ -1776,6 +2106,53 @@ namespace DBModKit
         {
             base.gtf();
             if (bdgr != null && bdgr == nn.bpbu) CustomRelics.Update(Instance, this);
+        }
+    }
+
+    // 自定义装备特效在游戏里的实例：bba.khf 的后缀创建，khh 设好拥有者 bbcm、等级 bbcn、数值 bbco / bbcp 后调 Init；
+    // 卸下时 Clear，强化 evl / 降级 evm，装备每帧调 euv。远程玩家、镜像 Boss 身上的也会创建，只有本地玩家的才接 Mod 的行为。
+    // 字段只放整数：重试波次（bbx.lph）会把快照里的字段写回特效对象
+    internal sealed class ModEquipEffect : ke
+    {
+        public readonly int DefId;
+        public int Instance;
+
+        public ModEquipEffect(int defId) => DefId = defId;
+
+        private bool Local => bbcm != null && bbcm == nn.bpbu;
+
+        public override void Init(jy equipBaseValue)
+        {
+            base.Init(equipBaseValue);
+            if (!Local) return;
+            if (Instance == 0) Instance = CustomEquipEffects.Created(DefId);
+            CustomEquipEffects.Added(Instance, this);
+        }
+
+        public override void Clear()
+        {
+            base.Clear();
+            if (Instance != 0) CustomEquipEffects.Removed(Instance);
+        }
+
+        public override void evl()
+        {
+            int old = bbcn;
+            base.evl();
+            if (Instance != 0) CustomEquipEffects.LevelChanged(Instance, this, old, bbcn);
+        }
+
+        public override void evm(int a)
+        {
+            int old = bbcn;
+            base.evm(a);
+            if (Instance != 0) CustomEquipEffects.LevelChanged(Instance, this, old, bbcn);
+        }
+
+        public override void euv()
+        {
+            base.euv();
+            if (Instance != 0 && Local) CustomEquipEffects.Update(Instance, this);
         }
     }
 

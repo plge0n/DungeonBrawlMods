@@ -206,6 +206,29 @@ namespace DBModKit
             return info;
         }
 
+        /// <summary>
+        /// 注册一个自定义装备特效（见 <see cref="CustomEquipEffects"/>）：挂到游戏已有的装备上（<see cref="EquipEffectDef.AttachTo"/>），
+        /// 或者给 <see cref="RegisterEquipment"/> 的装备用。名字和说明按 Mod 的 <see cref="Text"/> 翻译
+        /// （键 equipEffect.&lt;Key&gt;.name / equipEffect.&lt;Key&gt;.desc）。卸载时自动注销，本地玩家装备上的这个特效会收到 OnRemoved。
+        /// </summary>
+        public CustomEquipEffectInfo RegisterEquipEffect(EquipEffectDef def)
+        {
+            var info = CustomEquipEffects.Register(Metadata.GUID, Text, def);
+            AddCleanup(() => CustomEquipEffects.Unregister(info));
+            return info;
+        }
+
+        /// <summary>
+        /// 注册一件全新的装备（见 <see cref="CustomEquipment"/>）。名字和说明按 Mod 的 <see cref="Text"/> 翻译
+        /// （键 equip.&lt;Key&gt;.name / equip.&lt;Key&gt;.desc）。卸载时自动注销，本地玩家身上的这件装备会被卸下。
+        /// </summary>
+        public CustomEquipmentInfo RegisterEquipment(EquipmentDef def)
+        {
+            var info = CustomEquipment.Register(Metadata.GUID, Text, def);
+            AddCleanup(() => CustomEquipment.Unregister(info));
+            return info;
+        }
+
         private string ResolveFile(string file)
         {
             if (string.IsNullOrEmpty(file)) throw new ArgumentException("文件名为空");

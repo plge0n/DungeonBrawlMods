@@ -1,5 +1,17 @@
 # DBModKit 更新日志
 
+## 0.24.0
+自定义装备（2026-10-23 单人实测通过：挂特效、新装备、内容包、构筑数据过滤；**没测**：联机、装备强化、重试波次、在神器三选一里实际选中）：
+- 新增 `CustomEquipEffects` / `EquipEffectDef` / `EquipEffectBehaviour`（`mod.RegisterEquipEffect`）：装备特效，
+  可以用 `AttachTo` 挂到游戏已有的装备上（买到时一起生效，说明里多出这个特效），也可以给自定义装备用。
+  行为有 `OnAdded` / `OnRemoved` / `OnLevelChanged` / `OnUpdate` / `OnGameEvent` / `OnHit`，只在本地玩家身上运行
+- 新增 `CustomEquipment` / `EquipmentDef`（`mod.RegisterEquipment`）：全新装备，属性（`Attributes`，键名见 `CustomEquipment.AttributeNames`）、
+  自定义特效（`Effects`）、游戏已有特效（`GameEffects`）、进神器三选一（`Artifact`）；`CustomEquipment.Give` 直接发给本地玩家，
+  `CountOnLocalPlayer` 数身上有几件。不进商店、不掉落、不能强化
+- 装备和特效算改玩法的内容，计入联机握手；同步给队友、国王对决、镜像 Boss 的构筑数据会去掉自定义装备
+- 内容包新增 `equipEffects` 和 `equipment` 两个列表，翻译键 `equipEffect.<key>.name/desc`、`equip.<key>.name/desc`
+- SkillSample 和内容包模板各加了一个挂到 2 号装备上的特效和一件新神器
+
 ## 0.23.2
 联机测试（2026-10-22）发现的问题：
 - 屏幕顶部提示（`ScreenNotice`）在这个游戏里一直显示不出来（OnGUI 画不出来），改用 uGUI，优先用游戏字体。
