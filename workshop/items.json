@@ -1,7 +1,7 @@
 {
   "Runtime": {
     "Id": 3824690979,
-    "Visibility": "private",
+    "Visibility": "public",
     "Folder": "dist/workshop/Runtime",
     "Preview": "workshop/Runtime/preview.png",
     "Tags": [],
@@ -16,7 +16,7 @@
   },
   "SmartSkill": {
     "Id": 3824691150,
-    "Visibility": "private",
+    "Visibility": "public",
     "Folder": "dist/workshop/SmartSkill",
     "Preview": "workshop/SmartSkill/preview.png",
     "Tags": [],
@@ -31,7 +31,7 @@
   },
   "SmartMove": {
     "Id": 3824691259,
-    "Visibility": "private",
+    "Visibility": "public",
     "Folder": "dist/workshop/SmartMove",
     "Preview": "workshop/SmartMove/preview.png",
     "Tags": [],
@@ -46,7 +46,7 @@
   },
   "AutoPickup": {
     "Id": 3824691366,
-    "Visibility": "private",
+    "Visibility": "public",
     "Folder": "dist/workshop/AutoPickup",
     "Preview": "workshop/AutoPickup/preview.png",
     "Tags": [],
@@ -61,7 +61,7 @@
   },
   "DamageMeter": {
     "Id": 3824691468,
-    "Visibility": "private",
+    "Visibility": "public",
     "Folder": "dist/workshop/DamageMeter",
     "Preview": "workshop/DamageMeter/preview.png",
     "Tags": [],
@@ -76,7 +76,7 @@
   },
   "Hextech": {
     "Id": 3824691564,
-    "Visibility": "private",
+    "Visibility": "public",
     "Folder": "dist/workshop/Hextech",
     "Preview": "workshop/Hextech/preview.png",
     "Tags": [],
@@ -91,7 +91,7 @@
   },
   "DBStudio": {
     "Id": 3824691666,
-    "Visibility": "private",
+    "Visibility": "public",
     "Folder": "dist/workshop/DBStudio",
     "Preview": "workshop/DBStudio/preview.png",
     "Tags": [],
