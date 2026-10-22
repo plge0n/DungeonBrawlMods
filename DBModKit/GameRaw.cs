@@ -381,8 +381,17 @@ namespace DBModKit
         public static string WorkshopFolder(ulong id)
             => cj.boyt != null && cj.boyt.qar(id, out var item) && item != null ? item.installFolder : null;
 
-        // buj.pwf(文件夹, manifest, out 图)：manifest.previewImage，游戏的工坊列表也用它
-        public static Sprite SkinPreview(string dir) => bup.pyx(dir, out var m) && buj.pwf(dir, m, out var sprite) ? sprite : null;
+        // buj.pwf(文件夹, manifest, out 图)：manifest.previewImage，游戏的工坊列表也用它。
+        // 很多工坊物品没填 previewImage，但文件夹里有 preview.png / hero_icon.png（buj.pyb 按相对路径读图）
+        public static Sprite SkinPreview(string dir)
+        {
+            if (!bup.pyx(dir, out var m)) return null;
+            if (buj.pwf(dir, m, out var sprite)) return sprite;
+            foreach (var name in new[] { "preview.png", m.heroIcon, "hero_icon.png" })
+                if (!string.IsNullOrWhiteSpace(name) && File.Exists(Path.Combine(dir, name)) && buj.pyb(dir, name, out sprite))
+                    return sprite;
+            return null;
+        }
 
         public static int LocalHeroId() => nn.bpbu is bbe p ? (int)p.heroType : 0;
 

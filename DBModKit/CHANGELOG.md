@@ -7,6 +7,7 @@
 - `HeroSkins.OnlyLocalPlayer`：只给本地玩家换模型。游戏原本按英雄换，选了同一英雄的其他玩家在你这边也会被换掉
   （补丁 `buj.pwh`、`buj.pwj`，变身时通过 `bgt.mqp`、`bbp.lob` 确认是谁在变身）
 - 只改本机显示，不联机同步；启动参数 `-disable-mods` 时不生效
+- 修复 `NativeUi.Row` 在竖向布局里抢占剩余高度：DBStudio 的标题栏、页签被撑高，正文区只剩很小一块
 
 ## 0.4.0
 - 新增 `GameData`：改技能、英雄、怪物配置表里的数值。改动先记在内存里，`Active` 为 true 时写进游戏的表，

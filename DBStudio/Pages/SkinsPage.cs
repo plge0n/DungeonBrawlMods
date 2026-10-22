@@ -11,6 +11,9 @@ namespace DBStudio.Pages
     // 皮肤：给每个英雄从已订阅的工坊模型、本地皮肤文件夹里挑一套换上，或者强制用原版
     internal sealed class SkinsPage : IStudioPage
     {
+        // 订阅的物品可能在页面打开期间才下载完
+        private const float ScanInterval = 5f;
+
         // 切页再回来时保持选择
         private static string selectedHero;
 
@@ -18,6 +21,7 @@ namespace DBStudio.Pages
         private Image headIcon;
         private Text headTitle, hint, state;
         private bool listBuilt;
+        private float nextScan;
         private readonly Dictionary<string, Text> heroLabels = new Dictionary<string, Text>();
         private readonly Dictionary<string, Image> heroBackgrounds = new Dictionary<string, Image>();
         // 右边每个选项的背景，键是皮肤编号（null 表示按游戏设置）
@@ -28,6 +32,7 @@ namespace DBStudio.Pages
         public void Build(RectTransform body)
         {
             listBuilt = false;
+            nextScan = Time.unscaledTime + ScanInterval;
             Skins.Rescan();
             var columns = Studio.Columns(body);
 
@@ -70,7 +75,13 @@ namespace DBStudio.Pages
         public void Refresh()
         {
             // 主菜单之前打开时表还没加载
-            if (!listBuilt && GameData.Ready)
+            bool changed = false;
+            if (Time.unscaledTime >= nextScan)
+            {
+                nextScan = Time.unscaledTime + ScanInterval;
+                changed = Skins.Rescan();
+            }
+            if ((!listBuilt || changed) && GameData.Ready)
             {
                 RebuildList();
                 ShowHero();

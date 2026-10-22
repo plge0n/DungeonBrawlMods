@@ -79,7 +79,7 @@ namespace DBModKit
             ["ActiveSkillEnum"] = new[] { "None", "D_Execution", "S_Execution", "D_Alchemy", "S_Alchemy", "Bite" },
             ["SkillTag"] = new[] { "Heal", "Revive", "Shield", "Defense", "Buff", "Summon", "Aura", "Area", "Move", "Control", "Henshin", "Duration" },
             // 英雄皮肤
-            ["buj"] = new[] { "pwu", "pwh", "pwj", "pwm", "pwf" },
+            ["buj"] = new[] { "pwu", "pwh", "pwj", "pwm", "pwf", "pyb" },
             ["bup"] = new[] { "pyx" },
             ["buu"] = new[] { "qaq", "qar", "bptc" },
             ["buo"] = new[] { "bkkn" },
@@ -87,7 +87,7 @@ namespace DBModKit
             ["bgt"] = new[] { "mqp" },
             ["bbp"] = new[] { "lob" },
             ["WorkshopItemStatus"] = new[] { "publishedFileId", "installed", "heroId", "installFolder" },
-            ["LocalWorkshopManifest"] = new[] { "heroId", "title", "heroName", "author", "contentType", "bundleRelativePath", "bundleAssetName" },
+            ["LocalWorkshopManifest"] = new[] { "heroId", "title", "heroName", "heroIcon", "author", "contentType", "bundleRelativePath", "bundleAssetName" },
         };
 
         public static string GameVersion => Application.version;
