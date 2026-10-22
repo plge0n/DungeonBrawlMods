@@ -1,6 +1,6 @@
 # DBModKit 更新日志
 
-## 0.15.0
+## 0.18.0
 - 新增自定义被动技能（`PassiveSkills`）：`mod.RegisterPassive(new PassiveSkillDef { … })` 注册后和游戏的被动一样，
   会出现在技能书三选一里（按品级进池，可关）、占一个技能格、图鉴里能看到；名字和说明走 Mod 的 `Text`（键 `passive.<Key>.name/desc`），
   说明里的 `{0}` 等换成数值（含等级成长）。行为继承 `PassiveSkill`，重写 `OnAdded` / `OnRemoved` / `OnUpdate` / `OnGameEvent` / `OnHit`，
@@ -21,6 +21,30 @@
   原来 `lang/` 翻译文件不会被部署和打包
 - 图标靠 `Resources.Load` 补丁（`ModAssets.IconsAvailable`）；装不上时技能栏按钮单独补上
 - 映射重建工具：重写游戏虚方法的声明、带命名空间的类型名字符串也会跟着改；编译检查也读项目文件自己的引用
+- 修复：兼容检查清单里 `AttackType`、`DamageSourceKind`、`qp`、`bff` 写了两次，后写的空清单覆盖了前面的成员检查
+
+## 0.17.0
+- 英雄专属技能 `HeroSkill`（`HeroSkill.Of(英雄)`、`Player.HeroSkill`）：hero 表里每个英雄出生时发放的那个技能，主动或被动；主动的带冷却、蓝耗、持续时间、充能、伤害参数，被动的带表里的数值
+- `Player.HeroSkillSlot`（篮球巨星拿到"鸡舞"卡牌后返回换过的真·鸡舞）、`Player.FindSkill`、`SkillSlot.SkillId` / `CooldownTotal` / `ReduceCooldown`
+- 技能调整 `SkillTuning` / `mod.TuneSkill(技能, SkillTune)`：伤害、冷却、蓝耗、持续时间倍率和额外充能，**只作用于本地玩家**——释放时临时替换配置表、放完换回原版，伤害按命中乘倍率；多个 Mod 调同一技能时相乘，卸载时自动撤销。重试波次时跟着还原
+- 被动技能数值：`Player.PassiveValues(编号)`、`Player.SetPassiveValues(编号, 数值)`，只改身上的技能实例（内部折扣、电锯恶魔会先撤销再按新值生效）
+- 释放事件 `Combat.Cast`（`mod.OnSkillCast`）：本地玩家放出技能时触发，带目标点、朝向、目标、技能书编号、是否免费；`Player.FreeCast` 用游戏的"多重施法"同款免费再放一次（不扣蓝、不进冷却）
+- `Player.AddAttackSpeed`、`AddArmor`（累加，负数撤销）、`GiveInvulnerable(秒)`
+- 重试波次事件 `ModEvents.CheckpointSaved` / `CheckpointRestored`（`mod.OnCheckpointSaved/Restored`）：游戏拍快照、点"重试"还原之后通知，Mod 自己的状态在这里存取
+- `Game.TotalWaves`、`Game.RelicWaves`（进入哪些波次前的休息阶段弹遗物三选一）
+- `ChoicePanel.IsBusy` 在开场界面开着时也为真（它一关游戏就弹开局遗物）
+- `NativeTip.Show/Hide`：游戏原生的悬停提示框；`mod.SetSkillTooltip(技能, 文字)`：在本地玩家技能的悬停提示末尾追加文字（游戏自己的附加说明保留）
+
+## 0.16.0
+- `HitInfo.EffectKind` / `EffectName`：没带技能实例的伤害是哪个被动、装备（显示装备名；全身共享的装备技能显示技能名）、遗物或 Buff 造成的。
+  游戏调伤害时不传这个信息，ModKit 在伤害钩子里看调用栈找出发起的类，再到本地玩家身上（Buff 在目标身上）找对应的实例取名字。
+  只对本地玩家打出、且有人订阅命中事件时才取调用栈；名字按类型缓存
+
+## 0.15.0
+- `HitInfo.SourceSkillId`：造成这次伤害的技能实例的技能编号。游戏的命中记录只在来源标成"主动技能"时带技能编号（`SkillId`），
+  但很多技能结算伤害时没标，这些伤害以前看起来像被动；现在补丁 `yb.iwk` / `yb.iwr`，在调用期间记下技能实例
+- `HitInfo.Type`（`HitType`：普攻、技能、持续伤害、普攻特效、真实伤害）和 `HitInfo.Origin`（`HitOrigin`：光环、异常状态、反伤、被动触发、幻影武器……）；
+  钩子没装上时为 Unknown（`Combat.ContextAvailable`）
 
 ## 0.14.0
 - 新增 `LobbySync`：通过 Steam 大厅成员数据和其他装了 Mod 的玩家交换少量文字数据（`Publish` / `Read` / `Clear`）。

@@ -30,6 +30,26 @@ namespace DBModKit
         /// <summary>当前是第几波，从 1 开始，和游戏界面显示的一致（不在战斗中时是上一局的值）。</summary>
         public static int Wave => ModKit.Compatible ? GameRaw.Wave() + 1 : 0;
 
+        /// <summary>本局的总波数（关卡配置里的波次数；不在战斗中时是上一局的值，读不到为 0）。</summary>
+        public static int TotalWaves => ModKit.Compatible ? GameRaw.TotalWaves() : 0;
+
+        /// <summary>
+        /// 进入哪些波次（从 1 开始，和 <see cref="Wave"/> 一致）前的休息阶段会弹遗物三选一。
+        /// 休息阶段触发 <see cref="GameEventKind.WaveEnded"/> 时，<see cref="Wave"/> 已经是下一波的编号。
+        /// </summary>
+        public static List<int> RelicWaves
+        {
+            get
+            {
+                var list = new List<int>();
+                if (!ModKit.Compatible) return list;
+                int total = GameRaw.TotalWaves();
+                for (int i = 0; i < total; i++)
+                    if (GameRaw.RelicBeforeWave(i)) list.Add(i + 1);
+                return list;
+            }
+        }
+
         /// <summary>自己是房主（联机主机，或者单人）。</summary>
         public static bool IsHost => ModKit.Compatible && (GameRaw.ServerActive() || !GameRaw.ClientActive());
 
@@ -215,6 +235,91 @@ namespace DBModKit
             GameRaw.AddStats(Native, strength, agility, stamina, attack);
             RunLog.Info(RunLog.CallerMod(), "玩家", "改属性", ("力/敏/体/攻", $"{strength:+0;-0;0}/{agility:+0;-0;0}/{stamina:+0;-0;0}/{attack:+0;-0;0}"),
                 ("之前", before), ("之后", $"{Strength}/{Agility}/{Stamina} 攻击 {Attack}"));
+        }
+
+        /// <summary>这个英雄的专属技能。</summary>
+        public HeroSkill HeroSkill => HeroSkill.Of(HeroId);
+
+        /// <summary>
+        /// 身上的专属主动技能（被动英雄、或者还没发放时为 null）。
+        /// 篮球巨星拿到"鸡舞"卡牌后，游戏会把花式扣篮换成真·鸡舞，这里返回换过之后的那个。
+        /// </summary>
+        public SkillSlot HeroSkillSlot
+        {
+            get
+            {
+                var hs = HeroSkill;
+                if (hs == null || !hs.IsActive) return null;
+                return SkillSlot.Wrap(GameRaw.FindActiveSkill(Native, hs.SkillId) ?? GameRaw.FindReplacedSkill(Native, hs.SkillId));
+            }
+        }
+
+        /// <summary>身上的某个主动技能（不在技能栏里的也算）。</summary>
+        public SkillSlot FindSkill(int skillId) => SkillSlot.Wrap(GameRaw.FindActiveSkill(Native, skillId));
+
+        /// <summary>
+        /// 免费再放一次技能（游戏的"多重施法"同款：不查蓝、不扣蓝、不进冷却），参数照抄一次释放。
+        /// 会再次触发 <see cref="Combat.Cast"/>（IsFree = true），处理时注意不要无限连锁。返回游戏是否放了出来。
+        /// </summary>
+        public bool FreeCast(SkillCast cast)
+        {
+            RequireLocal();
+            bool ok = GameRaw.FreeCast(Native, cast.SkillId, cast.Position, cast.Rotation, cast.TargetId, cast.BookId);
+            RunLog.Debug(RunLog.CallerMod(), "玩家", "免费释放", ("技能", SkillInfo.Get(cast.SkillId)?.Name ?? cast.SkillId.ToString()), ("成功", ok));
+            return ok;
+        }
+
+        /// <summary>加攻速（比例，0.25 = +25%；负数撤销）。本局有效，临时加成要自己到时间撤销。</summary>
+        public void AddAttackSpeed(float ratio)
+        {
+            RequireLocal();
+            GameRaw.AddAttackSpeed(Native, ratio);
+            RunLog.Info(RunLog.CallerMod(), "玩家", "改攻速", ("加成", $"{ratio:+0.##;-0.##}"), ("攻速", AttackSpeed));
+        }
+
+        /// <summary>加护甲（负数撤销）。本局有效，临时加成要自己到时间撤销。</summary>
+        public void AddArmor(int amount)
+        {
+            RequireLocal();
+            int before = Armor;
+            GameRaw.AddArmor(Native, amount);
+            RunLog.Info(RunLog.CallerMod(), "玩家", "改护甲", ("加成", amount), ("护甲", $"{before}→{Armor}"));
+        }
+
+        /// <summary>无敌若干秒（游戏的无敌药水效果，重复使用时刷新时长）。</summary>
+        public void GiveInvulnerable(float seconds)
+        {
+            RequireLocal();
+            GameRaw.GiveInvulnerable(Native, seconds);
+            RunLog.Info(RunLog.CallerMod(), "玩家", "无敌", ("秒", seconds));
+        }
+
+        /// <summary>身上有这个被动技能（被动表编号）。</summary>
+        public bool HasPassive(int passiveId) => GameRaw.FindPassiveSkill(Native, passiveId) != null;
+
+        /// <summary>被动技能当前的数值（技能实例上的，可能已被改过）；没有这个被动时为 null。</summary>
+        public float[] PassiveValues(int passiveId)
+        {
+            var s = GameRaw.FindPassiveSkill(Native, passiveId);
+            return s == null ? null : (float[])GameRaw.PassiveValues(s)?.Clone();
+        }
+
+        /// <summary>
+        /// 改被动技能的数值（只改本地玩家身上这个技能实例，不动配置表）。各项含义见 NOTES.md 的"专属技能强化"。
+        /// 本局有效，下一局重新发放时恢复；要撤销就把 <see cref="HeroSkill.PassiveValues"/> 写回来。返回是否找到了这个被动。
+        /// </summary>
+        public bool SetPassiveValues(int passiveId, IReadOnlyList<float> values)
+        {
+            RequireLocal();
+            var s = GameRaw.FindPassiveSkill(Native, passiveId);
+            if (s == null) return false;
+            var before = GameRaw.PassiveValues(s);
+            var arr = new float[values.Count];
+            for (int i = 0; i < arr.Length; i++) arr[i] = values[i];
+            GameRaw.SetPassiveValues(s, arr);
+            RunLog.Info(RunLog.CallerMod(), "玩家", "改被动数值", ("被动", passiveId),
+                ("之前", before == null ? "" : string.Join("|", before)), ("之后", string.Join("|", arr)));
+            return true;
         }
 
         private void RequireLocal()

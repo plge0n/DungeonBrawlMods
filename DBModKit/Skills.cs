@@ -122,6 +122,17 @@ namespace DBModKit
         internal static SkillSlot Wrap(object native) => native == null ? null : cache.GetValue(native, n => new SkillSlot(n));
 
         public SkillInfo Info => SkillInfo.Get(GameRaw.SkillId(Native));
+        /// <summary>技能编号（ActiveSkillEnum 的值）。</summary>
+        public int SkillId => GameRaw.SkillId(Native);
+        /// <summary>冷却总时长（技能实例上的值，已含 <see cref="SkillTuning"/> 的调整）。</summary>
+        public float CooldownTotal => GameRaw.CooldownTotal(Native);
+
+        /// <summary>缩短剩余冷却（秒，最多缩到 0）。只能用于本地玩家的技能。</summary>
+        public void ReduceCooldown(float seconds)
+        {
+            if (seconds <= 0f || GameRaw.SkillOwner(Native) != GameRaw.LocalPlayer()) return;
+            GameRaw.SetCooldownRemaining(Native, Mathf.Max(0f, CooldownRemaining - seconds));
+        }
         /// <summary>右键开启了自动释放。</summary>
         public bool IsAutoCastOn => GameRaw.IsAutoCastOn(Native);
         public float CooldownRemaining => GameRaw.CooldownRemaining(Native);
