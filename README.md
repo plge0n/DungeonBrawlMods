@@ -20,24 +20,32 @@ BepInEx 5
 游戏代码经过 GUPS 混淆，每次更新混淆名都可能全部改变。所有混淆名集中在 DBModKit 的 `GameRaw.cs`、`Hooks.cs`（补丁签名）和 `Compat.cs`（检查清单）。游戏更新后只需修 DBModKit，已编译的 Mod 不用改。
 
 ## DBModKit 接口速览
+Mod 直接继承 `BaseUnityPlugin`，通过 `ModContext` 注册的事件、处理器、配置会在卸载时自动清理（热重载需要）。
+**不要**继承 DBModKit 里的类作为插件基类：ScriptEngine 解析不到继承链，热重载会崩溃。
 ```csharp
-[BepInDependency(ModKitPlugin.Guid, "0.1.0")]
-public class MyMod : BaseUnityPlugin
+[BepInPlugin(Guid, Name, Version)]
+[BepInDependency(ModKitPlugin.Guid, ModKit.Version)]
+public class Plugin : BaseUnityPlugin
 {
-    private void Awake()
+    private ModContext mod;
+    private void Awake() => mod = ModContext.Start(this, Logger, OnLoad, OnUnload);
+    private void OnDestroy() => mod?.Dispose();
+
+    private void OnLoad(ModContext mod)           // ModKit 不兼容时不会调用
     {
-        if (!ModKit.Compatible) return;               // 游戏版本不兼容时 ModKit 会自己提示
-        ModEvents.Update += () =>
+        mod.OnUpdate(() =>
         {
             var player = Game.LocalPlayer;            // 不在战斗中为 null
             if (player == null) return;
             var boss = player.PickEnemy(10f, e => e.IsBoss ? 0 : 1);
-        };
-        AutoCast.SetHandler(Guid, (slot, player) =>
+        });
+        mod.UseAutoCast((slot, player) =>
             slot.Info.HasTag(SkillTags.Heal) && player.HpPercent > 0.5f
                 ? AutoCastVerdict.Skip("血量充足")
                 : AutoCastVerdict.Vanilla());
     }
+
+    private void OnUnload() { }                   // 销毁自己挂在游戏对象上的东西
 }
 ```
 | 类型 | 作用 |
@@ -47,6 +55,7 @@ public class MyMod : BaseUnityPlugin
 | `SkillInfo` | 技能表数据：名字、标签、指示器、施法范围、冷却 |
 | `SkillSlot` / `SkillBar` | 技能栏里的技能：自动释放开关、剩余冷却、消耗、图标 |
 | `AutoCast` | 接管自动释放：决定放不放、打谁；`Resolved` 事件报告结果 |
+| `ModContext` | Mod 运行上下文：`OnUpdate`、`OnBattleStarted`、`UseAutoCast`、`LoadJson` 等，卸载时自动清理 |
 | `ModEvents` | 每帧、进入/离开战斗、退出游戏 |
 | `NativeUi` | 用游戏素材拼的面板、开关、滑条、下拉框、按钮 |
 | `JsonConfig<T>` | `BepInEx/config` 下的 JSON 配置，自动延迟保存 |
@@ -56,11 +65,18 @@ public class MyMod : BaseUnityPlugin
 需要 .NET SDK 8+，游戏目录已装 BepInEx 5。
 
 ```powershell
-dotnet build DungeonBrawlMods.sln -c Release   # 编译并复制到游戏的 BepInEx/plugins（需先关闭游戏）
-pwsh ./pack.ps1                                 # 生成 dist/ 下的发布包
+pwsh tools/devtools.ps1                         # 一次性：安装 UnityExplorer + ScriptEngine（-Remove 卸载）
+pwsh tools/new-mod.ps1 MyMod -Description "…"   # 新建依赖 DBModKit 的 Mod 并加入解决方案
+dotnet build DungeonBrawlMods.sln -c Release    # 编译并部署到游戏
+pwsh ./pack.ps1                                 # 生成 dist/ 下的发布包（包含解决方案里的所有插件）
 ```
+
+**热重载**：装了 ScriptEngine 后，普通 Mod 会部署到 `BepInEx/scripts`，游戏开着也能编译，约 1 秒后自动重载（也可按 F6）。DBModKit 始终在 `BepInEx/plugins`，改了它要重启游戏（编译前先关游戏，否则 dll 被占用）。没装 ScriptEngine 时一律部署到 `plugins`。
+
+**UnityExplorer**：游戏内按 F7。可以浏览场景里的 UI 和对象、查看/修改字段、在 C# 控制台里执行代码，是找游戏对象和调 UI 的首选工具。
+
 - 游戏不在默认位置：设置环境变量 `GameDir`，或加 `-p:GameDir="X:\...\地下城竞技场"`。
-- 公共构建配置在 `Directory.Build.props`：Mod 项目只需写 `AssemblyName` 和对 DBModKit 的 `ProjectReference`（`Private="false"`）。
+- 公共构建配置在 `Directory.Build.props/.targets`：Mod 项目只需写 `AssemblyName` 和对 DBModKit 的 `ProjectReference`（`Private="false"`）。模板在 `templates/DBMod`。
 - 发布新版本：改源码里的 `Version` 常量 → 在对应目录的 `CHANGELOG.md` 加条目 → `pack.ps1`（缺少更新日志条目时会报错）。
 
 ## 游戏更新后

@@ -11,7 +11,7 @@ $BepInExVersion = "5.4.23.5"
 $BepInExUrl = "https://github.com/BepInEx/BepInEx/releases/download/v$BepInExVersion/BepInEx_win_x64_$BepInExVersion.zip"
 
 $root = $PSScriptRoot
-$plugins = @("DBModKit", "SmartSkill")
+$sln = Join-Path $root "DungeonBrawlMods.sln"
 $dist = Join-Path $root "dist"
 $cache = Join-Path $root ".cache"
 
@@ -21,6 +21,11 @@ if (-not (Get-Command dotnet -ErrorAction SilentlyContinue)) {
     $env:PATH = "$userDotnet;$env:PATH"
     $env:DOTNET_ROOT = $userDotnet
 }
+
+# 解决方案里的每个项目都是一个插件
+$plugins = @(dotnet sln $sln list | Where-Object { $_ -like "*.csproj" } |
+    ForEach-Object { [IO.Path]::GetFileNameWithoutExtension($_) } | Sort-Object)
+if ($plugins -notcontains "DBModKit") { throw "解决方案里找不到 DBModKit" }
 
 # 每个插件的版本号是源码里的 Version 常量，更新日志在各自目录的 CHANGELOG.md
 $versions = @{}
@@ -38,7 +43,7 @@ foreach ($name in $plugins) {
 $version = $versions["SmartSkill"]
 Write-Host "打包 SmartSkill $version（DBModKit $($versions["DBModKit"])）"
 
-dotnet build (Join-Path $root "DungeonBrawlMods.sln") -c Release -nologo -v q -p:DeployToGame=false "-p:GameDir=$GameDir"
+dotnet build $sln -c Release -nologo -v q -p:DeployToGame=false "-p:GameDir=$GameDir"
 if ($LASTEXITCODE -ne 0) { throw "编译失败" }
 
 New-Item -ItemType Directory -Force $cache | Out-Null

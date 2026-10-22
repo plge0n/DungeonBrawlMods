@@ -259,6 +259,15 @@ namespace SmartSkill
             }
         }
 
+        public static void RemoveAll()
+        {
+            foreach (var button in SkillBar.Buttons())
+            {
+                var gear = button.Icon.Find(GearName);
+                if (gear != null) Object.Destroy(gear.gameObject);
+            }
+        }
+
         private static bool ShouldShow(SkillSlot slot)
         {
             if (slot?.Info == null) return false;

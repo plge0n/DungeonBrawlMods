@@ -4,6 +4,8 @@
     <RootNamespace>DBModKit</RootNamespace>
     <!-- 唯一引用游戏代码的项目 -->
     <ReferenceGame>true</ReferenceGame>
+    <!-- 其他 Mod 按程序集名引用 ModKit，热重载会生成改名的副本，所以 ModKit 始终放在 plugins -->
+    <HotReload>false</HotReload>
     <!-- 生成 XML 文档，依赖 ModKit 的 Mod 在 IDE 里能看到接口说明 -->
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <NoWarn>$(NoWarn);CS1591</NoWarn>

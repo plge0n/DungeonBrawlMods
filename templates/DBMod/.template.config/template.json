@@ -1,0 +1,25 @@
+{
+  "$schema": "http://json.schemastore.org/template",
+  "author": "plge0n",
+  "classifications": [ "Game", "BepInEx", "DungeonBrawl" ],
+  "identity": "plge0n.DungeonBrawl.Mod",
+  "name": "地下城竞技场 Mod（依赖 DBModKit）",
+  "shortName": "dbmod",
+  "sourceName": "DBModTemplate",
+  "preferNameDirectory": true,
+  "tags": { "language": "C#", "type": "project" },
+  "symbols": {
+    "guidName": {
+      "type": "generated",
+      "generator": "casing",
+      "parameters": { "source": "name", "toLower": true },
+      "replaces": "MOD_GUID_LOWER"
+    },
+    "description": {
+      "type": "parameter",
+      "datatype": "text",
+      "defaultValue": "TODO：一句话介绍这个 Mod",
+      "replaces": "MOD_DESCRIPTION"
+    }
+  }
+}

@@ -54,9 +54,11 @@ namespace SmartSkill
     // 规则按技能枚举名（SkillInfo.Key）存在 BepInEx/config/SmartSkill.rules.json
     internal static class RuleStore
     {
-        private static JsonConfig<Dictionary<string, SkillRule>> config;
+        public class Rules : Dictionary<string, SkillRule> { }
 
-        public static void Load() => config = new JsonConfig<Dictionary<string, SkillRule>>("SmartSkill.rules.json");
+        private static JsonConfig<Rules> config;
+
+        public static void Init(JsonConfig<Rules> c) => config = c;
 
         public static SkillRule Get(SkillInfo skill)
         {
@@ -76,6 +78,6 @@ namespace SmartSkill
 
         public static void MarkDirty() => config.MarkDirty();
 
-        public static void Flush() => config.Flush();
+        public static void Flush() => config?.Flush();
     }
 }

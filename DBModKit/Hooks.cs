@@ -7,18 +7,29 @@ namespace DBModKit
     // Harmony 补丁统一在这里按签名查找并安装；找不到或安装失败只停用对应功能，不影响其他部分
     internal static class Hooks
     {
-        public static void Install(Harmony harmony)
+        /// <summary>安装补丁。排行榜拦截装不上时返回 false，ModKit 整体停用。</summary>
+        public static bool Install(Harmony harmony)
         {
+            if (!TryPatch(harmony, typeof(LeaderboardHooks), "排行榜上传拦截",
+                    AccessTools.Method(typeof(bwu), "quj", new[]
+                    {
+                        typeof(int), typeof(int), typeof(de.TeamBuildData), typeof(Action<bws>),
+                        typeof(Action<LeaderboardUploadStage>), typeof(string),
+                    }),
+                    prefix: nameof(LeaderboardHooks.UploadPrefix)))
+                return false;
+
             AutoCast.Available =
-                TryPatch(harmony, "自动释放决策",
+                TryPatch(harmony, typeof(AutoCastHooks), "自动释放决策",
                     AccessTools.Method(typeof(ez), "dxx", new[] { typeof(ActiveSkillEnum), typeof(bbe), typeof(int) }),
                     prefix: nameof(AutoCastHooks.DecidePrefix), postfix: nameof(AutoCastHooks.DecidePostfix))
-                && TryPatch(harmony, "自动释放选目标",
+                && TryPatch(harmony, typeof(AutoCastHooks), "自动释放选目标",
                     AccessTools.Method(typeof(ez), "dxy", new[] { typeof(bbe), typeof(ActiveSkillData) }),
                     prefix: nameof(AutoCastHooks.TargetPrefix));
+            return true;
         }
 
-        private static bool TryPatch(Harmony harmony, string feature, MethodBase target, string prefix = null, string postfix = null)
+        private static bool TryPatch(Harmony harmony, Type hooks, string feature, MethodBase target, string prefix = null, string postfix = null)
         {
             if (target == null)
             {
@@ -28,8 +39,8 @@ namespace DBModKit
             try
             {
                 harmony.Patch(target,
-                    prefix: prefix == null ? null : new HarmonyMethod(typeof(AutoCastHooks), prefix),
-                    postfix: postfix == null ? null : new HarmonyMethod(typeof(AutoCastHooks), postfix));
+                    prefix: prefix == null ? null : new HarmonyMethod(hooks, prefix),
+                    postfix: postfix == null ? null : new HarmonyMethod(hooks, postfix));
                 return true;
             }
             catch (Exception e)
@@ -37,6 +48,25 @@ namespace DBModKit
                 Log.Error($"{feature}：补丁安装失败，该功能停用：{e}");
                 return false;
             }
+        }
+    }
+
+    // 游戏作者的规则：装了 Mod 不能上传排行榜（违规可能被拉进按 Steam 账号判定的黑名单，连累整队）。
+    // bwu.quj 是排行榜上传入口（由主机 MyServerNetworkManager 调用；bwu.nlq 是同签名的诱饵）。
+    // 强制拦截，不提供开关；按游戏自己的失败流程回调，结算界面会显示上传失败。
+    internal static class LeaderboardHooks
+    {
+        private static readonly MethodInfo makeFailure =
+            AccessTools.Method(typeof(bwu), "qut", new[] { typeof(LeaderboardUploadFailure), typeof(string) });
+
+        internal static bool UploadPrefix(Action<bws> __3)
+        {
+            Log.Warning("已安装 Mod：按游戏作者的规则，本局成绩不上传排行榜");
+            ScreenNotice.Show("已安装 Mod：按游戏作者的规则，本局成绩不上传排行榜。", 8f);
+            if (__3 != null)
+                Safe.Run("排行榜拦截回调", () =>
+                    __3((bws)makeFailure.Invoke(null, new object[] { LeaderboardUploadFailure.InvalidData, "Mods installed: leaderboard upload disabled." })));
+            return false;
         }
     }
 

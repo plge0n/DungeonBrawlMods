@@ -11,7 +11,7 @@ namespace DBModKit
     /// 存在 BepInEx/config 下的 JSON 配置。修改后调用 <see cref="MarkDirty"/>，
     /// ModKit 会在一秒后自动保存（拖动滑条这类连续修改不会每帧写盘），游戏退出时也会保存。
     /// </summary>
-    public sealed class JsonConfig<T> : IJsonConfig where T : new()
+    public sealed class JsonConfig<T> : IJsonConfig, IDisposable where T : new()
     {
         private bool dirty;
         private float lastSave;
@@ -61,6 +61,13 @@ namespace DBModKit
             }
         }
 
+        /// <summary>保存并停止自动保存。用 ModContext.LoadJson 打开的配置会在卸载时自动调用。</summary>
+        public void Dispose()
+        {
+            Flush();
+            JsonConfigRegistry.Remove(this);
+        }
+
         void IJsonConfig.Tick()
         {
             if (dirty && Time.unscaledTime - lastSave > 1f) Flush();
@@ -78,6 +85,8 @@ namespace DBModKit
         private static readonly List<IJsonConfig> configs = new List<IJsonConfig>();
 
         public static void Add(IJsonConfig c) => configs.Add(c);
+
+        public static void Remove(IJsonConfig c) => configs.Remove(c);
 
         public static void Tick()
         {

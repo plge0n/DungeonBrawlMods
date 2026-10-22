@@ -1,6 +1,29 @@
 <Project>
+  <!--
+    开发部署：
+    - 游戏里装了 ScriptEngine（tools/devtools.ps1）时，可热重载的 Mod 复制到 BepInEx/scripts，
+      游戏开着也能重新编译，ScriptEngine 检测到变化后自动重载（也可按 F6）。
+    - 否则复制到 BepInEx/plugins/<项目名>（需先关闭游戏）。
+    两个位置只保留一份，避免同一个 Mod 被加载两次。
+  -->
+  <PropertyGroup>
+    <HotReload Condition="'$(HotReload)' == '' And Exists('$(GameDir)\BepInEx\plugins\ScriptEngine.dll')">true</HotReload>
+    <ScriptsFile>$(GameDir)\BepInEx\scripts\$(TargetFileName)</ScriptsFile>
+    <!-- ScriptEngine 加载时会读取同名 .pdb，缺失就抛异常、整批 Mod 都不加载 -->
+    <ScriptsPdb>$(GameDir)\BepInEx\scripts\$(TargetName).pdb</ScriptsPdb>
+    <BuiltPdb>$(TargetDir)$(TargetName).pdb</BuiltPdb>
+  </PropertyGroup>
+
   <Target Name="DeployToGame" AfterTargets="Build" Condition="'$(DeployToGame)' == 'true'">
-    <MakeDir Directories="$(PluginDir)" />
-    <Copy SourceFiles="$(TargetPath)" DestinationFolder="$(PluginDir)" />
+    <MakeDir Directories="$(GameDir)\BepInEx\scripts" Condition="'$(HotReload)' == 'true'" />
+    <Copy SourceFiles="$(TargetPath);$(BuiltPdb)" DestinationFolder="$(GameDir)\BepInEx\scripts" Condition="'$(HotReload)' == 'true'" />
+    <RemoveDir Directories="$(PluginDir)" Condition="'$(HotReload)' == 'true'" ContinueOnError="true" />
+
+    <MakeDir Directories="$(PluginDir)" Condition="'$(HotReload)' != 'true'" />
+    <Copy SourceFiles="$(TargetPath)" DestinationFolder="$(PluginDir)" Condition="'$(HotReload)' != 'true'" />
+    <Delete Files="$(ScriptsFile);$(ScriptsPdb)" Condition="'$(HotReload)' != 'true'" />
+
+    <Message Importance="high" Text="$(MSBuildProjectName) -> $(GameDir)\BepInEx\scripts（热重载）" Condition="'$(HotReload)' == 'true'" />
+    <Message Importance="high" Text="$(MSBuildProjectName) -> $(PluginDir)" Condition="'$(HotReload)' != 'true'" />
   </Target>
 </Project>

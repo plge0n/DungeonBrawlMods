@@ -7,40 +7,46 @@ namespace SmartSkill
 {
     // 接管游戏自带的"右键技能图标自动释放"：每个技能的释放条件在技能图标上的齿轮弹窗里设定
     [BepInPlugin(Guid, Name, Version)]
-    [BepInDependency(ModKitPlugin.Guid, "0.1.0")]
+    [BepInDependency(ModKitPlugin.Guid, "0.2.0")]
     public class Plugin : BaseUnityPlugin
     {
         public const string Guid = "plge0n.dungeonbrawl.smartskill";
         public const string Name = "SmartSkill";
         // 发布时同步修改 CHANGELOG.md；pack.ps1 从这里读取版本号
-        public const string Version = "0.5.0";
+        public const string Version = "0.5.1";
 
         internal static ManualLogSource Log;
 
         internal static ConfigEntry<bool> Enabled;
         internal static ConfigEntry<bool> VerboseLog;
 
-        private void Awake()
+        private ModContext mod;
+
+        private void Awake() => mod = ModContext.Start(this, Logger, OnLoad, OnUnload);
+
+        private void OnDestroy() => mod?.Dispose();
+
+        private void OnLoad(ModContext mod)
         {
             Log = Logger;
-
-            // ModKit 不兼容时它自己会在屏幕上提示，这里只需不启动
-            if (!ModKit.Compatible || !AutoCast.Available)
-            {
-                Log.LogWarning($"{Name} 未启动：ModKit 不兼容或自动释放钩子不可用");
-                return;
-            }
+            if (!AutoCast.Available) throw new System.Exception("ModKit 的自动释放钩子不可用");
 
             Enabled = Config.Bind("General", "Enabled", true, "总开关。关闭后完全使用游戏原版自动释放逻辑");
             VerboseLog = Config.Bind("General", "VerboseLog", false, "在 BepInEx 日志中记录自动释放的决策（排查问题时打开）");
 
-            RuleStore.Load();
-            AutoCast.SetHandler(Guid, SkillBrain.Decide);
-            AutoCast.Resolved += StatusLog.OnResolved;
-            ModEvents.Update += SkillGear.Sync;
-            ModEvents.Update += SkillPopup.Tick;
-            ModEvents.BattleEnded += SkillPopup.Close;
-            Log.LogInfo($"{Name} {Version} 已加载");
+            RuleStore.Init(mod.LoadJson<RuleStore.Rules>("SmartSkill.rules.json"));
+            mod.UseAutoCast(SkillBrain.Decide);
+            mod.OnAutoCastResolved(StatusLog.OnResolved);
+            mod.OnUpdate(SkillGear.Sync);
+            mod.OnUpdate(SkillPopup.Tick);
+            mod.OnBattleEnded(SkillPopup.Close);
+        }
+
+        // 弹窗和齿轮挂在游戏 UI 上，不会随插件销毁
+        private void OnUnload()
+        {
+            SkillPopup.Close();
+            SkillGear.RemoveAll();
         }
     }
 }
