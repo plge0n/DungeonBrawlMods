@@ -17,10 +17,10 @@ namespace DBModKit
         // 类型名 → Mod 用到的成员（字段/属性/方法，含继承自基类的）
         private static readonly Dictionary<string, string[]> Required = new Dictionary<string, string[]>
         {
-            ["nn"] = new[] { "bpbu", "bbsr", "bbtv", "bbtm", "fqr", "frk" },
+            ["nn"] = new[] { "bpbu", "bbsr", "bbtv", "bbtm", "bbth", "bbtz", "fqr", "frk" },
             ["os"] = new[] { "gba", "bctl", "bctm" },
-            ["cj"] = new[] { "boyb", "boyi", "boyj", "boyl", "boyn", "boyt" },
-            ["ez"] = new[] { "dxx", "dxy", "dyk", "dvm" },
+            ["cj"] = new[] { "boyb", "boyi", "boyj", "boyl", "boyn", "boyq", "boyt" },
+            ["ez"] = new[] { "dxx", "dxy", "dyk", "dvm", "eaz", "ebc" },
             ["bfl"] = new[] { "mna" },
             ["pj"] = new[] { "bcxi" },
             ["bfe"] = new[] { "bgwf", "bgwg", "bgwi" },
@@ -29,7 +29,7 @@ namespace DBModKit
             ["nw"] = new[] { "bcmf" },
             ["bdc"] = new[] { "bgfu" },
             ["ProgressCombatFact"] = new[] { "Amount", "ShieldDamage", "SkillId", "Active", "Critical" },
-            ["RoleState"] = new[] { "Attack" },
+            ["RoleState"] = new[] { "Attack", "Dead" },
             ["RoleType"] = new[] { "King" },
             ["bwu"] = new[] { "quj", "qut" },
             ["bws"] = new string[0],
@@ -46,13 +46,19 @@ namespace DBModKit
             {
                 "heroType", "kzz", "bpnc", "bfru", "bfrv", "kqi", "kqh", "addDamagePercent", "addBossEnemy", "addEliteEnemy", "addNormalEnemy",
                 "ksd", "k4a25de8c63fe4a7192613346ae51af4e", "kfd63a19d353a42878846361e6af4f637",
-                "kqk", "kkl", "onPlayerLevelUp", "onPlayerRelife", "addBagItemEvent",
+                "kqk", "kkl", "CmdPickItem", "playerAttribute", "onPlayerLevelUp", "onPlayerRelife", "addBagItemEvent",
             },
             ["EnemyDefeatContext"] = new[] { "IsBoss", "IsElite" },
             ["MyServerNetworkManager"] = new[] { "qhu" },
             ["ClientNetMessage"] = new[] { "clientNetOperation" },
             ["ClientNetOperation"] = new[] { "OnStartGame", "OnStartRest", "EnemyEnterTip", "OnGameOver" },
             ["RemainsData"] = new[] { "grade" },
+            // 掉落物拾取
+            ["ot"] = new[] { "bctu", "gdb" },
+            ["ou"] = new[] { "bcty", "bctz", "bcua", "bcuc" },
+            ["bba"] = new[] { "kgw" },
+            ["AudioManager"] = new[] { "daw" },
+            ["ItemType"] = new[] { "Gold", "Gem", "STRBook", "Active_Book_D", "Passsive_Book_D", "GoldCoinBag_LV1", "Talisman_Roar", "Card_0" },
             ["bqa"] = new[] { "osj", "bacf" },
             ["RoguelikeUIData"] = new[] { "name", "dec", "icon", "quality", "data" },
             ["GoldIncomeSource"] = new[] { "Gameplay" },
