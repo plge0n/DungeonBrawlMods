@@ -27,6 +27,9 @@ namespace DBModKit
             }
         }
 
+        /// <summary>当前波次（不在战斗中时是上一局的值）。</summary>
+        public static int Wave => ModKit.Compatible ? GameRaw.Wave() : 0;
+
         /// <summary>自己是房主（联机主机，或者单人）。</summary>
         public static bool IsHost => ModKit.Compatible && (GameRaw.ServerActive() || !GameRaw.ClientActive());
 
@@ -40,6 +43,9 @@ namespace DBModKit
                 return GameRaw.ClientActive() ? -1 : 1;
             }
         }
+
+        /// <summary>游戏设置里的"自动战斗"开着。</summary>
+        public static bool AutoBattle => ModKit.Compatible && GameRaw.AutoBattleOn();
 
         /// <summary>取游戏本地化文本，找不到时返回 fallback。</summary>
         public static string Localize(string key, string fallback = null)
@@ -74,6 +80,20 @@ namespace DBModKit
         public float HitRadius => GameRaw.HitRadius(Native);
         public bool IsBoss => GameRaw.IsBoss(Native);
         public bool IsElite => GameRaw.IsElite(Native);
+        public long Shield => GameRaw.Shield(Native);
+        /// <summary>血量 + 护盾：伤害要达到这个值才能击杀。</summary>
+        public long EffectiveHp => Hp + Shield;
+        /// <summary>无敌中，受到的伤害记为 0。</summary>
+        public bool IsInvulnerable => GameRaw.IsInvulnerable(Native);
+        /// <summary>普攻距离；对方在 距离 ≤ AttackRange + 对方体型半径 内时可以被普攻打到。</summary>
+        public float AttackRange => GameRaw.AttackRange(Native);
+        public float MoveSpeed => GameRaw.MoveSpeed(Native);
+        /// <summary>当前状态（RoleState 枚举名）：Idle、Run、Attack、Skill、Skill2…、Dead 等。</summary>
+        public string State => GameRaw.State(Native);
+        public bool IsAttacking => GameRaw.IsAttacking(Native);
+        /// <summary>在对方的普攻范围内。</summary>
+        public bool InAttackRangeOf(Role attacker, float extra = 0f)
+            => attacker.DistanceTo(this) <= attacker.AttackRange + HitRadius + extra;
 
         // ---- 属性（含装备、遗物、卡牌等加成后的当前值）----
         public long Attack => GameRaw.Attack(Native);
@@ -88,7 +108,6 @@ namespace DBModKit
         public int Armor => GameRaw.Armor(Native);
         public int Dodge => GameRaw.Dodge(Native);
         public float LifeSteal => GameRaw.LifeSteal(Native);
-        public float MoveSpeed => GameRaw.MoveSpeed(Native);
 
         /// <summary>水平距离（忽略高度）。</summary>
         public float DistanceTo(Role other) => GameRaw.Distance(Native, other.Position);
@@ -134,10 +153,47 @@ namespace DBModKit
             return amount > 0 ? GameRaw.AddGold(Native, amount) : 0;
         }
 
+        /// <summary>获得一个遗物（ItemType 编号，见 RelicInfo）。超过本局获取上限等情况下返回 false。</summary>
+        public bool GiveRelic(int relicId)
+        {
+            RequireLocal();
+            return GameRaw.GiveRelic(Native, relicId);
+        }
+
+        /// <summary>
+        /// 加力量、敏捷、体力、攻击（负数为减），加在加成上而不是基础值上，不会触发防篡改校验；体力会同步生命上限。
+        /// 本局有效，下一局英雄重新生成时清零。要临时加成就到时间后用相反数调用一次。
+        /// </summary>
+        public void AddStats(int strength, int agility, int stamina, long attack)
+        {
+            RequireLocal();
+            GameRaw.AddStats(Native, strength, agility, stamina, attack);
+        }
+
         private void RequireLocal()
         {
             if (!IsLocal) throw new InvalidOperationException("只能修改本地玩家");
         }
+
+        /// <summary>变身中（变身类技能生效期间）。</summary>
+        public bool IsTransformed => GameRaw.IsTransformed(Native);
+
+        /// <summary>普攻冷却好了。</summary>
+        public bool AttackReady => GameRaw.AttackTimer(Native) > GameRaw.AttackInterval(Native);
+        /// <summary>距离下次能普攻还有多少秒。</summary>
+        public float AttackCooldownLeft => Mathf.Max(0f, GameRaw.AttackInterval(Native) - GameRaw.AttackTimer(Native));
+        public float AttackInterval => GameRaw.AttackInterval(Native);
+        /// <summary>本次普攻已经出手（伤害或弹道已经发出）。之后移动不会丢掉这次攻击；出手前移动会取消攻击，但冷却会立刻转好。</summary>
+        public bool AttackHitDone => GameRaw.AttackHitDone(Native);
+
+        /// <summary>
+        /// 自己放的某个技能还在生效的剩余秒数（持续伤害、增益、变身等），没有则为 0。
+        /// 瞬发技能的实例也会短暂存在，判断"增益还在"时最好留一点阈值。
+        /// </summary>
+        public float SkillEffectRemaining(int skillId) => GameRaw.SkillEffectRemaining(Native, skillId);
+
+        /// <summary>对该敌人的增伤比例（全局增伤 + 对 Boss/精英/普通敌人的增伤），0.3 表示 +30%。</summary>
+        public float DamageBonusAgainst(Role target) => GameRaw.DamageBonus(Native, target.Native);
 
         /// <summary>当前所有存活的敌人。</summary>
         public List<Role> Enemies()
