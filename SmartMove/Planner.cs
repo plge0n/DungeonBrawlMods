@@ -49,7 +49,7 @@ namespace SmartMove
             return cmd;
         }
 
-        private static string StripNumbers(string s) => s == null ? null : System.Text.RegularExpressions.Regex.Replace(s, @"[d.]+", "#");
+        private static string StripNumbers(string s) => s == null ? null : System.Text.RegularExpressions.Regex.Replace(s, @"[\d.]+", "#");
 
         private static MoveCommand Plan(MoveContext ctx)
         {
