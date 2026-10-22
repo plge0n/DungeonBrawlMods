@@ -1,5 +1,15 @@
 # DBModKit 更新日志
 
+## 0.22.0
+- 新增自定义遗物（`CustomRelics`）：`mod.RegisterRelic(new RelicDef { … })` 注册后和游戏的遗物一样，按品级进遗物三选一、显示在遗物栏、可以升级；
+  名字和说明走 Mod 的 `Text`（键 `relic.<Key>.name/desc`），说明里的 `{0}` 由游戏换成数值（`ValueTypes` 决定显示成原值还是百分比）。
+  行为继承 `RelicBehaviour`，重写 `OnAdded` / `OnRemoved` / `OnLevelChanged` / `OnUpdate` / `OnGameEvent` / `OnHit`；`CustomRelics.Give` 直接发放。
+  编号由 Mod 的 GUID 和 Key 算出（3000000 起）
+- 联机：遗物只在自己的客户端生效；不是团队遗物、没有获取次数上限，选遗物时不会给房主发消息。算改玩法的内容，联机握手不允许时不进三选一。
+  同步给队友、国王对决、镜像 Boss 的构筑数据会去掉自定义遗物
+- 内容包支持 `relics`：字段同 `RelicDef`，触发器和被动一样；升级时自动按新等级重新生效
+- `RelicInfo.All` 包括自定义遗物（注册、注销后重新读）
+
 ## 0.21.0
 - 新增内容包（`ContentPacks`）：不写代码的 Mod。文件夹里放 `dbmod.json`（`"Type": "content"`）、JSON、图片和翻译，
   ModKit 从创意工坊、`BepInEx/workshop-dev/`、`BepInEx/content/` 读取，注册主动技能、被动和变体英雄，不用逐个确认。

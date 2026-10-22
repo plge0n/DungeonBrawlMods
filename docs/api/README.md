@@ -10,6 +10,7 @@
 | [战斗事件](战斗事件.md) | `GameEvents` `Combat` |
 | [自动释放、走位与技能调整](自动释放与走位.md) | `AutoCast` `MoveControl` `SkillTuning` `SkillTooltips` |
 | [自定义技能](自定义技能.md) | `PassiveSkills` `ActiveSkills` `ModAssets` `ModBundle` |
+| [自定义遗物](遗物.md) | `CustomRelics` `RelicDef` `RelicBehaviour` |
 | [英雄](英雄.md) | `HeroVariants` `HeroSkins` |
 | [数值与三选一](数值与三选一.md) | `GameData` `ChoicePanel` `RelicInfo` |
 | [界面](界面.md) | `NativeUi` `NativeWindow` `NativeTabs` `GameInput` `GamePause` `NativeTip` |

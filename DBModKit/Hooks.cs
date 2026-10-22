@@ -143,6 +143,17 @@ namespace DBModKit
                         typeof(uint), typeof(ActiveSkillEnum), typeof(Vector3), typeof(yb), typeof(int), typeof(float), typeof(int), typeof(int), typeof(bff),
                     }),
                     postfix: nameof(PassiveHooks.SkillCreatedPostfix));
+            // 自定义遗物：和被动共用文本、镜像 Boss 过滤；先装构筑数据和候选池的过滤，都装上了才接管遗物的创建
+            CustomRelics.Available = PassiveSkills.Available
+                && TryPatch(harmony, typeof(RelicHooks), "自定义遗物（构筑数据过滤）",
+                    AccessTools.Method(typeof(ez), "ebj", new[] { typeof(bool), typeof(bool) }),
+                    postfix: nameof(RelicHooks.KingDataPostfix))
+                && TryPatch(harmony, typeof(RelicHooks), "自定义遗物（候选池）",
+                    AccessTools.Method(typeof(ez), "eae", new[] { typeof(Dictionary<ItemType, RemainsData>), typeof(HashSet<ItemType>), typeof(HashSet<ItemType>) }),
+                    postfix: nameof(RelicHooks.PoolPostfix))
+                && TryPatch(harmony, typeof(RelicHooks), "自定义遗物（创建）",
+                    AccessTools.Method(typeof(bbe), "kql", new[] { typeof(string) }),
+                    postfix: nameof(RelicHooks.CreatePostfix));
 
             // Mod 的特效：m.cyn(路径) 是对象池第一次用到某个路径时加载模板的地方（m.cyp 等取对象的方法都经过它）
             ModAssets.EffectsAvailable = TryPatch(harmony, typeof(AssetHooks), "Mod 特效",
@@ -336,6 +347,51 @@ namespace DBModKit
         internal static void TogglePostfix(bool __result, State? __state)
         {
             if (__state is State s) AutoCast.RaiseResolved(new AutoCastResult(s.Slot, s.Verdict, __result));
+        }
+    }
+
+    // 自定义遗物（见 CustomRelics）：
+    // ez.ebj(_, _)：本地玩家的构筑数据（PlayerKingData），遗物数组直接从 playerAttribute.bfna 生成；同步给队友（CmdUploadSyncPlayerData）、
+    //   国王对决、信息面板、结算界面都用它（eiu / dpt / hlq / obw 是没有调用者的诱饵副本）
+    // ez.eae(遗物表, 排除, 已有)：三选一候选池按品级分组，ead（随机）和 eaa（固定品级）都经过它
+    // bbe.kql(效果名)：遗物表 skill 列 → rn 子类的大 switch，未知名字返回 new rn()
+    internal static class RelicHooks
+    {
+        internal static void KingDataPostfix(ref de.PlayerKingData __result)
+        {
+            try
+            {
+                GameRaw.FilterKingRelics(ref __result);
+            }
+            catch (Exception e)
+            {
+                Safe.Report("自定义遗物（构筑数据过滤）", e);
+            }
+        }
+
+        internal static void PoolPostfix(Dictionary<int, List<ItemType>> __result)
+        {
+            try
+            {
+                GameRaw.FilterRelicPool(__result);
+            }
+            catch (Exception e)
+            {
+                Safe.Report("自定义遗物（候选池）", e);
+            }
+        }
+
+        internal static void CreatePostfix(string __0, ref rn __result)
+        {
+            try
+            {
+                var ours = GameRaw.CreateModRelic(__0);
+                if (ours != null) __result = ours;
+            }
+            catch (Exception e)
+            {
+                Safe.Report("自定义遗物（创建）", e);
+            }
         }
     }
 

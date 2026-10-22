@@ -4,7 +4,7 @@
 
 | 示例 | 演示什么 |
 |---|---|
-| [SkillSample](SkillSample) | 自定义被动（饮血之刃：加力量、命中回血）和主动技能（雷暴：范围伤害、持续伤害、特效、施法动作）。和 [templates/ContentPack](../templates/ContentPack) 是同一套技能，可以对照 JSON 的写法 |
+| [SkillSample](SkillSample) | 自定义被动（饮血之刃：加力量、命中回血）、主动技能（雷暴：范围伤害、持续伤害、特效、施法动作）和遗物（铁壁徽章：护甲，升级补差值）。和 [templates/ContentPack](../templates/ContentPack) 是同一套技能，可以对照 JSON 的写法 |
 | [Frieren](Frieren) | 变体英雄"芙莉莲"：基于精灵魔法使，专属被动"无限魔力"，开局自带直线穿透技能"杀人魔法"，模型用创意工坊的芙莉莲皮肤（3798456516，要自己订阅） |
 | [BundleSkill](BundleSkill) | 图标、特效预制体、施法动作都来自 Mod 自己的 AssetBundle（"陨石术"）。仓库不带 bundle 文件，做法见 [docs/AssetBundle.md](../docs/AssetBundle.md) |
 

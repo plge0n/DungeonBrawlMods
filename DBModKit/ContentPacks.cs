@@ -9,7 +9,7 @@ using UnityEngine.UI;
 
 namespace DBModKit
 {
-    /// <summary>一个内容包：JSON 定义的技能、被动、变体英雄，加上图片和翻译，不含代码。</summary>
+    /// <summary>一个内容包：JSON 定义的技能、被动、遗物、变体英雄，加上图片和翻译，不含代码。</summary>
     public sealed class ContentPack
     {
         internal readonly List<Action> Cleanups = new List<Action>();
@@ -212,6 +212,14 @@ namespace DBModKit
                     pack.Cleanups.Add(() => PassiveSkills.Unregister(info));
                     passives[def.Key] = info;
                 });
+            int relics = 0;
+            foreach (var def in parsed.Relics)
+                Register(pack, parsed, $"遗物 {def.Key}", () =>
+                {
+                    var info = CustomRelics.Register(pack.Guid, text, def);
+                    pack.Cleanups.Add(() => CustomRelics.Unregister(info));
+                    relics++;
+                });
             int variants = 0;
             foreach (var (def, active, passive, where) in parsed.Variants)
             {
@@ -246,7 +254,7 @@ namespace DBModKit
             }
 
             // 改玩法的包按 JSON 内容的哈希比对：同一个版本号、文件被改过的包联机时也算"装的不一样"
-            if (actives.Count > 0 || passives.Count > 0 || HeroVariants.All.Any(v => v.Owner == pack.Guid && v.ChangesGameplay))
+            if (actives.Count > 0 || passives.Count > 0 || relics > 0 || HeroVariants.All.Any(v => v.Owner == pack.Guid && v.ChangesGameplay))
                 Multiplayer.Declare(pack.Guid, fingerprint.ToString("x8"));
 
             pack.ErrorList.AddRange(parsed.Errors);
@@ -255,6 +263,7 @@ namespace DBModKit
             var parts = new List<string>();
             if (actives.Count > 0) parts.Add($"{actives.Count} 个主动技能");
             if (passives.Count > 0) parts.Add($"{passives.Count} 个被动");
+            if (relics > 0) parts.Add($"{relics} 个遗物");
             if (variants > 0) parts.Add($"{variants} 个变体英雄");
             pack.Summary = parts.Count > 0 ? string.Join("、", parts) : "没有加载任何内容";
             pack.Loaded = true;
