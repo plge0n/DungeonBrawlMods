@@ -1,5 +1,10 @@
 # DBModKit 更新日志
 
+## 0.17.1
+- 排行榜规则补漏：在别人的房间里，国王对决结算时不再把自己的构筑快照发给房主（`bbe.ktb`）。房主没装 Mod 时，
+  原来会把我们（可能改过数值的）构筑和队伍一起上传；现在队伍照常上传，只是不带我们，并在屏幕上提示。
+  自己当房主时不变（最后的上传本来就会被拦截）。这道拦截装不上时 ModKit 整体停用，和上传拦截一样
+
 ## 0.17.0
 - 英雄专属技能 `HeroSkill`（`HeroSkill.Of(英雄)`、`Player.HeroSkill`）：hero 表里每个英雄出生时发放的那个技能，主动或被动；主动的带冷却、蓝耗、持续时间、充能、伤害参数，被动的带表里的数值
 - `Player.HeroSkillSlot`（篮球巨星拿到"鸡舞"卡牌后返回换过的真·鸡舞）、`Player.FindSkill`、`SkillSlot.SkillId` / `CooldownTotal` / `ReduceCooldown`
