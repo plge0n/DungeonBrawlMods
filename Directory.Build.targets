@@ -11,6 +11,8 @@
     1. 当前代码包含 origin/main 的最新提交（从旧的 main 拉出来、还没变基的分支不部署）；
     2. 当前代码包含游戏里这个项目上一次部署时的提交（记在 BepInEx/DBMods.deploy/<项目名>.commit）。
     确定要覆盖时：dotnet build -p:ForceDeploy=true
+    3. 部署目录里有 BepInEx/DBMods.nodeploy 时一律不部署（ForceDeploy 也不行）：用来保护只装工坊版、平时自己玩的游戏目录。
+       开发部署到另一个目录（-p:DeployDir=… 或环境变量 DeployDir）。
 
     项目里的 lang/（翻译）和 assets/（图片、AssetBundle）一起复制：plugins 下放在插件文件夹里，
     热重载时放在 BepInEx/scripts/<程序集名>/（ScriptEngine 从内存加载 dll，ModContext 到这里找文件）。
@@ -69,7 +71,14 @@
              Text="$(MSBuildProjectName) 没有部署到游戏：游戏里现在是另一份代码部署的（$(DeployedInfo)），当前分支（$(GitBranch)）不包含它的提交，部署会覆盖别人正在测的版本。先合并或变基到那份代码；如果那是你自己变基前的旧提交，或者确定要覆盖，加 -p:ForceDeploy=true。" />
   </Target>
 
-  <Target Name="DeployToGame" AfterTargets="CheckDeploySource" Condition="'$(DeployToGame)' == 'true' And '$(DeployBlocked)' != 'true'">
+  <!-- 3. 受保护的游戏目录 -->
+  <Target Name="CheckNoDeployMarker" AfterTargets="ReadGitHead"
+          Condition="'$(DeployToGame)' == 'true' And Exists('$(DeployDir)\BepInEx\DBMods.nodeploy')">
+    <Warning Text="$(MSBuildProjectName) 没有部署：$(DeployDir) 里有 BepInEx\DBMods.nodeploy（这个目录只装工坊版，不放开发版）。部署到开发用的游戏目录：-p:DeployDir=&quot;X:\...\测试用游戏目录&quot;，或设置环境变量 DeployDir。" />
+  </Target>
+
+  <Target Name="DeployToGame" AfterTargets="CheckDeploySource"
+          Condition="'$(DeployToGame)' == 'true' And '$(DeployBlocked)' != 'true' And !Exists('$(DeployDir)\BepInEx\DBMods.nodeploy')">
     <MakeDir Directories="$(DeployDir)\BepInEx\scripts" Condition="'$(HotReload)' == 'true'" />
     <Copy SourceFiles="$(TargetPath);$(BuiltPdb)" DestinationFolder="$(DeployDir)\BepInEx\scripts" Condition="'$(HotReload)' == 'true'" />
     <RemoveDir Directories="$(PluginDir)" Condition="'$(HotReload)' == 'true'" ContinueOnError="true" />
