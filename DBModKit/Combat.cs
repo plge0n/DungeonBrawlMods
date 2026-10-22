@@ -29,6 +29,19 @@ namespace DBModKit
         IllusoryWeapon,
     }
 
+    /// <summary>没带技能实例的伤害是谁造成的。</summary>
+    public enum HitEffectKind
+    {
+        None,
+        /// <summary>被动技能。</summary>
+        Passive,
+        /// <summary>装备特效。</summary>
+        Equipment,
+        Relic,
+        /// <summary>持续伤害的 Buff（灼烧、中毒……）。</summary>
+        Buff,
+    }
+
     // GameRaw 交给 Combat 的原始命中数据
     internal struct RawHit
     {
@@ -38,6 +51,8 @@ namespace DBModKit
         public bool Critical, Normal;
         public HitType Type;
         public HitOrigin Origin;
+        public HitEffectKind EffectKind;
+        public string EffectName;
     }
 
     /// <summary>一次命中。</summary>
@@ -64,6 +79,12 @@ namespace DBModKit
         /// 游戏没有记成"主动释放"的技能伤害（很多技能结算伤害时没标来源）也有。没有技能实例时为 null。
         /// </summary>
         public int? SourceSkillId { get; }
+        /// <summary>
+        /// 没有技能实例时，造成这次伤害的被动、装备特效、遗物或 Buff（只对本地玩家打出的伤害识别）。
+        /// 名字是游戏里显示的名字（装备特效用装备名）；识别不出时 Kind 为 None、名字为 null。
+        /// </summary>
+        public HitEffectKind EffectKind { get; }
+        public string EffectName { get; }
         /// <summary>这一下打死了目标（与游戏判定斩杀奖励的方式一致：伤害 ≥ 血量 + 护盾）。</summary>
         public bool Lethal => Damage >= TargetHp + TargetShield;
 
@@ -80,6 +101,8 @@ namespace DBModKit
             Type = h.Type;
             Origin = h.Origin;
             SourceSkillId = h.SourceSkillId ?? h.SkillId;
+            EffectKind = h.EffectKind;
+            EffectName = h.EffectName;
         }
     }
 
@@ -91,6 +114,9 @@ namespace DBModKit
         /// 联机时斩杀以主机为准，这里的 Lethal 是本地判断，极少数情况下和主机不一致。
         /// </summary>
         public static event Action<HitInfo> Hit;
+
+        // 有订阅者时才值得去取调用栈
+        internal static bool HasSubscribers => Hit != null;
 
         /// <summary>伤害上下文的钩子已安装（<see cref="HitInfo.Type"/>、<see cref="HitInfo.Origin"/>、<see cref="HitInfo.SourceSkillId"/> 可用）。</summary>
         public static bool ContextAvailable { get; internal set; }

@@ -24,6 +24,13 @@ namespace DBModKit
             ["bfl"] = new[] { "mna" },
             ["pj"] = new[] { "bcxi" },
             ["bfe"] = new[] { "bgwf", "bgwg", "bgwi" },
+            // 伤害来自哪个被动 / 装备 / 遗物 / Buff
+            ["qp"] = new string[0],
+            ["ke"] = new string[0],
+            ["lm"] = new string[0],
+            ["rn"] = new[] { "bdgp" },
+            ["hm"] = new[] { "baqz" },
+            ["jy"] = new[] { "baxw", "etb" },
             ["AttackType"] = new[] { "Normal", "Skill", "Buff", "AttackEffect", "TrueDamage" },
             ["DamageSourceKind"] = new[] { "Default", "ActiveSkill", "Aura", "Status", "Reflect", "PassiveProc", "IllusoryWeapon" },
             ["oj"] = new[] { "bcqp" },
@@ -39,7 +46,7 @@ namespace DBModKit
             ["LeaderboardUploadStage"] = new string[0],
             ["yb"] = new[]
             {
-                "hp", "maxHp", "authorityId", "iwk", "iwr", "izk", "iyn", "ivj", "bphx", "bpia", "bphc", "bqbx", "roleName", "bpgz", "beqd", "ivk", "bphy", "roleType",
+                "hp", "maxHp", "authorityId", "iwk", "iwr", "localRoleBuffDic", "izk", "iyn", "ivj", "bphx", "bpia", "bphc", "bqbx", "roleName", "bpgz", "beqd", "ivk", "bphy", "roleType",
                 "henShinSkillId", "timer", "iyi", "iyj", "isCheckAttack",
                 "enemyDefeatedEvent", "activeSkillCastEvent", "criticalEvent", "dogeEvent",
                 "bphz", "bphq", "bphp", "bpho", "bphb", "bphl", "bphm", "bphk", "bphr", "bphv", "bpgy", "iwz", "iwh",
@@ -48,7 +55,7 @@ namespace DBModKit
             {
                 "heroType", "kzz", "bpnc", "bfru", "bfrv", "kqi", "kqh", "addDamagePercent", "addBossEnemy", "addEliteEnemy", "addNormalEnemy",
                 "ksd", "k4a25de8c63fe4a7192613346ae51af4e", "kfd63a19d353a42878846361e6af4f637",
-                "kqk", "kkl", "CmdPickItem", "playerAttribute", "onPlayerLevelUp", "onPlayerRelife", "addBagItemEvent",
+                "kqk", "kkl", "CmdPickItem", "playerAttribute", "roleSkillList", "onPlayerLevelUp", "onPlayerRelife", "addBagItemEvent",
             },
             ["EnemyDefeatContext"] = new[] { "IsBoss", "IsElite" },
             ["MyServerNetworkManager"] = new[] { "qhu" },
@@ -58,7 +65,7 @@ namespace DBModKit
             // 掉落物拾取
             ["ot"] = new[] { "bctu", "gdb" },
             ["ou"] = new[] { "bcty", "bctz", "bcua", "bcuc" },
-            ["bba"] = new[] { "kgw" },
+            ["bba"] = new[] { "kgw", "bfmz", "bfna", "bfnc" },
             ["AudioManager"] = new[] { "daw" },
             ["ItemType"] = new[] { "Gold", "Gem", "STRBook", "Active_Book_D", "Passsive_Book_D", "GoldCoinBag_LV1", "Talisman_Roar", "Card_0" },
             ["bqa"] = new[] { "osj", "bacf" },
