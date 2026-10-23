@@ -1,7 +1,7 @@
 # DBModKit 更新日志
 
 ## 0.26.0
-海克斯第二批用的接口（**都没有实测**）：
+海克斯第二批用的接口（2026-10-23 单人实测通过）：
 - `mod.SetShotgunAmmo(上限, 冲锋装填数)`（`Shotgun`）：男枪的弹药上限（原版写死 2）和冲锋装填数（原版 1），上限可以随属性变（每次需要时调用），最多 12；
   头顶弹药条会补上多出来的弹壳。替换了弹药类 `bcc` 的 4 个真方法（lpz、lqb、lqc、lpx），补了 `PlayerShotgunMode.huq` 的战术装填和 `llk` 的同步编码
 - `Player.AddAttackCount` / `AttackCount`：多重攻击
@@ -15,7 +15,7 @@
 - 修复：ScriptEngine 热重载的插件（程序集名会被加上 "-数字"）找不到 `scripts/<名字>/` 下的 lang/、assets/，`mod.Folder` 为 null，图标和翻译都读不到
 
 ## 0.25.0
-给海克斯通用强化用的接口（**都没有实测**）：
+给海克斯通用强化用的接口（2026-10-23 单人实测通过；敌人攻击倍率改成受伤时放大后才真正生效）：
 - `Player.AddAttribute(键, 数值)`：按游戏的属性键加成（遗物、卡牌、锻体用的同一套，键名见注释），例如 `CoolDown` 技能急速、`AddDamage` 总伤害
 - `Player.ActiveSkills()`：身上所有主动技能（含技能书学到的）；`SkillSlot.ResetCooldown()`：冷却立刻转好
 - `Forging.Open(ForgeTier)`：免费用一次属性锻造器，和商店买的一样，价格不涨；`Forging.CanOpen` 判断界面空闲
