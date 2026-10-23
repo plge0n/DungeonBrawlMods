@@ -127,6 +127,14 @@ namespace DBModKit
                     AccessTools.Method(typeof(yb), "iwr", new[] { typeof(AttackType), typeof(double), typeof(bool), typeof(yb), typeof(bool) }),
                     prefix: nameof(DamageContextHooks.DotPrefix), finalizer: nameof(DamageContextHooks.Pop));
 
+            // 原始伤害：没装上时 HitInfo.RawDamage 等于 Damage
+            TryPatch(harmony, typeof(RawDamageHooks), "原始伤害（lvz）",
+                AccessTools.Method(typeof(bdc), "lvz", new[]
+                {
+                    typeof(yb), typeof(yb), typeof(long), typeof(AttackType), typeof(long), typeof(bdc.Origin).MakeByRefType(),
+                }),
+                prefix: nameof(RawDamageHooks.Prefix), finalizer: nameof(RawDamageHooks.Pop));
+
             SkillTuning.Available =
                 TryPatch(harmony, typeof(TuningHooks), "技能调整（创建技能）",
                     AccessTools.Method(typeof(ez), "dzc", new[]
@@ -911,6 +919,40 @@ namespace DBModKit
             {
                 owner = previous;
             }
+        }
+    }
+
+    // bdc.lvz(攻击者, 目标, 伤害, AttackType, 目标护盾, …)：触发命中事件 bgfu 前用 bdn.lyb 把伤害截到目标的护盾 + 血量，
+    // 打死目标时溢出的部分不算（goz、gxk 是同签名的诱饵）。这里记下截断前的伤害；bgfu 里的订阅者可能造成新的伤害（嵌套），用栈
+    internal static class RawDamageHooks
+    {
+        private struct Entry
+        {
+            public yb Attacker, Target;
+            public long Damage;
+        }
+
+        private static readonly List<Entry> stack = new List<Entry>();
+
+        internal static void Prefix(yb __0, yb __1, long __2, out bool __state)
+        {
+            stack.Add(new Entry { Attacker = __0, Target = __1, Damage = __2 });
+            __state = true;
+        }
+
+        internal static void Pop(bool __state)
+        {
+            if (__state && stack.Count > 0) stack.RemoveAt(stack.Count - 1);
+        }
+
+        // 最内层的调用对得上这次命中的目标和攻击者才算
+        internal static bool TryGet(yb target, yb attacker, out long damage)
+        {
+            damage = 0;
+            if (stack.Count == 0) return false;
+            var e = stack[stack.Count - 1];
+            damage = e.Damage;
+            return e.Target == target && e.Attacker == attacker;
         }
     }
 

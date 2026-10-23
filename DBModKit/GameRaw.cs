@@ -365,6 +365,9 @@ namespace DBModKit
                     Type = HitType.Unknown,
                     Origin = HitOrigin.Unknown,
                 };
+                raw.RawDamage = RawDamageHooks.TryGet(hit.target, hit.source, out long rawDamage)
+                    ? System.Math.Max(rawDamage, raw.Damage)
+                    : raw.Damage;
                 if (DamageContextHooks.TryGet(hit.target, hit.source, out var ctx))
                 {
                     raw.Type = MapEnum(ctx.Type, HitType.Unknown);

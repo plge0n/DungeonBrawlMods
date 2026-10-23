@@ -10,6 +10,7 @@
 - `Safe.Skip`：补丁前缀用，出错时自动退回原方法
 
 ## 0.25.1
+- `HitInfo.RawDamage`：打出的伤害，不受目标剩余血量限制（`Damage` 被游戏截到目标的血量 + 护盾，秒杀时溢出的部分不算）。补丁 `bdc.lvz` 前缀
 - 三选一卡片上 Mod 注册的图标（`mod.LoadIcon` / `RegisterIcon`）保留原色：游戏会按品质给图标染色，浅色的自制图标会整张变成紫色 / 橙色（补丁 `bpw.ork` 后缀）
 - 修复：ScriptEngine 热重载的插件（程序集名会被加上 "-数字"）找不到 `scripts/<名字>/` 下的 lang/、assets/，`mod.Folder` 为 null，图标和翻译都读不到
 

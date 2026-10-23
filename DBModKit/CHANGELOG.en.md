@@ -4,6 +4,7 @@
 - `mod.SetShotgunAmmo` (Shotgun hero's ammo cap and dash reload), `Player.AddAttackCount`, `Player.DropItem`, `Player.DamageArea`
 
 ## 0.25.1
+- `HitInfo.RawDamage`: damage dealt including overkill (`Damage` is capped at the target's HP + shield)
 - Mod icons in the three-choice panel keep their own colors (the game tints icons by quality)
 - Fix: hot-reloaded plugins (ScriptEngine renames the assembly) could not find their lang/ and assets/ folders
 
