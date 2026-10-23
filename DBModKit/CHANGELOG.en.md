@@ -2,6 +2,7 @@
 
 ## 0.25.0
 - New APIs for generic augments: `Player.AddAttribute`, `Player.ActiveSkills`, `SkillSlot.ResetCooldown`, `Forging.Open` (a free attribute forge), `mod.SetEnemyBoost` (enemy HP/attack multipliers), `mod.SetSoulSplash` (Desert Reaper's empowered strike splashes)
+- Fix: the workshop loader no longer loads a subscribed plugin that is also in `BepInEx/scripts` (dev setups ran both versions)
 
 ## 0.24.0
 - Custom equipment: attach custom effects to existing equipment (`RegisterEquipEffect`), or add brand-new equipment (`RegisterEquipment`, `CustomEquipment.Give`) that can appear in the artifact pick
