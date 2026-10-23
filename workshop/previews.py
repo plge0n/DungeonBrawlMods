@@ -16,6 +16,7 @@ ITEMS = {
     "DamageMeter": ("DamageMeter", "伤害统计", "Damage meter"),
     "Hextech": ("Hextech", "海克斯强化", "Hextech augments"),
     "DBStudio": ("DBStudio", "Mod 工作台", "In-game mod workbench"),
+    "Frieren": ("Frieren", "芙莉莲 · 无限魔力", "Infinite Mana"),
 }
 
 
