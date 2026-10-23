@@ -31,6 +31,8 @@ namespace Hextech
             public int WaveForges;
             // 无限循环往复：击杀累加的技能急速、普通敌人击杀计数
             public int InfiniteBonus, InfiniteKills;
+            // 法力流已经加上去的生命上限、攻击、最大法力；魔宗叠了几次
+            public int ManaHp, ManaAttack, ManaMp, ManamuneStacks;
             // 敌人海克斯拿到的卡；多给刷新次数的是哪一回合
             public List<Card> EnemyPicks = new List<Card>();
             public int BonusRound = -1;
@@ -80,6 +82,7 @@ namespace Hextech
             });
             mod.OnGameEvent(OnEvent);
             mod.OnSkillCast(Triggers.OnCast);
+            mod.OnSkillCast(OnAnyCast);
             mod.OnHit(Triggers.OnHit);
             mod.OnCheckpointSaved(() => checkpoint = run.Clone());
             mod.OnCheckpointRestored(Restore);
@@ -145,6 +148,7 @@ namespace Hextech
             Triggers.Tick(player);
             TickOffer();
             TickForge();
+            TickMana(player);
         }
 
         private static void Start(Player player)
@@ -270,7 +274,8 @@ namespace Hextech
                 cards.AddRange(Generator.Offer(profile, tier, 2 - cards.Count, rng, run.Shown));
             }
             int general = 3 - cards.Count;
-            var pool = Augments.All.Where(a => a.Pool == AugmentPool.General && a.Tier == tier && !Picked(a.Id)).ToList();
+            var pool = Augments.All.Where(a => a.Pool == AugmentPool.General && a.Tier == tier && !Picked(a.Id)
+                && (a.Requires == null || a.Requires.Any(Picked))).ToList();
             var fresh = pool.Where(a => !run.Shown.Contains("a:" + a.Id)).ToList();
             int heroId = Game.LocalPlayer?.HeroId ?? -1;
             cards.AddRange(Augments.Draw(fresh.Count >= general ? fresh : pool, heroId, general, rng).Select(a => a.ToCard()));
@@ -397,6 +402,50 @@ namespace Hextech
             }
         }
 
+        // ---- 法力流（由心及物、魔宗、左脚踩右脚）：每秒按当前的蓝、血算目标值，只补差额 ----
+        private static float manaAt;
+
+        private static void OnAnyCast(SkillCast cast)
+        {
+            if (cast.IsFree || !Active || !Picked("manamune") || run.ManamuneStacks >= Augments.ManamuneMaxStacks) return;
+            run.ManamuneStacks++;
+            if (run.ManamuneStacks == Augments.ManamuneMaxStacks) ScreenNotice.Show("魔宗叠满，变成「魔切」：攻击加成翻倍", 3f);
+        }
+
+        private static void TickMana(Player player)
+        {
+            if (Time.unscaledTime < manaAt || !Augments.ManaCards.Any(Picked)) return;
+            manaAt = Time.unscaledTime + 1f;
+            // 先算蓝（魔宗叠的 + 血转蓝），再用新的蓝算血和攻击；循环靠每秒重算逐步收敛
+            int mp = (Picked("manamune") ? run.ManamuneStacks * Augments.ManamuneStack : 0)
+                + (Picked("loop") ? (int)Math.Min(int.MaxValue / 4, player.MaxHp * Augments.LoopManaPerHp) : 0);
+            Adjust(player, "MP", ref run.ManaMp, mp);
+            long maxMana = player.MaxMana;
+            int hp = Picked("mind") ? (int)Math.Min(int.MaxValue / 4, maxMana * Augments.MindToMatter) : 0;
+            float attackRatio = Augments.ManamuneAttack * (run.ManamuneStacks >= Augments.ManamuneMaxStacks ? 2f : 1f);
+            int attack = Picked("manamune") ? (int)Math.Min(int.MaxValue / 4, maxMana * attackRatio) : 0;
+            Adjust(player, "HP", ref run.ManaHp, hp);
+            Adjust(player, "Attack", ref run.ManaAttack, attack);
+        }
+
+        // 已经加了 applied，目标是 target：只加差额（变化不到 1% 不动，免得每秒都发同步）
+        private static void Adjust(Player player, string key, ref int applied, int target)
+        {
+            int delta = target - applied;
+            if (delta == 0 || Math.Abs(delta) < Math.Max(1, Math.Abs(target) / 100)) return;
+            player.AddAttribute(key, delta);
+            applied = target;
+        }
+
+        private static void RevertMana(Player player)
+        {
+            if (player == null) return;
+            if (run.ManaHp != 0) player.AddAttribute("HP", -run.ManaHp);
+            if (run.ManaAttack != 0) player.AddAttribute("Attack", -run.ManaAttack);
+            if (run.ManaMp != 0) player.AddAttribute("MP", -run.ManaMp);
+            run.ManaHp = run.ManaAttack = run.ManaMp = 0;
+        }
+
         // ---- 属性锻造：攒着，休息时（三选一界面空闲、海克斯没在等着弹）依次打开 ----
         public static void QueueForge(ForgeTier tier, int count)
         {
@@ -490,6 +539,7 @@ namespace Hextech
             {
                 foreach (var c in run.Picks) c.Augment?.Revert?.Invoke(me);
                 if (run.InfiniteBonus > 0) me.AddAttribute("CoolDown", -run.InfiniteBonus);
+                RevertMana(me);
             }
             run.InfiniteBonus = 0;
             run.Forges.Clear();

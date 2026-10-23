@@ -25,6 +25,8 @@ namespace Hextech
         // 某些英雄更容易抽到（英雄编号 → 权重倍数）
         public Dictionary<int, float> HeroWeights;
         public Action<Player> OnPick;
+        // 要先选过其中任意一张才会出现
+        public string[] Requires;
         // 撤销 OnPick 的效果（有人进房间、关掉总开关时）；一次性的锻造之类撤不了的留空
         public Action<Player> Revert;
         // 敌人卡：之后刷出的怪物倍率
@@ -55,6 +57,10 @@ namespace Hextech
         public const float AxiomEliteRatio = 0.15f;
         public const int RecursionHaste = 40, InfiniteHaste = 60;
         public const int InfiniteNormalKills = 20, InfiniteElite = 2, InfiniteBoss = 10, InfiniteMax = 60;
+        // 法力流：由心及物（蓝转血）、魔宗（蓝转攻击，放技能叠蓝）、左脚踩右脚（血转蓝）。
+        // 蓝转血 × 血转蓝 = 1 × 0.05 < 1，循环会收敛（总共多出约 1/(1-0.05) 倍），所以不设上限
+        public const float MindToMatter = 1f, ManamuneAttack = 0.05f, LoopManaPerHp = 0.05f;
+        public const int ManamuneStack = 5, ManamuneMaxStacks = 100;
 
         private static Augment Stat(string id, string name, string origin, Tier tier, string line, string key, int amount, string icon = EpicIcon,
             Dictionary<int, float> weights = null) => new Augment
@@ -65,6 +71,9 @@ namespace Hextech
         };
 
         private static readonly Dictionary<int, float> Frieren = new Dictionary<int, float> { [FrierenHero] = 3f };
+
+        // 法力流的卡：数值每秒按当前的蓝、血重算（Engine.TickMana），撤销时减掉加过的量
+        public static readonly string[] ManaCards = { "mind", "manamune", "loop" };
 
         public static readonly Augment[] All =
         {
@@ -80,6 +89,11 @@ namespace Hextech
             },
             new Augment
             {
+                Id = "mind", Name = "由心及物", Origin = "由心及物", Pool = AugmentPool.General, Tier = Tier.Silver, IconPath = EpicIcon, HeroWeights = Frieren,
+                Lines = new[] { $"生命上限 + 最大法力的 {MindToMatter:0%}（蓝涨了血跟着涨）" },
+            },
+            new Augment
+            {
                 Id = "goldrush", Name = "淘金", Pool = AugmentPool.General, Tier = Tier.Silver, IconPath = ForgeIcon,
                 Lines = new[]
                 {
@@ -92,6 +106,15 @@ namespace Hextech
             Stat("recursion", "循环往复", "循环往复", Tier.Gold, $"技能急速 +{RecursionHaste}", "CoolDown", RecursionHaste, weights: Frieren),
             Stat("critical", "暴击", "暴击", Tier.Gold, "暴击率 +20%", "Critical", 20),
             Stat("colossus", "巨像", "天体", Tier.Gold, "生命上限 +20%", "HpPercent", 20),
+            new Augment
+            {
+                Id = "manamune", Name = "魔宗", Origin = "魔宗（装备）", Pool = AugmentPool.General, Tier = Tier.Gold, IconPath = EpicIcon, HeroWeights = Frieren,
+                Lines = new[]
+                {
+                    $"攻击 + 最大法力的 {ManamuneAttack:0%}",
+                    $"每放一次主动技能，最大法力 +{ManamuneStack}；叠满 {ManamuneMaxStacks} 次后变成「魔切」，攻击加成翻倍",
+                },
+            },
             new Augment
             {
                 Id = "axiom", Name = "奥术公理", Origin = "奥术公理", Pool = AugmentPool.General, Tier = Tier.Gold, IconPath = EpicIcon, HeroWeights = Frieren,
@@ -118,6 +141,11 @@ namespace Hextech
                 OnPick = _ => Engine.QueueForge(ForgeTier.Gold, 3),
             },
             Stat("goliath", "巨人", "巨人", Tier.Prism, "生命上限 +35%", "HpPercent", 35),
+            new Augment
+            {
+                Id = "loop", Name = "左脚踩右脚", Pool = AugmentPool.General, Tier = Tier.Prism, IconPath = EpicIcon, HeroWeights = Frieren, Requires = new[] { "mind", "manamune" },
+                Lines = new[] { $"最大法力 + 生命上限的 {LoopManaPerHp:0%}", "和由心及物、魔宗互相喂：蓝变多 → 血、攻击变多 → 蓝更多" },
+            },
 
             // ---- 招牌 ----
             new Augment
