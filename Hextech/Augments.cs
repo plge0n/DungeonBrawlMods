@@ -32,6 +32,9 @@ namespace Hextech
         public Action<Player> Revert;
         // 敌人卡：之后刷出的怪物倍率
         public float EnemyHp = 1f, EnemyAttack = 1f;
+        // 招牌「邦」系列：噬魂一击溅射。同一系列按档次升级，拿了高档的低档不再出现，生效取最高的那张
+        public SoulSplash Splash;
+        public int Rank;
 
         public float WeightFor(int heroId) => HeroWeights != null && HeroWeights.TryGetValue(heroId, out var w) ? w : 1f;
 
@@ -149,11 +152,24 @@ namespace Hextech
                 Lines = new[] { $"最大法力 + 生命上限的 {LoopManaPerHp:0%}", "和由心及物、魔宗互相喂：蓝变多 → 血、攻击变多 → 蓝更多" },
             },
 
-            // ---- 招牌 ----
+            // ---- 招牌（每档都有，开局抽到银也能拿到）----
             new Augment
             {
-                Id = "bonk", Name = "邦！", Origin = "邦！", Pool = AugmentPool.Signature, Tier = Tier.Gold, SkillId = SoulDevourerSkill,
+                Id = "bonk1", Name = "邦", Origin = "邦！", Pool = AugmentPool.Signature, Tier = Tier.Silver, SkillId = SoulDevourerSkill, Rank = 1,
+                Splash = new SoulSplash { Radius = 2.5f, Ratio = 0.4f },
+                Lines = new[] { "噬魂一击的强化普攻同时打中主目标附近的敌人（40% 伤害，各自判定暴击）", "被溅射打死的敌人也照常叠层" },
+            },
+            new Augment
+            {
+                Id = "bonk", Name = "邦！", Origin = "邦！", Pool = AugmentPool.Signature, Tier = Tier.Gold, SkillId = SoulDevourerSkill, Rank = 2,
+                Splash = new SoulSplash { Radius = 3.5f, Ratio = 0.6f },
                 Lines = new[] { "噬魂一击的强化普攻同时打中主目标周围的敌人（60% 伤害，各自判定暴击）", "被溅射打死的敌人也照常叠层" },
+            },
+            new Augment
+            {
+                Id = "bonk3", Name = "邦邦邦！", Origin = "邦！+ 叠角龙", Pool = AugmentPool.Signature, Tier = Tier.Prism, SkillId = SoulDevourerSkill, Rank = 3,
+                Splash = new SoulSplash { Radius = 5f, Ratio = 1f, HitStacks = 1 },
+                Lines = new[] { "噬魂一击的强化普攻同时打中大范围内的敌人（100% 伤害，各自判定暴击）", "溅射打死的照常叠层，没打死也 +1 层" },
             },
 
             // ---- 敌人 ----

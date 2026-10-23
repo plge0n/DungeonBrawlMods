@@ -177,19 +177,43 @@ def manamune():  # 魔宗：蓝色的剑
     return ic
 
 
-def bonk():  # 邦！：骨头 + 冲击线（沙漠死神的招牌）
+def bone(ic, cx, cy, k=1.0, rot=0.0):
+    """一根骨头（中心 cx, cy，k 缩放，rot 旋转角度）。"""
+    base = [(0.3, 0.42), (0.68, 0.42)] + circle(0.74, 0.4, 0.07)[36:48] + circle(0.74, 0.4, 0.07)[0:6] +            circle(0.74, 0.56, 0.07)[0:18] + [(0.68, 0.54), (0.3, 0.54)] + circle(0.25, 0.56, 0.07)[12:30] + circle(0.25, 0.4, 0.07)[24:42]
+    c, s_ = math.cos(math.radians(rot)), math.sin(math.radians(rot))
+    pts = [(cx + ((x - 0.5) * c - (y - 0.48) * s_) * k, cy + ((x - 0.5) * s_ + (y - 0.48) * c) * k) for x, y in base]
+    shape(ic, pts, (245, 235, 205), 0.03 * max(0.7, k))
+
+
+def impact(ic, cx, cy, r0, r1, step=35, color=(230, 90, 40)):
+    for a in range(0, 360, step):
+        if 160 < a % 180 or a % 180 < 20:
+            continue  # 骨头两头留空
+        r = math.radians(a)
+        ic.line([(cx + r0 * math.cos(r), cy + r0 * 0.8 * math.sin(r)), (cx + r1 * math.cos(r), cy + r1 * 0.8 * math.sin(r))],
+                color=color, width=0.022, passes=1)
+
+
+def bonk1():  # 邦（银）：一根小骨头
+    ic = Icon(207, "silver")
+    bone(ic, 0.5, 0.5, 0.8)
+    impact(ic, 0.5, 0.5, 0.24, 0.32, 60)
+    return ic
+
+
+def bonk():  # 邦！（金）：骨头 + 冲击线（沙漠死神的招牌）
     ic = Icon(206, "gold")
-    bone = [(0.3, 0.42), (0.68, 0.42)] + circle(0.74, 0.4, 0.07)[36:48] + circle(0.74, 0.4, 0.07)[0:6] + \
-           circle(0.74, 0.56, 0.07)[0:18] + [(0.68, 0.54), (0.3, 0.54)] + circle(0.25, 0.56, 0.07)[12:30] + circle(0.25, 0.4, 0.07)[24:42]
-    shape(ic, bone, (245, 235, 205))
-    for a in range(200, 341, 35):
-        r = math.radians(a)
-        ic.line([(0.5 + 0.3 * math.cos(r), 0.48 + 0.3 * math.sin(r)), (0.5 + 0.4 * math.cos(r), 0.48 + 0.4 * math.sin(r))],
-                color=(230, 90, 40), width=0.022, passes=1)
-    for a in range(20, 161, 35):
-        r = math.radians(a)
-        ic.line([(0.5 + 0.22 * math.cos(r), 0.48 + 0.22 * math.sin(r)), (0.5 + 0.32 * math.cos(r), 0.48 + 0.32 * math.sin(r))],
-                color=(230, 90, 40), width=0.022, passes=1)
+    bone(ic, 0.5, 0.5)
+    impact(ic, 0.5, 0.5, 0.27, 0.38)
+    return ic
+
+
+def bonk3():  # 邦邦邦！（棱彩）：三根骨头 + 一圈冲击线
+    ic = Icon(208, "prism")
+    impact(ic, 0.5, 0.5, 0.33, 0.43, 25, (200, 80, 220))
+    bone(ic, 0.5, 0.33, 0.62, -12)
+    bone(ic, 0.5, 0.5, 0.62, 8)
+    bone(ic, 0.5, 0.67, 0.62, -6)
     return ic
 
 
@@ -239,7 +263,7 @@ def loop():  # 左脚踩右脚：两个脚印踩在一起 + 转圈箭头
 
 
 ICONS = {f.__name__: f for f in (blunt, deft, goredrink, stats, goldrush, mind,
-                                  recursion, critical, colossus, axiom, manamune, bonk,
+                                  recursion, critical, colossus, axiom, manamune, bonk1, bonk, bonk3,
                                   infinite, stats3, goliath, loop)}
 
 if __name__ == "__main__":

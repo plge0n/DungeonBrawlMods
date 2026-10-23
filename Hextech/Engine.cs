@@ -268,10 +268,13 @@ namespace Hextech
             if (profile != null)
             {
                 var ids = SkillIds().ToList();
+                int rank = run.Picks.Where(c => c.Augment?.Splash != null).Select(c => c.Augment.Rank).DefaultIfEmpty(0).Max();
                 var signature = Augments.All.Where(a => a.Pool == AugmentPool.Signature && a.Tier == tier && ids.Contains(a.SkillId)
-                    && !Picked(a.Id) && !run.Shown.Contains("a:" + a.Id)).ToList();
-                if (signature.Count > 0 && rng.NextDouble() < 0.5) cards.Add(signature[rng.Next(signature.Count)].ToCard());
-                cards.AddRange(Generator.Offer(profile, tier, 2 - cards.Count, rng, run.Shown));
+                    && !Picked(a.Id) && (a.Splash == null || a.Rank > rank) && !run.Shown.Contains("a:" + a.Id)).ToList();
+                if (signature.Count > 0 && rng.NextDouble() < 0.7) cards.Add(signature[rng.Next(signature.Count)].ToCard());
+                // 积木少的技能刷新几次后会凑出同名的卡（数值不同），同名的只留一张，空位给通用卡
+                foreach (var c in Generator.Offer(profile, tier, 2 - cards.Count, rng, run.Shown))
+                    if (cards.All(x => x.Name != c.Name)) cards.Add(c);
             }
             int general = 3 - cards.Count;
             var pool = Augments.All.Where(a => a.Pool == AugmentPool.General && a.Tier == tier && !Picked(a.Id)
@@ -506,11 +509,12 @@ namespace Hextech
         // 持续的状态：按已选的卡重新设置，可以反复调用（重试波次后也走这里）
         private static void ApplyState()
         {
-            bool bonk = Picked("bonk");
-            if (bonk != splashSet)
+            var splash = run.Picks.Select(c => c.Augment).Where(a => a?.Splash != null).OrderByDescending(a => a.Rank).FirstOrDefault()?.Splash;
+            if (splash != null || splashSet)
             {
-                mod.SetSoulSplash(bonk ? new SoulSplash { Radius = 3.5f, Ratio = 0.6f } : null);
-                splashSet = bonk;
+                // 相同设置 ModKit 只是覆盖，重复调用无妨
+                mod.SetSoulSplash(splash);
+                splashSet = splash != null;
             }
             float hp = 1f, attack = 1f;
             foreach (var c in run.EnemyPicks)

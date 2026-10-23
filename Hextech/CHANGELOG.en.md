@@ -1,6 +1,8 @@
 # Hextech changelog (English)
 
 ## 0.2.1
+- Desert Reaper's signature now has three tiers (Bonk / Bonk! / Bonk Bonk Bonk!) so it can show up in any pick
+- Fix: two signature-skill cards with the same name in one pick
 - Hand-drawn crayon-style icons for generic and signature augments, paper color by tier
 
 ## 0.2.0
