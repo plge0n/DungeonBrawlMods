@@ -792,7 +792,7 @@ namespace DBModKit
     {
         internal static void CardPostfix(bpw __instance, RoguelikeUIData __0)
         {
-            if (__0 != null && ModAssets.IsOurs(__0.icon) && __instance.iconImg != null) __instance.iconImg.color = Color.white;
+            if (ModAssets.IsOurs(__0.icon) && __instance.iconImg != null) __instance.iconImg.color = Color.white;
         }
     }
 

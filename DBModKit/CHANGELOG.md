@@ -1,6 +1,7 @@
 # DBModKit 更新日志
 
 ## 0.25.1
+- 三选一卡片上 Mod 注册的图标（`mod.LoadIcon` / `RegisterIcon`）保留原色：游戏会按品质给图标染色，浅色的自制图标会整张变成紫色 / 橙色（补丁 `bpw.ork` 后缀）
 - 修复：ScriptEngine 热重载的插件（程序集名会被加上 "-数字"）找不到 `scripts/<名字>/` 下的 lang/、assets/，`mod.Folder` 为 null，图标和翻译都读不到
 
 ## 0.25.0
