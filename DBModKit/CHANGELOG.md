@@ -1,5 +1,14 @@
 # DBModKit 更新日志
 
+## 0.25.0
+给海克斯通用强化用的接口（**都没有实测**）：
+- `Player.AddAttribute(键, 数值)`：按游戏的属性键加成（遗物、卡牌、锻体用的同一套，键名见注释），例如 `CoolDown` 技能急速、`AddDamage` 总伤害
+- `Player.ActiveSkills()`：身上所有主动技能（含技能书学到的）；`SkillSlot.ResetCooldown()`：冷却立刻转好
+- `Forging.Open(ForgeTier)`：免费用一次属性锻造器，和商店买的一样，价格不涨；`Forging.CanOpen` 判断界面空闲
+- `mod.SetEnemyBoost(生命, 攻击, 护盾)`（`EnemyBoosts`）：怪物变强，多个 Mod 相乘，乘在 GameData 数值包之上。生命、护盾在刷怪时乘；攻击在怪物打到本地玩家时放大伤害（实测小怪表里的攻击只有 1~3，乘表取整等于没乘）
+- `mod.SetSoulSplash(SoulSplash)`（`SoulDevourer`）：沙漠死神噬魂一击的强化普攻溅射到周围敌人，溅射打死的也叠层
+- 修复：开发环境里 `BepInEx/scripts` 有同一个插件时，工坊加载器还会再加载订阅的那份，两个版本同时运行（实测 Hextech 0.1.1 和 0.2.0 一起弹三选一）
+
 ## 0.24.0
 自定义装备（2026-10-23 单人实测通过：挂特效、新装备、内容包、构筑数据过滤；**没测**：联机、装备强化、重试波次、在神器三选一里实际选中）：
 - 新增 `CustomEquipEffects` / `EquipEffectDef` / `EquipEffectBehaviour`（`mod.RegisterEquipEffect`）：装备特效，

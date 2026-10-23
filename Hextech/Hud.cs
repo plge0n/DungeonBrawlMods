@@ -83,7 +83,7 @@ namespace Hextech
             irt.offsetMax = new Vector2(-3f, -3f);
             var img = icon.GetComponent<Image>();
             img.raycastTarget = false;
-            string path = Engine.HeroSkill?.IconPath;
+            string path = Engine.IconFor(card);
             var sprite = string.IsNullOrEmpty(path) ? null : Resources.Load<Sprite>(path);
             if (sprite != null) img.sprite = sprite;
             else img.color = new Color(0.15f, 0.15f, 0.2f);

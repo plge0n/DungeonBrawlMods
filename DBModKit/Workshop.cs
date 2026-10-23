@@ -328,11 +328,20 @@ namespace DBModKit
             }
         }
 
+        private static bool InScriptsFolder(Candidate c)
+        {
+            string dir = Path.Combine(Paths.BepInExRootPath, "scripts");
+            return Directory.Exists(dir) && File.Exists(Path.Combine(dir, Path.GetFileName(c.Type.Assembly.Location)));
+        }
+
         // null = 可以加载；"" = 依赖在同一批里还没加载；其他 = 不能加载的原因
         private static string MissingDependency(Candidate c, List<Candidate> batch, bool waitSoft)
         {
             if (Chainloader.PluginInfos.ContainsKey(c.Metadata.GUID))
                 return $"已经装了同一个插件（{c.Metadata.GUID}），用的是本地那份";
+            // ScriptEngine 的 scripts 文件夹（开发环境）比工坊加载得晚，这时还不在 PluginInfos 里，按文件名认
+            if (InScriptsFolder(c))
+                return $"BepInEx/scripts 里有同一个插件（{Path.GetFileName(c.Type.Assembly.Location)}），用的是本地那份";
             foreach (var inc in MetadataHelper.GetAttributes<BepInIncompatibility>(c.Type))
                 if (Chainloader.PluginInfos.ContainsKey(inc.IncompatibilityGUID))
                     return $"和 {inc.IncompatibilityGUID} 不兼容";

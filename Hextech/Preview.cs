@@ -34,6 +34,10 @@ namespace Hextech
                     foreach (var c in Generator.Offer(p, t, 3, rng))
                         sb.AppendLine($"  [{Engine.TierName(t)}] {c.Name}：{string.Join("；", c.Lines)}");
             }
+            sb.AppendLine();
+            sb.AppendLine("=== 手写的卡（通用 / 招牌 / 敌人）");
+            foreach (var a in Augments.All)
+                sb.AppendLine($"  [{a.Pool} {Engine.TierName(a.Tier)}] {a.Name}：{string.Join("；", a.Lines)}");
             string dir = Path.Combine(Paths.BepInExRootPath, "Hextech");
             Directory.CreateDirectory(dir);
             string path = Path.Combine(dir, "preview.txt");

@@ -375,6 +375,34 @@ namespace DBModKit
         /// <summary>撤销这个 Mod 的所有技能调整。</summary>
         public void ClearSkillTunes() => SkillTuning.ClearOwner(Metadata.Name);
 
+        private bool enemyBoost;
+
+        /// <summary>
+        /// 给之后刷出来的怪物乘上倍率（见 <see cref="EnemyBoosts"/>），再次调用覆盖这个 Mod 上一次的设置，全传 1 撤销；卸载时自动撤销。
+        /// </summary>
+        public void SetEnemyBoost(float hp, float attack = 1f, float shield = 1f)
+        {
+            if (!enemyBoost)
+            {
+                enemyBoost = true;
+                AddCleanup(() => EnemyBoosts.ClearOwner(Metadata.Name));
+            }
+            EnemyBoosts.Set(Metadata.Name, hp, attack, shield);
+        }
+
+        private bool soulSplash;
+
+        /// <summary>设置沙漠死神噬魂一击的溅射（见 <see cref="SoulDevourer"/>），传 null 取消；卸载时自动取消。</summary>
+        public void SetSoulSplash(SoulSplash splash)
+        {
+            if (!soulSplash)
+            {
+                soulSplash = true;
+                AddCleanup(() => SoulDevourer.ClearOwner(Metadata.Name));
+            }
+            SoulDevourer.Set(Metadata.Name, splash);
+        }
+
         /// <summary>打开 BepInEx/config 下的 JSON 配置；卸载时自动保存并释放。</summary>
         public JsonConfig<T> LoadJson<T>(string fileName) where T : new()
         {

@@ -133,6 +133,9 @@ namespace DBModKit
             if (seconds <= 0f || GameRaw.SkillOwner(Native) != GameRaw.LocalPlayer()) return;
             GameRaw.SetCooldownRemaining(Native, Mathf.Max(0f, CooldownRemaining - seconds));
         }
+        /// <summary>冷却立刻转好（充能技能只转好正在冷却的这一格）。只能用于本地玩家的技能。</summary>
+        public void ResetCooldown() => ReduceCooldown(CooldownRemaining);
+
         /// <summary>右键开启了自动释放。</summary>
         public bool IsAutoCastOn => GameRaw.IsAutoCastOn(Native);
         public float CooldownRemaining => GameRaw.CooldownRemaining(Native);
