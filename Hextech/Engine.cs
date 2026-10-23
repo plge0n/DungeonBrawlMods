@@ -563,6 +563,8 @@ namespace Hextech
             appliedPassive = null;
             mod.RunLog.Info("重试波次", "还原", ("已选", run.Picks.Count), ("待弹", run.Pending));
             if (run.Pending) openAt = Time.unscaledTime + IdleDelay;
+            // 游戏随后会重弹这一波的遗物选择，欠的锻造等它先出来
+            forgeAt = Time.unscaledTime + IdleDelay;
             Apply();
         }
 
