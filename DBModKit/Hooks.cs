@@ -54,6 +54,11 @@ namespace DBModKit
                 }),
                 prefix: nameof(GameDataHooks.EnemyDamagePrefix));
 
+            // 三选一卡片 bpw.ork 按品质给图标染色（原版的深色技能图标染了才有色调），Mod 注册的图标保留原色
+            TryPatch(harmony, typeof(ChoiceIconHooks), "三选一图标保留原色",
+                AccessTools.Method(typeof(bpw), "ork", new[] { typeof(RoguelikeUIData), typeof(int), typeof(bool), typeof(int) }),
+                postfix: nameof(ChoiceIconHooks.CardPostfix));
+
             // 沙漠死神噬魂一击的溅射：lkt 是强化普攻结算完、清除强化的方法（镜像 Boss 的子类在 GameRaw 里排除）
             SoulDevourer.Available = TryPatch(harmony, typeof(SoulDevourerHooks), "噬魂一击溅射",
                 AccessTools.Method(typeof(PlayerKoboldMode), "lkt", Type.EmptyTypes),
@@ -781,6 +786,14 @@ namespace DBModKit
         }
 
         private static int ScaleInt(int v, double scale) => (int)Math.Round(Math.Min(int.MaxValue, v * scale));
+    }
+
+    internal static class ChoiceIconHooks
+    {
+        internal static void CardPostfix(bpw __instance, RoguelikeUIData __0)
+        {
+            if (__0 != null && ModAssets.IsOurs(__0.icon) && __instance.iconImg != null) __instance.iconImg.color = Color.white;
+        }
     }
 
     internal static class SoulDevourerHooks
