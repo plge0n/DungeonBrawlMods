@@ -238,6 +238,30 @@ namespace DBModKit
                 ("之前", before), ("之后", $"{Strength}/{Agility}/{Stamina} 攻击 {Attack}"));
         }
 
+        /// <summary>
+        /// 按游戏的属性键加成（遗物、卡牌、锻体用的同一套，负数撤销）。本局有效，不会自动撤销，临时加成要自己到时间用相反数再调一次。
+        /// 整数键：Str、Agi、Sta、Three（三围）、Attack、HP、MP、Armor、HPSec、MPSec、Luck、XiXue、CoolDown（技能急速，冷却 ×1/(1+急速/100)）、
+        /// ReduceInjury、ExtraDamage、Doge、MoveSpeed、SkillHit；
+        /// 百分比键（25 = 25%）：AttackSpeed、Critical、CriticalDamage、XiXueRate、NormalAdd、SkillAdd、AddDamage（总伤害）、HpPercent、HpSecRate、
+        /// NormalBreak、SkillBreak、AllBreakShield、ExpAdd、SummonAdd、HenshinAdd、HaloAdd、ArmedAdd、GoldAdd。
+        /// 加力量、敏捷、体力会改基础值（游戏的官方方法，会过防篡改校验）；只想要可撤销的三围加成用 <see cref="AddStats"/>。
+        /// </summary>
+        public void AddAttribute(string key, int amount)
+        {
+            RequireLocal();
+            if (amount == 0 || string.IsNullOrEmpty(key)) return;
+            GameRaw.AddAttribute(key, amount);
+            RunLog.Info(RunLog.CallerMod(), "玩家", "加属性", ("键", key), ("数值", amount));
+        }
+
+        /// <summary>身上所有的主动技能（专属技能、技能书学到的、自定义的），不含被动。</summary>
+        public List<SkillSlot> ActiveSkills()
+        {
+            var result = new List<SkillSlot>();
+            foreach (var s in GameRaw.ActiveSkillsOf(Native)) result.Add(SkillSlot.Wrap(s));
+            return result;
+        }
+
         /// <summary>这个英雄的专属技能。</summary>
         public HeroSkill HeroSkill => HeroSkill.Of(HeroId);
 

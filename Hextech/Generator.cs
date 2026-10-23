@@ -39,11 +39,14 @@ namespace Hextech
         public List<CardPart> Parts = new List<CardPart>();
         public string Name = "";
         public List<string> Lines = new List<string>();
+        // 手写的卡（通用、招牌、敌人），这时 Parts 为空
+        public Augment Augment;
 
         public float Points => Parts.Sum(p => p.Points);
-        public string Signature => string.Join(",", Parts.Select(p => $"{p.Block.Id}x{p.Mult}{(p.EveryThird ? "/3" : "")}").OrderBy(s => s));
+        public string Signature => Augment != null ? "a:" + Augment.Id
+            : string.Join(",", Parts.Select(p => $"{p.Block.Id}x{p.Mult}{(p.EveryThird ? "/3" : "")}").OrderBy(s => s));
         // 积木组合（不管倍数）：刷新时按它排除，否则换来的只是同一张卡数值稍有不同
-        public string Shape => string.Join(",", Parts.Select(p => p.Block.Id).OrderBy(s => s));
+        public string Shape => Augment != null ? "a:" + Augment.Id : string.Join(",", Parts.Select(p => p.Block.Id).OrderBy(s => s));
     }
 
     internal static class Blocks

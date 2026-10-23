@@ -1978,6 +1978,84 @@ namespace DBModKit
         public static void AddAttackSpeed(Component p, float ratio) => ((yb)p).iqz(ratio);
         // yb.irv：护甲（会刷新属性面板）
         public static void AddArmor(Component p, int amount) => ((yb)p).irv(amount);
+
+        // ---- 通用加成（海克斯通用强化）----
+        // ez.ebt(键, 整数)：遗物、卡牌、锻体读"键|值"时走的就是它，作用于本地玩家 nn.bpbu。百分比类的键传 25 表示 25%。
+        // 有的分支直接写字段（skillCdReduce、addDamagePercent……），不经过防篡改校验，也不会自动撤销，撤销就传负数
+        private static Action<string, int> addAttribute;
+
+        public static void AddAttribute(string key, int amount)
+        {
+            addAttribute = addAttribute ?? AccessTools.MethodDelegate<Action<string, int>>(
+                AccessTools.Method(typeof(ez), "ebt", new[] { typeof(string), typeof(int) }));
+            addAttribute(key, amount);
+        }
+
+        // 身上的主动技能（roleSkillList 里除了被动 qp 的都算，包括技能书学到的）
+        public static List<object> ActiveSkillsOf(Component p)
+        {
+            var result = new List<object>();
+            foreach (var s in ((bbe)p).roleSkillList)
+                if (s != null && !(s is qp) && s.bhne != ActiveSkillEnum.None) result.Add(s);
+            return result;
+        }
+
+        // 属性锻造器：商店买锻造器走 pi.ghj → 检查 ez.dyw（三选一界面空闲）和 nn.bbto → pi.gjl(ForgingTier)。
+        // gjl 抽稀有度、弹"属性选择"三选一，选中后经 pi.gjm 加属性（官方路径，过防篡改）。直接调 gjl 和买一个一样，只是价格不涨
+        private static Action<pi, pi.ForgingTier> forge;
+
+        public static bool CanForge() => !nn.bbto && !ChoiceBusy() && bz.ddr<pi>() != null;
+
+        public static void Forge(int tier)
+        {
+            forge = forge ?? AccessTools.MethodDelegate<Action<pi, pi.ForgingTier>>(
+                AccessTools.Method(typeof(pi), "gjl", new[] { typeof(pi.ForgingTier) }));
+            forge(bz.ddr<pi>(), tier == 2 ? pi.ForgingTier.Epic : tier == 1 ? pi.ForgingTier.Gold : pi.ForgingTier.Normal);
+        }
+
+        // 沙漠死神的普攻组件 PlayerKoboldMode：噬魂一击把 bftv 置为 true（下一次普攻强化），lko 在出手时结算：
+        // 伤害 kcm(kse(out 普攻增伤))，dxt 返回值 ≥ 目标生命 + 护盾算击杀，击杀调 lkp(目标) 叠层（普通 4 / 精英 12 / Boss 75），
+        // 多重攻击的额外目标是 kqs 返回的共享列表 nn.bbtt。结算完调 lkt 清掉强化——补丁挂在 lkt 前面，这时 bftv 还是 true
+        private static readonly AccessTools.FieldRef<PlayerKoboldMode, bool> koboldEmpowered = AccessTools.FieldRefAccess<PlayerKoboldMode, bool>("bftv");
+        private static Action<PlayerKoboldMode, yb> koboldKillStack;
+        private static Action<PlayerKoboldMode, int> koboldAddStacks;
+        private static Func<PlayerKoboldMode, long, long> koboldDamage;
+        private static readonly List<yb> splashTargets = new List<yb>();
+
+        // 镜像 Boss 用的子类、别人的英雄、没有强化的普攻都不算
+        public static bool IsLocalEmpoweredStrike(object mode)
+            => mode is PlayerKoboldMode m && m.GetType() == typeof(PlayerKoboldMode) && koboldEmpowered(m)
+               && m.playerBase != null && m.playerBase == nn.bpbu && m.playerBase.bqbw && m.playerBase.trackRoleBase != null;
+
+        // 对主目标周围的敌人再打一次（伤害 × ratio），击杀照常叠层；hitStacks > 0 时没打死也加这么多层（休息阶段不加）。返回打到几个
+        public static int SoulSplash(object mode, float radius, float ratio, int hitStacks)
+        {
+            var m = (PlayerKoboldMode)mode;
+            koboldKillStack = koboldKillStack ?? AccessTools.MethodDelegate<Action<PlayerKoboldMode, yb>>(AccessTools.Method(typeof(PlayerKoboldMode), "lkp"));
+            koboldAddStacks = koboldAddStacks ?? AccessTools.MethodDelegate<Action<PlayerKoboldMode, int>>(AccessTools.Method(typeof(PlayerKoboldMode), "lkq"));
+            koboldDamage = koboldDamage ?? AccessTools.MethodDelegate<Func<PlayerKoboldMode, long, long>>(AccessTools.Method(typeof(PlayerKoboldMode), "kcm"));
+            var p = m.playerBase;
+            var main = p.trackRoleBase;
+            Vector3 center = main.bphx.position;
+            splashTargets.Clear();
+            foreach (var e in p.izk())
+            {
+                if (e == null || e == main || !e.gameObject.activeInHierarchy || e.bpia == null || !e.iyn()) continue;
+                if (p.attackNum > 1 && nn.bbtt.Contains(e)) continue;
+                if (ez.dxw(e.bphx.position, center) <= radius + e.bpia.addRange) splashTargets.Add(e);
+            }
+            if (splashTargets.Count == 0) return 0;
+            long damage = (long)Math.Round(koboldDamage(m, p.kse(out float bonus)) * (double)ratio);
+            float angle = p.bphx.eulerAngles.y;
+            foreach (var e in splashTargets)
+            {
+                long before = e.hp + e.bpgz;
+                long dealt = ez.dxt(p, e, damage, angle, AttackType.Normal, p.izi(AttackType.Normal), bonus);
+                if (dealt >= before) koboldKillStack(m, e);
+                else if (hitStacks > 0 && !nn.bbtf && e is xo) koboldAddStacks(m, hitStacks);
+            }
+            return splashTargets.Count;
+        }
         // 游戏的无敌药水 buff（roleBuffManager.mim<T>(名字, 秒)，同名 buff 重复添加时刷新时长）
         public static void GiveInvulnerable(Component p, float seconds) => ((yb)p).roleBuffManager.mim<Buff无敌>("Buff无敌", seconds);
 

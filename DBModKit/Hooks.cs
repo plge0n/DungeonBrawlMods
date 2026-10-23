@@ -46,6 +46,11 @@ namespace DBModKit
                 AccessTools.Method(typeof(oo), "gad", Type.EmptyTypes),
                 postfix: nameof(GameDataHooks.EnemyTablePostfix));
 
+            // 沙漠死神噬魂一击的溅射：lkt 是强化普攻结算完、清除强化的方法（镜像 Boss 的子类在 GameRaw 里排除）
+            SoulDevourer.Available = TryPatch(harmony, typeof(SoulDevourerHooks), "噬魂一击溅射",
+                AccessTools.Method(typeof(PlayerKoboldMode), "lkt", Type.EmptyTypes),
+                prefix: nameof(SoulDevourerHooks.StrikeEndPrefix));
+
             HeroSkins.Available = TryPatch(harmony, typeof(HeroSkinHooks), "英雄皮肤（查找模型）",
                 AccessTools.Method(typeof(buj), "pwu", new[] { typeof(int), typeof(string).MakeByRefType(), typeof(LocalWorkshopManifest).MakeByRefType() }),
                 prefix: nameof(HeroSkinHooks.ResolvePrefix));
@@ -735,10 +740,17 @@ namespace DBModKit
         internal static void EnemyAttributePostfix(oo __instance, EnemyType __0, EnemySpawnKind __1, int __2, ref RoleAttribute __result)
         {
             string key = __0.ToString();
-            if (!GameData.HasEnemyScale(key) || !OccurrenceOverrides(__instance, __0, __1, __2)) return;
-            __result.hp = ScaleInt(__result.hp, GameData.EnemyScale(key, "hp"));
-            __result.attackPower = ScaleInt(__result.attackPower, GameData.EnemyScale(key, "attackPower"));
-            __result.shiled *= (float)GameData.EnemyScale(key, "shiled");
+            if (GameData.HasEnemyScale(key) && OccurrenceOverrides(__instance, __0, __1, __2))
+            {
+                __result.hp = ScaleInt(__result.hp, GameData.EnemyScale(key, "hp"));
+                __result.attackPower = ScaleInt(__result.attackPower, GameData.EnemyScale(key, "attackPower"));
+                __result.shiled *= (float)GameData.EnemyScale(key, "shiled");
+            }
+            // Mod 叠加的倍率（EnemyBoosts）：返回的是结构体副本，每次刷怪都从原值乘，不会越乘越大
+            if (!EnemyBoosts.Active) return;
+            __result.hp = ScaleInt(__result.hp, EnemyBoosts.Hp);
+            __result.attackPower = ScaleInt(__result.attackPower, EnemyBoosts.Attack);
+            __result.shiled *= EnemyBoosts.Shield;
         }
 
         // 与 gaf 的判断一致：出场类型不是 None、出场次数 ≥ 0，且 bcrv 里有出场次数不超过它的条目
@@ -753,6 +765,11 @@ namespace DBModKit
         }
 
         private static int ScaleInt(int v, double scale) => (int)Math.Round(Math.Min(int.MaxValue, v * scale));
+    }
+
+    internal static class SoulDevourerHooks
+    {
+        internal static void StrikeEndPrefix(object __instance) => SoulDevourer.OnStrikeEnd(__instance);
     }
 
     // MyServerNetworkManager.qhu(ClientNetMessage)：客户端（含主机自己）收到服务器消息后的分发（在 cik.vig 里注册，是真方法）。
