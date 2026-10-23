@@ -1,5 +1,9 @@
 # DBModKit changelog (English)
 
+## 0.25.1
+- Mod icons in the three-choice panel keep their own colors (the game tints icons by quality)
+- Fix: hot-reloaded plugins (ScriptEngine renames the assembly) could not find their lang/ and assets/ folders
+
 ## 0.25.0
 - New APIs for generic augments: `Player.AddAttribute`, `Player.ActiveSkills`, `SkillSlot.ResetCooldown`, `Forging.Open` (a free attribute forge), `mod.SetEnemyBoost` (enemy HP/attack multipliers), `mod.SetSoulSplash` (Desert Reaper's empowered strike splashes)
 - Fix: the workshop loader no longer loads a subscribed plugin that is also in `BepInEx/scripts` (dev setups ran both versions)

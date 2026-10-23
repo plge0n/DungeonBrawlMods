@@ -1,5 +1,10 @@
 # Hextech changelog (English)
 
+## 0.2.1
+- Desert Reaper's signature now has three tiers (Bonk / Bonk! / Bonk Bonk Bonk!) so it can show up in any pick
+- Fix: two signature-skill cards with the same name in one pick
+- Hand-drawn crayon-style icons for generic and signature augments, paper color by tier
+
 ## 0.2.0
 - Generic augments inspired by LoL ARAM: Mayhem — every hero can roll them (2 signature-skill cards + 1 generic per pick; heroes without skill cards get 3 generic), including attribute forges that open during the rest phase, and a mana build (Mind to Matter, Manamune, and a prismatic loop card that feeds them back)
 - First hand-made signature augment: "Bonk!" for Desert Reaper — the empowered strike splashes to nearby enemies and splash kills grant stacks

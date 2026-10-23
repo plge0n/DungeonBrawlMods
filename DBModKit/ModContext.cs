@@ -80,7 +80,9 @@ namespace DBModKit
             string scripts = System.IO.Path.Combine(Paths.BepInExRootPath, "scripts");
             if (folder == null || string.Equals(System.IO.Path.GetFullPath(folder).TrimEnd('\\', '/'), System.IO.Path.GetFullPath(scripts).TrimEnd('\\', '/'), StringComparison.OrdinalIgnoreCase))
             {
-                string own = System.IO.Path.Combine(scripts, plugin.GetType().Assembly.GetName().Name);
+                // ScriptEngine 热重载时会把程序集改名成 "名字-一串数字"，资源文件夹还是原名
+                string name = System.Text.RegularExpressions.Regex.Replace(plugin.GetType().Assembly.GetName().Name, @"-\d+$", "");
+                string own = System.IO.Path.Combine(scripts, name);
                 if (System.IO.Directory.Exists(own)) folder = own;
             }
             var ctx = new ModContext(MetadataHelper.GetMetadata(plugin), logger, onUnload, folder);
