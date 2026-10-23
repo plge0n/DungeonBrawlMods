@@ -1,5 +1,8 @@
 # DBModKit 更新日志
 
+## 0.25.1
+- 修复：ScriptEngine 热重载的插件（程序集名会被加上 "-数字"）找不到 `scripts/<名字>/` 下的 lang/、assets/，`mod.Folder` 为 null，图标和翻译都读不到
+
 ## 0.25.0
 给海克斯通用强化用的接口（**都没有实测**）：
 - `Player.AddAttribute(键, 数值)`：按游戏的属性键加成（遗物、卡牌、锻体用的同一套，键名见注释），例如 `CoolDown` 技能急速、`AddDamage` 总伤害
