@@ -425,7 +425,8 @@ namespace Hextech
                 }
                 mod.RunLog.Debug("奥术公理", boss ? "Boss：冷却全部转好" : "变异怪：返还冷却");
             }
-            if (Picked("excited"))
+            // 休息阶段（波次结束后才判定的最后几只）不加：游戏马上要拍重试快照，限时攻速会被拍进去
+            if (Picked("excited") && inWave)
             {
                 if (!excitedOn) player.AddAttackSpeed(Augments.ExcitedSpeed);
                 excitedOn = true;
@@ -511,7 +512,9 @@ namespace Hextech
             var others = player.ActiveSkills().Where(s => s.SkillId != cast.SkillId && s.CooldownRemaining > 0f && !s.IsToggledOn).ToList();
             if (others.Count == 0) return;
             var slot = others[UnityEngine.Random.Range(0, others.Count)];
+            float before = slot.CooldownRemaining;
             slot.ReduceCooldown(slot.CooldownTotal * Augments.ArchmageRatio);
+            mod.RunLog.Debug("大法师", "减冷却", ("技能", slot.Info?.Name), ("剩余", $"{before:0.#}→{slot.CooldownRemaining:0.#}"));
         }
 
         // ---- 法力流（由心及物、魔宗、左脚踩右脚）：每秒按当前的蓝、血算目标值，只补差额 ----
