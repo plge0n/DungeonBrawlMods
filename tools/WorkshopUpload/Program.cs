@@ -6,6 +6,7 @@ using Steamworks;
 // 创意工坊上传：读仓库里的 workshop/items.json，按条目名上传（先跑 pack.ps1 生成 dist/workshop/）。
 //   dotnet run --project tools/WorkshopUpload -- Runtime            上传/更新
 //   dotnet run --project tools/WorkshopUpload -- Runtime --dry-run  只检查，不上传
+//   dotnet run --project tools/WorkshopUpload -- Hextech --since 0.1.1   更新说明带上 0.1.1 之后的每一版（中间的版本没上传过时用）
 // 第一次上传会新建条目并把编号写回 items.json（要提交）。标题和说明按语言分别提交（schinese 为主，其余是翻译）。
 // 需要 Steam 客户端开着并登录了拥有游戏的账号。
 internal static class Program
@@ -15,14 +16,16 @@ internal static class Program
     private static int Main(string[] args)
     {
         Console.OutputEncoding = Encoding.UTF8;
-        string name = args.FirstOrDefault(a => !a.StartsWith("--"));
+        string name = args.Where((a, i) => !a.StartsWith("--") && (i == 0 || args[i - 1] != "--since")).FirstOrDefault();
         bool dryRun = args.Contains("--dry-run");
+        int sinceAt = Array.IndexOf(args, "--since");
+        string since = sinceAt >= 0 && sinceAt + 1 < args.Length ? args[sinceAt + 1] : null;
         string root = FindRepoRoot();
         string itemsPath = Path.Combine(root, "workshop", "items.json");
         var items = JObject.Parse(File.ReadAllText(itemsPath));
         if (name == null || items[name] == null)
         {
-            Console.WriteLine($"用法：WorkshopUpload <条目> [--dry-run]，条目：{string.Join("、", items.Properties().Select(p => p.Name))}");
+            Console.WriteLine($"用法：WorkshopUpload <条目> [--dry-run] [--since 旧版本]，条目：{string.Join("、", items.Properties().Select(p => p.Name))}");
             return 2;
         }
         var item = (JObject)items[name];
@@ -34,7 +37,7 @@ internal static class Program
         var tags = item["Tags"]?.ToObject<List<string>>() ?? new List<string>();
         var visibility = ParseVisibility(item.Value<string>("Visibility"));
         // 第一次上传不贴开发用的更新日志
-        string note = id == 0 ? FirstNote(folder) : ChangeNote(root, folder);
+        string note = id == 0 ? FirstNote(folder) : ChangeNote(root, folder, since);
 
         // 上传前检查：内容文件夹、预览图、长度限制
         var problems = new List<string>();
@@ -198,8 +201,9 @@ internal static class Program
         return $"首次发布 / First release {version}".Trim();
     }
 
-    // 更新说明：条目 dbmod.json 的版本 + 对应插件 CHANGELOG.md（中文）和 CHANGELOG.en.md（英文）里这一版的条目
-    private static string ChangeNote(string root, string folder)
+    // 更新说明：条目 dbmod.json 的版本 + 对应插件 CHANGELOG.md（中文）和 CHANGELOG.en.md（英文）里这一版的条目；
+    // 给了 since 时带上 since 之后（不含）的每一版，每版前面写版本号
+    private static string ChangeNote(string root, string folder, string since)
     {
         string manifest = Path.Combine(folder, "dbmod.json");
         if (!File.Exists(manifest)) return "";
@@ -207,18 +211,31 @@ internal static class Program
         string version = m.Value<string>("Version");
         string plugin = m.Value<string>("Type") == "runtime" ? "DBModKit" : m.Value<string>("Name");
         var entries = new[] { "CHANGELOG.md", "CHANGELOG.en.md" }
-            .Select(f => ChangelogEntry(Path.Combine(root, plugin, f), version))
+            .Select(f => since == null ? ChangelogEntry(Path.Combine(root, plugin, f), version) : ChangelogSince(Path.Combine(root, plugin, f), since))
             .Where(e => e.Length > 0);
-        return $"{version}\n{string.Join("\n\n", entries)}".Trim();
+        string head = since == null ? version : $"{since} → {version}";
+        return $"{head}\n{string.Join("\n\n", entries)}".Trim();
+    }
+
+    private static string ChangelogSince(string log, string since)
+    {
+        if (!File.Exists(log)) return "";
+        var lines = File.ReadAllLines(log).SkipWhile(l => !l.StartsWith("## ")).TakeWhile(l => l.Trim() != "## " + since)
+            .Select(l => l.StartsWith("## ") ? $"[b]{l.Substring(3).Trim()}[/b]" : l);
+        return ToBBCode(string.Join("\n", lines));
     }
 
     private static string ChangelogEntry(string log, string version)
     {
         if (!File.Exists(log)) return "";
         var lines = File.ReadAllLines(log).SkipWhile(l => l.Trim() != "## " + version).Skip(1).TakeWhile(l => !l.StartsWith("## "));
-        // 更新日志是 Markdown，Steam 的更新说明用 BBCode：粗体换成 [b]，去掉代码的反引号
-        string text = string.Join("\n", lines).Trim();
-        text = System.Text.RegularExpressions.Regex.Replace(text, @"\*\*(.+?)\*\*", "[b]$1[/b]");
+        return ToBBCode(string.Join("\n", lines));
+    }
+
+    // 更新日志是 Markdown，Steam 的更新说明用 BBCode：粗体换成 [b]，去掉代码的反引号
+    private static string ToBBCode(string text)
+    {
+        text = System.Text.RegularExpressions.Regex.Replace(text.Trim(), @"\*\*(.+?)\*\*", "[b]$1[/b]");
         return text.Replace("`", "");
     }
 
