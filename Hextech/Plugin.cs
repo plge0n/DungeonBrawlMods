@@ -14,7 +14,7 @@ namespace Hextech
         public const string Guid = "plge0n.dungeonbrawl.hextech";
         public const string Name = "Hextech";
         // 发布时同步修改 CHANGELOG.md；pack.ps1 从这里读取版本号
-        public const string Version = "0.2.0";
+        public const string Version = "0.2.1";
 
         internal static ConfigEntry<bool> Enabled;
         internal static ConfigEntry<int> Refreshes;
@@ -42,6 +42,7 @@ namespace Hextech
 
             if (!SkillTuning.Available) Logger.LogWarning("ModKit 的技能调整补丁没有装上，主动技能的数值强化不会生效");
 
+            Augments.LoadIcons(mod);
             Engine.Attach(mod);
             mod.OnUpdate(() =>
             {

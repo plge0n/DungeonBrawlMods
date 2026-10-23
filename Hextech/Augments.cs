@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using DBModKit;
 
@@ -167,6 +168,21 @@ namespace Hextech
         };
 
         public static Augment Get(string id) => All.FirstOrDefault(a => a.Id == id);
+
+        // 手绘图标 assets/icons/<Id>.png（tools/HextechIcons/draw.py 生成）；没有文件或图标补丁没装上时沿用锻造器图标
+        public static void LoadIcons(ModContext mod)
+        {
+            if (!ModAssets.IconsAvailable || mod.Folder == null) return;
+            int n = 0;
+            foreach (var a in All)
+            {
+                string file = Path.Combine("assets", "icons", a.Id + ".png");
+                if (!File.Exists(Path.Combine(mod.Folder, file))) continue;
+                a.IconPath = mod.LoadIcon(a.Id, file);
+                n++;
+            }
+            mod.RunLog.Info("图标", "载入手绘图标", ("数量", n));
+        }
 
         // 按权重不放回地抽 count 张
         public static List<Augment> Draw(IEnumerable<Augment> pool, int heroId, int count, Random rng)
