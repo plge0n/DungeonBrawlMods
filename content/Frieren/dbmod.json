@@ -1,0 +1,12 @@
+{
+  "Format": 1,
+  "Type": "content",
+  "Id": "plge0n.frieren",
+  "Name": "芙莉莲",
+  "Author": "plge0n",
+  "Version": "1.0.0",
+  "Description": "变体英雄芙莉莲：底层是精灵魔法使，专属技能换成被动「无限魔力」。内容包的示例，只用 JSON 写成",
+  "MinModKit": "0.24.0",
+  "Content": ["frieren.json"],
+  "Lang": "lang"
+}

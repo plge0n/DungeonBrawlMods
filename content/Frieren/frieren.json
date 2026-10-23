@@ -1,0 +1,25 @@
+{
+  "passiveSkills": [
+    {
+      "key": "infinite_mana",
+      "name": "无限魔力",
+      "description": "法力永远是满的",
+      "icon": "SpellBook01_66",
+      "quality": "S",
+      "tags": ["Buff"],
+      "inSkillBook": false,
+      "onCast": [ { "mana": "maxMana - mana" } ],
+      "onTick": { "every": 0.1, "do": [ { "mana": "maxMana - mana" } ] }
+    }
+  ],
+  "heroVariants": [
+    {
+      "key": "frieren",
+      "name": "芙莉莲",
+      "description": "活了一千多年的精灵魔法使：法力无限",
+      "baseHero": 20,
+      "passiveSkill": "infinite_mana",
+      "workshopModel": 3798456516
+    }
+  ]
+}
