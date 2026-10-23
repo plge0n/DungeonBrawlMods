@@ -46,7 +46,7 @@ namespace DBModKit
     internal struct RawHit
     {
         public Component Source, Target;
-        public long Damage, Hp, Shield;
+        public long Damage, RawDamage, Hp, Shield;
         public int? SkillId, SourceSkillId;
         public bool Critical, Normal;
         public HitType Type;
@@ -62,6 +62,11 @@ namespace DBModKit
         public Role Target { get; }
         /// <summary>实际伤害（含打掉的护盾）。</summary>
         public long Damage { get; }
+        /// <summary>
+        /// 打出的伤害，不受目标剩余血量限制：打死目标时溢出的部分也算（<see cref="Damage"/> 最多到目标的血量 + 护盾）。
+        /// 适合统计"最高一击"；补丁没装上时等于 <see cref="Damage"/>。
+        /// </summary>
+        public long RawDamage { get; }
         /// <summary>命中前目标的血量和护盾。</summary>
         public long TargetHp { get; }
         public long TargetShield { get; }
@@ -93,6 +98,7 @@ namespace DBModKit
             Source = Role.Wrap(h.Source);
             Target = Role.Wrap(h.Target);
             Damage = h.Damage;
+            RawDamage = h.RawDamage;
             TargetHp = h.Hp;
             TargetShield = h.Shield;
             SkillId = h.SkillId;

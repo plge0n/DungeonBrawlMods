@@ -16,12 +16,13 @@ namespace DamageMeter
 
         public SourceStats(string name) => Name = name;
 
-        public void Add(long damage, bool critical)
+        // damage 是实际伤害（最多到目标剩余血量），rawDamage 是打出的伤害（打死目标时溢出的也算）
+        public void Add(long damage, long rawDamage, bool critical)
         {
             Damage += damage;
             Hits++;
             if (critical) Crits++;
-            if (damage > MaxHit) MaxHit = damage;
+            if (rawDamage > MaxHit) MaxHit = rawDamage;
         }
     }
 
@@ -58,10 +59,10 @@ namespace DamageMeter
             runningSince = -1f;
         }
 
-        public void Add(string source, long damage, bool critical)
+        public void Add(string source, long damage, long rawDamage, bool critical)
         {
             if (!sources.TryGetValue(source, out var s)) sources[source] = s = new SourceStats(source);
-            s.Add(damage, critical);
+            s.Add(damage, rawDamage, critical);
         }
 
         public void Clear()
@@ -112,8 +113,9 @@ namespace DamageMeter
                 Wave.Start();
                 Run.Start();
             }
-            Wave.Add(source, hit.Damage, hit.Critical);
-            Run.Add(source, hit.Damage, hit.Critical);
+            // 总伤害按实际伤害算；最高一击按打出的伤害算，否则秒杀时只能到怪物的血量
+            Wave.Add(source, hit.Damage, hit.RawDamage, hit.Critical);
+            Run.Add(source, hit.Damage, hit.RawDamage, hit.Critical);
         }
 
         public static void OnEvent(GameEvent e)
