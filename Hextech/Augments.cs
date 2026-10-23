@@ -56,11 +56,12 @@ namespace Hextech
         public const int GoldRushPerWave = 3;
         public const float AxiomEliteRatio = 0.15f;
         public const int RecursionHaste = 40, InfiniteHaste = 60;
-        public const int InfiniteNormalKills = 20, InfiniteElite = 2, InfiniteBoss = 10, InfiniteMax = 60;
+        // 实测（40 波图）第 5 波就叠满了上限 60，放慢普通击杀、提高上限，让它一直涨到后期
+        public const int InfiniteNormalKills = 50, InfiniteElite = 2, InfiniteBoss = 10, InfiniteMax = 300;
         // 法力流：由心及物（蓝转血）、魔宗（蓝转攻击，放技能叠蓝）、左脚踩右脚（血转蓝）。
         // 蓝转血 × 血转蓝 = 1 × 0.05 < 1，循环会收敛（总共多出约 1/(1-0.05) 倍），所以不设上限
         public const float MindToMatter = 1f, ManamuneAttack = 0.05f, LoopManaPerHp = 0.05f;
-        public const int ManamuneStack = 5, ManamuneMaxStacks = 100;
+        public const int ManamuneStack = 5, ManamuneMaxStacks = 300;
 
         private static Augment Stat(string id, string name, string origin, Tier tier, string line, string key, int amount, string icon = EpicIcon,
             Dictionary<int, float> weights = null) => new Augment
