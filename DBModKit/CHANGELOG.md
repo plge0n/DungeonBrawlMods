@@ -1,5 +1,14 @@
 # DBModKit 更新日志
 
+## 0.26.0
+海克斯第二批用的接口（**都没有实测**）：
+- `mod.SetShotgunAmmo(上限, 冲锋装填数)`（`Shotgun`）：男枪的弹药上限（原版写死 2）和冲锋装填数（原版 1），上限可以随属性变（每次需要时调用），最多 12；
+  头顶弹药条会补上多出来的弹壳。替换了弹药类 `bcc` 的 4 个真方法（lpz、lqb、lqc、lpx），补了 `PlayerShotgunMode.huq` 的战术装填和 `llk` 的同步编码
+- `Player.AddAttackCount` / `AttackCount`：多重攻击
+- `Player.DropItem(道具, 位置, 数量)`：在地上掉游戏的道具
+- `Player.DamageArea(伤害, 中心, 半径, 特效)`：范围伤害（游戏 `nn.fsp`，死灵祭司被动用的同一个）
+- `Safe.Skip`：补丁前缀用，出错时自动退回原方法
+
 ## 0.25.1
 - 三选一卡片上 Mod 注册的图标（`mod.LoadIcon` / `RegisterIcon`）保留原色：游戏会按品质给图标染色，浅色的自制图标会整张变成紫色 / 橙色（补丁 `bpw.ork` 后缀）
 - 修复：ScriptEngine 热重载的插件（程序集名会被加上 "-数字"）找不到 `scripts/<名字>/` 下的 lang/、assets/，`mod.Folder` 为 null，图标和翻译都读不到

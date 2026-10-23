@@ -78,6 +78,21 @@ namespace DBModKit
             }
         }
 
+        /// <summary>补丁前缀用：action 成功时返回 false（跳过原方法），出错时记一次日志并返回 true（照常执行原方法）。</summary>
+        public static bool Skip(string where, Action action)
+        {
+            try
+            {
+                action();
+                return false;
+            }
+            catch (Exception e)
+            {
+                Report(where, e);
+                return true;
+            }
+        }
+
         public static void Report(string where, Exception e)
         {
             if (reported.Add(where)) Log.Error($"{where} 出错（同一处只记一次）：{e}");

@@ -33,6 +33,9 @@ namespace Hextech
             public int InfiniteBonus, InfiniteKills;
             // 法力流已经加上去的生命上限、攻击、最大法力；魔宗叠了几次
             public int ManaHp, ManaAttack, ManaMp, ManamuneStacks;
+            // 第二批：坦克引擎已加 / 待加的生命上限、本波果实化掉了几个、豪猪攒的伤害
+            public int TankHp, TankPending, WaveFruits;
+            public double PorcupineStored;
             // 敌人海克斯拿到的卡；多给刷新次数的是哪一回合
             public List<Card> EnemyPicks = new List<Card>();
             public int BonusRound = -1;
@@ -59,7 +62,10 @@ namespace Hextech
         private static float openAt, battleStart, forgeAt;
         private static bool sawGameChoice, waveStarted, inWave;
         private static float[] appliedPassive;
-        private static bool splashSet;
+        private static bool splashSet, ammoSet;
+        // 兴奋：限时攻速是否加着、到什么时候
+        private static bool excitedOn;
+        private static float excitedUntil, tankAt;
 
         public static IReadOnlyList<Card> Picks => run.Picks;
         public static IReadOnlyList<Card> EnemyPicks => run.EnemyPicks;
@@ -78,6 +84,7 @@ namespace Hextech
                 appliedPassive = null;
                 profile = null;
                 started = false;
+                excitedOn = false;
                 ClearState();
             });
             mod.OnGameEvent(OnEvent);
@@ -101,6 +108,7 @@ namespace Hextech
             battleStart = Time.unscaledTime;
             openAt = battleStart + IdleDelay;
             forgeAt = 0f;
+            excitedOn = false;
             sawGameChoice = waveStarted = inWave = false;
             mod.ClearSkillTunes();
             ClearState();
@@ -111,7 +119,8 @@ namespace Hextech
         private static void ClearState()
         {
             if (splashSet) mod.SetSoulSplash(null);
-            splashSet = false;
+            if (ammoSet) mod.SetShotgunAmmo(null);
+            splashSet = ammoSet = false;
             mod.SetEnemyBoost(1f, 1f, 1f);
         }
 
@@ -149,6 +158,7 @@ namespace Hextech
             TickOffer();
             TickForge();
             TickMana(player);
+            TickBatch2(player);
         }
 
         private static void Start(Player player)
@@ -178,14 +188,31 @@ namespace Hextech
                 if (Active) OnKill(e);
                 return;
             }
+            if (e.Kind == GameEventKind.Damaged)
+            {
+                if (Active) OnDamaged(e);
+                return;
+            }
+            if (e.Kind == GameEventKind.Revived)
+            {
+                if (Active) OnRevived();
+                return;
+            }
             if (e.Kind == GameEventKind.WaveStarted)
             {
                 waveStarted = inWave = true;
-                run.WaveForges = 0;
+                run.WaveForges = run.WaveFruits = 0;
             }
             if (e.Kind != GameEventKind.WaveEnded) return;
             inWave = false;
             forgeAt = Time.unscaledTime + IdleDelay;
+            // 游戏随后拍重试快照：限时加成撤掉、攒着的生命上限先加上
+            var me = Game.LocalPlayer;
+            if (me != null)
+            {
+                StopExcited(me);
+                FlushTank(me);
+            }
             // 休息阶段：限时加成提前结束（游戏随后拍重试快照，快照里不能带着加成）
             Triggers.Clear(revert: true);
             if (run.Round >= Rounds || run.Round == 0) return;
@@ -259,6 +286,12 @@ namespace Hextech
 
         private static bool Picked(string augmentId) => run.Picks.Any(c => c.Augment?.Id == augmentId);
 
+        // 已经拿到这个系列的第几档（0 = 没拿）
+        private static int SeriesRank(string series) => Best(series)?.Rank ?? 0;
+
+        private static Augment Best(string series)
+            => run.Picks.Select(c => c.Augment).Where(a => a?.Series == series).OrderByDescending(a => a.Rank).FirstOrDefault();
+
         public static string IconFor(Card card) => card.Augment?.IconPath ?? heroSkill?.IconPath ?? "Bundles/UI/Icon/Shop/forging_epic";
 
         // 一次三张：有专属卡的英雄"专属 2 + 通用 1"（招牌卡有一半机会占一个专属位），其他英雄 3 张通用卡
@@ -268,9 +301,8 @@ namespace Hextech
             if (profile != null)
             {
                 var ids = SkillIds().ToList();
-                int rank = run.Picks.Where(c => c.Augment?.Splash != null).Select(c => c.Augment.Rank).DefaultIfEmpty(0).Max();
                 var signature = Augments.All.Where(a => a.Pool == AugmentPool.Signature && a.Tier == tier && ids.Contains(a.SkillId)
-                    && !Picked(a.Id) && (a.Splash == null || a.Rank > rank) && !run.Shown.Contains("a:" + a.Id)).ToList();
+                    && !Picked(a.Id) && (a.Series == null || a.Rank > SeriesRank(a.Series)) && !run.Shown.Contains("a:" + a.Id)).ToList();
                 if (signature.Count > 0 && rng.NextDouble() < 0.7) cards.Add(signature[rng.Next(signature.Count)].ToCard());
                 // 积木少的技能刷新几次后会凑出同名的卡（数值不同），同名的只留一张，空位给通用卡
                 foreach (var c in Generator.Offer(profile, tier, 2 - cards.Count, rng, run.Shown))
@@ -393,6 +425,19 @@ namespace Hextech
                 }
                 mod.RunLog.Debug("奥术公理", boss ? "Boss：冷却全部转好" : "变异怪：返还冷却");
             }
+            if (Picked("excited"))
+            {
+                if (!excitedOn) player.AddAttackSpeed(Augments.ExcitedSpeed);
+                excitedOn = true;
+                excitedUntil = Time.time + Augments.ExcitedSeconds;
+            }
+            if (Picked("fruitify") && (boss || elite) && run.WaveFruits < Augments.FruitPerWave
+                && (boss || UnityEngine.Random.value < Augments.FruitElite) && e.Target != null)
+            {
+                run.WaveFruits++;
+                player.DropItem(Augments.FruitItem, e.Target.Position);
+            }
+            if (Picked("tank")) run.TankPending += boss ? Augments.TankBoss : elite ? Augments.TankElite : Augments.TankNormal;
             if (Picked("infinite") && run.InfiniteBonus < Augments.InfiniteMax)
             {
                 int add = boss ? Augments.InfiniteBoss : elite ? Augments.InfiniteElite : ++run.InfiniteKills % Augments.InfiniteNormalKills == 0 ? 1 : 0;
@@ -405,12 +450,78 @@ namespace Hextech
             }
         }
 
+        // ---- 第二批的持续效果：兴奋到时撤销、坦克引擎每秒合并一次加生命上限（每次都会同步，别每杀一只就发一次）----
+        private static void TickBatch2(Player player)
+        {
+            if (excitedOn && Time.time >= excitedUntil) StopExcited(player);
+            if (run.TankPending > 0 && Time.unscaledTime >= tankAt)
+            {
+                tankAt = Time.unscaledTime + 1f;
+                FlushTank(player);
+            }
+        }
+
+        private static void StopExcited(Player player)
+        {
+            if (!excitedOn) return;
+            excitedOn = false;
+            player.AddAttackSpeed(-Augments.ExcitedSpeed);
+        }
+
+        private static void FlushTank(Player player)
+        {
+            if (run.TankPending <= 0) return;
+            player.AddAttribute("HP", run.TankPending);
+            run.TankHp += run.TankPending;
+            run.TankPending = 0;
+        }
+
+        // 坦克引擎：死亡失去一半（复活时扣）
+        private static void OnRevived()
+        {
+            var player = Game.LocalPlayer;
+            if (player == null || !Picked("tank")) return;
+            FlushTank(player);
+            int lose = run.TankHp / 2;
+            if (lose <= 0) return;
+            player.AddAttribute("HP", -lose);
+            run.TankHp -= lose;
+            ScreenNotice.Show($"坦克引擎：死亡失去 {lose} 点生命上限（还剩 +{run.TankHp}）", 3f);
+        }
+
+        // 豪猪：掉的血攒够生命上限的一定比例就爆一次
+        private static void OnDamaged(GameEvent e)
+        {
+            if (!Picked("porcupine")) return;
+            var player = Game.LocalPlayer;
+            if (player == null || !player.IsAlive) return;
+            run.PorcupineStored += e.Amount;
+            double need = player.MaxHp * Augments.PorcupineTrigger;
+            if (need <= 0 || run.PorcupineStored < need) return;
+            run.PorcupineStored = 0;
+            player.DamageArea((float)Math.Min(float.MaxValue / 4, player.MaxHp * Augments.PorcupineDamage), player.Position, Augments.PorcupineRadius,
+                "Effect/DeathExplosion", 1.5f);
+        }
+
+        // 大法师：放主动技能时，随机另一个冷却中的技能冷却 -30%
+        private static void Archmage(SkillCast cast)
+        {
+            var player = Game.LocalPlayer;
+            if (player == null) return;
+            var others = player.ActiveSkills().Where(s => s.SkillId != cast.SkillId && s.CooldownRemaining > 0f && !s.IsToggledOn).ToList();
+            if (others.Count == 0) return;
+            var slot = others[UnityEngine.Random.Range(0, others.Count)];
+            slot.ReduceCooldown(slot.CooldownTotal * Augments.ArchmageRatio);
+        }
+
         // ---- 法力流（由心及物、魔宗、左脚踩右脚）：每秒按当前的蓝、血算目标值，只补差额 ----
         private static float manaAt;
 
         private static void OnAnyCast(SkillCast cast)
         {
-            if (cast.IsFree || !Active || !Picked("manamune") || run.ManamuneStacks >= Augments.ManamuneMaxStacks) return;
+            if (cast.IsFree || !Active) return;
+            if (Picked("archmage")) Archmage(cast);
+            if (!Picked("manamune") || run.ManamuneStacks >= Augments.ManamuneMaxStacks) return;
             run.ManamuneStacks++;
             if (run.ManamuneStacks == Augments.ManamuneMaxStacks) ScreenNotice.Show("魔宗叠满，变成「魔切」：攻击加成翻倍", 3f);
         }
@@ -509,12 +620,19 @@ namespace Hextech
         // 持续的状态：按已选的卡重新设置，可以反复调用（重试波次后也走这里）
         private static void ApplyState()
         {
-            var splash = run.Picks.Select(c => c.Augment).Where(a => a?.Splash != null).OrderByDescending(a => a.Rank).FirstOrDefault()?.Splash;
+            var splash = Best("bonk")?.Splash;
             if (splash != null || splashSet)
             {
                 // 相同设置 ModKit 只是覆盖，重复调用无妨
                 mod.SetSoulSplash(splash);
                 splashSet = splash != null;
+            }
+            var ammo = Best("cannon")?.Ammo;
+            if (ammo != null || ammoSet)
+            {
+                if (ammo == null) mod.SetShotgunAmmo(null);
+                else mod.SetShotgunAmmo(() => Game.LocalPlayer is Player p ? ammo.MaxFor(p) : Shotgun.BaseMax, ammo.Dash);
+                ammoSet = ammo != null;
             }
             float hp = 1f, attack = 1f;
             foreach (var c in run.EnemyPicks)
@@ -544,8 +662,10 @@ namespace Hextech
                 foreach (var c in run.Picks) c.Augment?.Revert?.Invoke(me);
                 if (run.InfiniteBonus > 0) me.AddAttribute("CoolDown", -run.InfiniteBonus);
                 RevertMana(me);
+                StopExcited(me);
+                if (run.TankHp > 0) me.AddAttribute("HP", -run.TankHp);
             }
-            run.InfiniteBonus = 0;
+            run.InfiniteBonus = run.TankHp = run.TankPending = 0;
             run.Forges.Clear();
             ClearState();
             mod.ClearSkillTunes();
@@ -564,6 +684,7 @@ namespace Hextech
             if (checkpoint == null) return;
             run = checkpoint.Clone();
             Triggers.Clear(revert: false);
+            excitedOn = false;
             appliedPassive = null;
             mod.RunLog.Info("重试波次", "还原", ("已选", run.Picks.Count), ("待弹", run.Pending));
             if (run.Pending) openAt = Time.unscaledTime + IdleDelay;

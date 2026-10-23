@@ -254,6 +254,37 @@ namespace DBModKit
             RunLog.Info(RunLog.CallerMod(), "玩家", "加属性", ("键", key), ("数值", amount));
         }
 
+        /// <summary>多重攻击数（1 = 只打一个目标）。</summary>
+        public int AttackCount => GameRaw.AttackNum(Native);
+
+        /// <summary>多重攻击 +n（负数撤销），和多重攻击被动一样会同步。本局有效，不会自动撤销。</summary>
+        public void AddAttackCount(int n)
+        {
+            RequireLocal();
+            if (n == 0) return;
+            GameRaw.AddAttackNum(Native, n);
+            RunLog.Info(RunLog.CallerMod(), "玩家", "多重攻击", ("加", n), ("现在", AttackCount));
+        }
+
+        /// <summary>在地上掉道具（游戏的 ItemType 编号，例如 1407 痊愈神符、1501 蟹黄堡），走游戏自己的生成，玩家照常拾取。</summary>
+        public void DropItem(int itemType, Vector3 position, int count = 1)
+        {
+            RequireLocal();
+            GameRaw.DropItem(Native, itemType, position, count);
+            RunLog.Debug(RunLog.CallerMod(), "玩家", "掉道具", ("道具", itemType), ("数量", count));
+        }
+
+        /// <summary>
+        /// 以 center 为圆心对范围内的敌人各造成一次技能伤害（暴击照常判定，算本地玩家打的），并播放特效（游戏的特效路径，例如 "Effect/DeathExplosion"）。
+        /// </summary>
+        public void DamageArea(float damage, Vector3 center, float radius, string effect = "Effect/DeathExplosion", float effectScale = 1f)
+        {
+            RequireLocal();
+            if (damage <= 0f || radius <= 0f) return;
+            GameRaw.DamageArea(Native, damage, center, radius, effect, effectScale);
+            RunLog.Debug(RunLog.CallerMod(), "玩家", "范围伤害", ("伤害", Mathf.Round(damage)), ("半径", radius));
+        }
+
         /// <summary>身上所有的主动技能（专属技能、技能书学到的、自定义的），不含被动。</summary>
         public List<SkillSlot> ActiveSkills()
         {

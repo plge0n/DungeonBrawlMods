@@ -1,5 +1,8 @@
 # DBModKit changelog (English)
 
+## 0.26.0
+- `mod.SetShotgunAmmo` (Shotgun hero's ammo cap and dash reload), `Player.AddAttackCount`, `Player.DropItem`, `Player.DamageArea`
+
 ## 0.25.1
 - Mod icons in the three-choice panel keep their own colors (the game tints icons by quality)
 - Fix: hot-reloaded plugins (ScriptEngine renames the assembly) could not find their lang/ and assets/ folders

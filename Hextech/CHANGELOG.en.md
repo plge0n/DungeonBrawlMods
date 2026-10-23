@@ -1,5 +1,10 @@
 # Hextech changelog (English)
 
+## 0.3.0
+- Shotgun hero signature (three tiers): more ammo, two shells per dash, and ammo from crit damage (up to 12)
+- New generic augments: Get Excited, Fruitify, Tank Engine, Porcupine, Archmage, Dual Wield
+- 9 new hand-drawn icons
+
 ## 0.2.1
 - Desert Reaper's signature now has three tiers (Bonk / Bonk! / Bonk Bonk Bonk!) so it can show up in any pick
 - Fix: two signature-skill cards with the same name in one pick

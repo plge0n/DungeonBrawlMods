@@ -8,13 +8,13 @@ namespace Hextech
     // 海克斯强化：每局 4 次三选一（开局 + 约 25%/50%/75% 波次附近的遗物回合之后）。
     // 专属卡由积木按品质点数自动生成（加少量手写招牌），通用卡参照 LoL 海克斯大乱斗手写；只在单人时生效。企划见 docs/设计/海克斯企划.md
     [BepInPlugin(Guid, Name, Version)]
-    [BepInDependency(ModKitPlugin.Guid, "0.25.0")]
+    [BepInDependency(ModKitPlugin.Guid, "0.26.0")]
     public class Plugin : BaseUnityPlugin
     {
         public const string Guid = "plge0n.dungeonbrawl.hextech";
         public const string Name = "Hextech";
         // 发布时同步修改 CHANGELOG.md；pack.ps1 从这里读取版本号
-        public const string Version = "0.2.1";
+        public const string Version = "0.3.0";
 
         internal static ConfigEntry<bool> Enabled;
         internal static ConfigEntry<int> Refreshes;
