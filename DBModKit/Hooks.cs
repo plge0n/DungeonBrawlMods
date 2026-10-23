@@ -46,6 +46,14 @@ namespace DBModKit
                 AccessTools.Method(typeof(oo), "gad", Type.EmptyTypes),
                 postfix: nameof(GameDataHooks.EnemyTablePostfix));
 
+            TryPatch(harmony, typeof(GameDataHooks), "怪物倍率（受伤）",
+                AccessTools.Method(typeof(yb), "iwk", new[]
+                {
+                    typeof(yb), typeof(double), typeof(float), typeof(AttackType), typeof(bool), typeof(float?), typeof(ActiveSkillEnum),
+                    typeof(DamageSourceKind), typeof(bfe), typeof(PlayerDamageFeedbackKind),
+                }),
+                prefix: nameof(GameDataHooks.EnemyDamagePrefix));
+
             // 沙漠死神噬魂一击的溅射：lkt 是强化普攻结算完、清除强化的方法（镜像 Boss 的子类在 GameRaw 里排除）
             SoulDevourer.Available = TryPatch(harmony, typeof(SoulDevourerHooks), "噬魂一击溅射",
                 AccessTools.Method(typeof(PlayerKoboldMode), "lkt", Type.EmptyTypes),
@@ -746,11 +754,19 @@ namespace DBModKit
                 __result.attackPower = ScaleInt(__result.attackPower, GameData.EnemyScale(key, "attackPower"));
                 __result.shiled *= (float)GameData.EnemyScale(key, "shiled");
             }
-            // Mod 叠加的倍率（EnemyBoosts）：返回的是结构体副本，每次刷怪都从原值乘，不会越乘越大
+            // Mod 叠加的倍率（EnemyBoosts）：返回的是结构体副本，每次刷怪都从原值乘，不会越乘越大。
+            // 攻击不在这里乘：小怪表里的攻击只有 1~3，乘完取整等于没乘，改在受伤时乘（EnemyDamagePrefix）
             if (!EnemyBoosts.Active) return;
             __result.hp = ScaleInt(__result.hp, EnemyBoosts.Hp);
-            __result.attackPower = ScaleInt(__result.attackPower, EnemyBoosts.Attack);
             __result.shiled *= EnemyBoosts.Shield;
+        }
+
+        // yb.iwk 挂在受伤的一方：本地玩家被怪物（xo）打时按 EnemyBoosts.Attack 放大伤害
+        internal static void EnemyDamagePrefix(yb __instance, yb __0, ref double __1)
+        {
+            if (!EnemyBoosts.Active || EnemyBoosts.Attack == 1f || !(__0 is xo)) return;
+            if ((object)__instance != GameRaw.LocalPlayer()) return;
+            __1 *= EnemyBoosts.Attack;
         }
 
         // 与 gaf 的判断一致：出场类型不是 None、出场次数 ≥ 0，且 bcrv 里有出场次数不超过它的条目

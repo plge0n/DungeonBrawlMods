@@ -3,8 +3,9 @@ using System.Collections.Generic;
 namespace DBModKit
 {
     /// <summary>
-    /// 各个 Mod 叠加在怪物身上的倍率（生命、攻击、护盾），乘在 <see cref="GameData"/> 的怪物数值之上，不会覆盖玩家自己的数值包。
-    /// 刷怪时生效：已经在场上的怪不变。多个 Mod 的倍率相乘。用 <see cref="ModContext.SetEnemyBoost"/> 设置，卸载时自动撤销。
+    /// 各个 Mod 叠加在怪物身上的倍率，乘在 <see cref="GameData"/> 的怪物数值之上，不会覆盖玩家自己的数值包。
+    /// 生命、护盾在刷怪时乘（已经在场上的怪不变）；攻击是怪物打到本地玩家时直接放大伤害（小怪表里的攻击只有个位数，乘表取整等于没乘）。
+    /// 多个 Mod 的倍率相乘。用 <see cref="ModContext.SetEnemyBoost"/> 设置，卸载时自动撤销。
     /// </summary>
     public static class EnemyBoosts
     {
