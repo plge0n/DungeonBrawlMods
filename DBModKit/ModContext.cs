@@ -392,6 +392,22 @@ namespace DBModKit
             EnemyBoosts.Set(Metadata.Name, hp, attack, shield);
         }
 
+        private bool shotgun;
+
+        /// <summary>
+        /// 男枪的弹药上限（每次需要时调用 max，可以随属性变化；最少 2、最多 <see cref="Shotgun.Cap"/>）和冲锋装填数（原版 1），
+        /// 见 <see cref="Shotgun"/>。传 null 恢复原版；卸载时自动恢复。
+        /// </summary>
+        public void SetShotgunAmmo(Func<int> max, int dashLoad = 1)
+        {
+            if (!shotgun)
+            {
+                shotgun = true;
+                AddCleanup(() => Shotgun.ClearOwner(Metadata.Name));
+            }
+            Shotgun.Set(Metadata.Name, max, dashLoad);
+        }
+
         private bool soulSplash;
 
         /// <summary>设置沙漠死神噬魂一击的溅射（见 <see cref="SoulDevourer"/>），传 null 取消；卸载时自动取消。</summary>

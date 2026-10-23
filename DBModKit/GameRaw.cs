@@ -1982,6 +1982,152 @@ namespace DBModKit
         // yb.irv：护甲（会刷新属性面板）
         public static void AddArmor(Component p, int amount) => ((yb)p).irv(amount);
 
+        // ---- 男枪（PlayerShotgunMode，普攻组件）的弹药 bcc ----
+        // bgac 弹数（私有 setter）、bgad 装填中、bgae 装填进度；上限是编译期常量 2（bcc.bgab）。真方法：lpy 消耗、lpz 开始装填、
+        // lqb 推进装填（满了直接 bgac = 2）、lqc 冲锋 +1（Min(2, …)）、lpx 补满、lqd 远端同步（Clamp 0..2）；其余同签名的都是诱饵。
+        // huq 里空闲时"弹数 < 2 且停了 tacticalReloadDelay 秒"就战术装填；llk 把 bgac | (装填中 ? 4 : 0) 发给别人（弹数 ≥ 4 会溢出到装填位）。
+        // 弹药 UI bij：mwj 建 2 个弹壳（bhro / bhrp，readonly 数组），LateUpdate 按 bhro.Length 逐个上色
+        private static readonly AccessTools.FieldRef<PlayerShotgunMode, bcc> shotgunAmmo = AccessTools.FieldRefAccess<PlayerShotgunMode, bcc>("bfuo");
+        private static readonly AccessTools.FieldRef<PlayerShotgunMode, float> shotgunIdle = AccessTools.FieldRefAccess<PlayerShotgunMode, float>("bfuv");
+        private static readonly AccessTools.FieldRef<PlayerShotgunMode, float> tacticalDelay = AccessTools.FieldRefAccess<PlayerShotgunMode, float>("tacticalReloadDelay");
+        private static readonly AccessTools.FieldRef<bcc, bool> ammoReloading = AccessTools.FieldRefAccess<bcc, bool>("<bgad>k__BackingField");
+        private static readonly AccessTools.FieldRef<bcc, float> ammoProgress = AccessTools.FieldRefAccess<bcc, float>("<bgae>k__BackingField");
+        private static readonly AccessTools.FieldRef<bcc, int> ammoCount = AccessTools.FieldRefAccess<bcc, int>("<bgac>k__BackingField");
+        private static readonly AccessTools.FieldRef<yb, RoleModeBase> roleMode = AccessTools.FieldRefAccess<yb, RoleModeBase>("roleModeBase");
+
+        // 本地玩家的弹药对象（不是男枪时为 null）
+        public static object LocalShotgunAmmo()
+        {
+            var p = nn.bpbu;
+            return p != null && roleMode(p) is PlayerShotgunMode m ? shotgunAmmo(m) : null;
+        }
+
+        public static int AmmoCount(object ammo) => ammoCount((bcc)ammo);
+
+        // 以下几个替换 bcc 的真方法（补丁前缀里调用，只用于本地玩家的弹药），max 换掉原来的 2
+        public static void AmmoStartReload(object a, int max)
+        {
+            var b = (bcc)a;
+            if (ammoCount(b) >= max || ammoReloading(b)) return;
+            ammoReloading(b) = true;
+            ammoProgress(b) = 0f;
+        }
+
+        public static bool AmmoAdvanceReload(object a, float dt, float speed, float duration, int max)
+        {
+            var b = (bcc)a;
+            if (!ammoReloading(b)) return false;
+            ammoProgress(b) = Mathf.Clamp01(ammoProgress(b) + Mathf.Max(0f, dt) * Mathf.Max(0.1f, speed) / Mathf.Max(0.1f, duration));
+            if (ammoProgress(b) < 1f) return false;
+            ammoCount(b) = max;
+            b.lqa();
+            return true;
+        }
+
+        public static void AmmoAdd(object a, int n, int max)
+        {
+            var b = (bcc)a;
+            ammoCount(b) = Math.Min(max, ammoCount(b) + n);
+            b.lqa();
+        }
+
+        public static void AmmoFill(object a, int max)
+        {
+            var b = (bcc)a;
+            ammoCount(b) = max;
+            b.lqa();
+        }
+
+        // huq 之后：弹数在 2 以上但没满时，原版不会战术装填，这里补上
+        public static void AmmoTacticalReload(object mode, int max)
+        {
+            var m = (PlayerShotgunMode)mode;
+            var b = shotgunAmmo(m);
+            var p = m.playerBase;
+            if (p == null || p != nn.bpbu || p.iym() || ammoReloading(b)) return;
+            if (p.bphy != RoleState.Idle && p.bphy != RoleState.Run) return;
+            int n = ammoCount(b);
+            if (n >= 2 && n < max && shotgunIdle(m) >= tacticalDelay(m)) AmmoStartReload(b, max);
+        }
+
+        public static bool IsLocalShotgun(object mode) => mode is PlayerShotgunMode m && m.playerBase != null && m.playerBase == nn.bpbu;
+
+        // llk 的替代：发给别人的弹数截到 3，免得溢出到"装填中"那一位
+        private static readonly AccessTools.FieldRef<PlayerShotgunMode, int> ammoSent = AccessTools.FieldRefAccess<PlayerShotgunMode, int>("bfvb");
+
+        public static void AmmoSync(object mode)
+        {
+            var m = (PlayerShotgunMode)mode;
+            if (!m.playerBase.bqbw) return;
+            var b = shotgunAmmo(m);
+            int num = Math.Min(3, ammoCount(b)) | (ammoReloading(b) ? 4 : 0);
+            if (num != ammoSent(m) && m.playerBase.izm(num)) ammoSent(m) = num;
+        }
+
+        // 弹药 UI：弹壳不够 max 个时照 mwj 的样子补上（多的删掉，最少 2 个）
+        private static readonly FieldInfo uiShells = AccessTools.Field(typeof(bij), "bhro");
+        private static readonly FieldInfo uiBrass = AccessTools.Field(typeof(bij), "bhrp");
+        private static readonly AccessTools.FieldRef<bij, RectTransform> uiRoot = AccessTools.FieldRefAccess<bij, RectTransform>("bhrm");
+
+        public static void AmmoUi(object ui, int max)
+        {
+            var u = (bij)ui;
+            var shells = (UnityEngine.UI.Image[])uiShells.GetValue(u);
+            int want = Math.Max(2, max);
+            if (shells == null || shells.Length == want) return;
+            var brass = (UnityEngine.UI.Image[])uiBrass.GetValue(u);
+            var newShells = new UnityEngine.UI.Image[want];
+            var newBrass = new UnityEngine.UI.Image[want];
+            for (int n = 0; n < want; n++)
+            {
+                if (n < shells.Length)
+                {
+                    newShells[n] = shells[n];
+                    newBrass[n] = brass[n];
+                    continue;
+                }
+                var socket = NewImage("ShellSocket" + n, uiRoot(u), new Vector2(-31f + n * 23f, 0f), new Vector2(13f, 22f), new Color(0.045f, 0.06f, 0.065f, 0.95f));
+                socket.rectTransform.localRotation = Quaternion.Euler(0f, 0f, -38f);
+                newShells[n] = NewImage("Shell", socket.rectTransform, new Vector2(0f, 2f), new Vector2(9f, 14f), new Color(0.9f, 0.32f, 0.1f));
+                newBrass[n] = NewImage("Brass", socket.rectTransform, new Vector2(0f, -7f), new Vector2(11f, 4f), new Color(1f, 0.73f, 0.3f));
+            }
+            for (int n = want; n < shells.Length; n++)
+                if (shells[n] != null) UnityEngine.Object.Destroy(shells[n].transform.parent.gameObject);
+            uiShells.SetValue(u, newShells);
+            uiBrass.SetValue(u, newBrass);
+        }
+
+        private static UnityEngine.UI.Image NewImage(string name, Transform parent, Vector2 pos, Vector2 size, Color color)
+        {
+            var go = new GameObject(name, typeof(RectTransform), typeof(CanvasRenderer), typeof(UnityEngine.UI.Image));
+            go.transform.SetParent(parent, false);
+            var img = go.GetComponent<UnityEngine.UI.Image>();
+            img.raycastTarget = false;
+            img.color = color;
+            img.rectTransform.sizeDelta = size;
+            img.rectTransform.anchoredPosition = pos;
+            return img;
+        }
+
+        public static bool IsLocalAmmoUi(object ui) => ui is bij u && u != null && LocalShotgunAmmo() != null;
+
+        // 多重攻击：多重攻击被动（B多重攻击）就是 attackNum += n，再 CmdAttackNum 同步
+        public static void AddAttackNum(Component p, int n)
+        {
+            var b = (bbe)p;
+            b.attackNum += n;
+            if (b.bqbw) b.CmdAttackNum(b.attackNum);
+        }
+
+        public static int AttackNum(Component p) => ((yb)p).attackNum;
+
+        // 在地上掉道具（ItemType 编号）：bbe.CmdCreateItemByPosWithNum，Remains_19、转变之石都这么掉
+        public static void DropItem(Component p, int itemType, Vector3 pos, int count) => ((bbe)p).CmdCreateItemByPosWithNum((ItemType)itemType, pos, count, false);
+
+        // 范围伤害：nn.fsp（死灵祭司"对死者的供奉"用的）——范围内的敌人各吃一次技能伤害（暴击照常判定），再播特效
+        public static void DamageArea(Component p, float damage, Vector3 center, float radius, string effect, float effectScale)
+            => nn.fsp((yb)p, damage, center, radius, effect, effectScale);
+
         // ---- 通用加成（海克斯通用强化）----
         // ez.ebt(键, 整数)：遗物、卡牌、锻体读"键|值"时走的就是它，作用于本地玩家 nn.bpbu。百分比类的键传 25 表示 25%。
         // 有的分支直接写字段（skillCdReduce、addDamagePercent……），不经过防篡改校验，也不会自动撤销，撤销就传负数

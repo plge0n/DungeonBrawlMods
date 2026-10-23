@@ -262,9 +262,111 @@ def loop():  # 左脚踩右脚：两个脚印踩在一起 + 转圈箭头
     return ic
 
 
+
+# ---------- 第二批 ----------
+def excited():  # 兴奋：闪电（银）
+    ic = Icon(109, "silver")
+    bolt = [(0.56, 0.12), (0.3, 0.52), (0.48, 0.52), (0.38, 0.88), (0.72, 0.42), (0.54, 0.42), (0.66, 0.12)]
+    shape(ic, bolt, (250, 210, 60))
+    ic.sparkle(0.22, 0.24, 0.035, (240, 120, 40))
+    ic.sparkle(0.8, 0.72, 0.035, (240, 120, 40))
+    return ic
+
+
+def fruitify():  # 果实化：苹果（银）
+    ic = Icon(110, "silver")
+    apple = heart(0.5, 0.6, 0.3)[::-1]
+    apple = [(x, 1.12 - y) for x, y in apple]
+    shape(ic, apple, (225, 60, 60))
+    ic.line([(0.5, 0.36), (0.53, 0.2)], color=(110, 70, 40), width=0.03, passes=1)
+    leaf = [(0.54, 0.26), (0.66, 0.18), (0.74, 0.24), (0.62, 0.3)]
+    shape(ic, leaf, (90, 180, 80), 0.02)
+    ic.line([(0.4, 0.5), (0.38, 0.6)], color=(255, 250, 245), width=0.025, passes=1)
+    return ic
+
+
+def tank():  # 坦克引擎：小坦克（金）
+    ic = Icon(211, "gold")
+    body = [(0.16, 0.58), (0.84, 0.58), (0.78, 0.76), (0.22, 0.76)]
+    shape(ic, body, (110, 150, 90))
+    turret = [(0.32, 0.58), (0.36, 0.42), (0.62, 0.42), (0.66, 0.58)]
+    shape(ic, turret, (130, 170, 100))
+    ic.line([(0.6, 0.48), (0.86, 0.38)], color=(80, 100, 70), width=0.05, passes=1)
+    ic.line([(0.6, 0.48), (0.86, 0.38)], width=0.016, passes=1)
+    for x in (0.3, 0.44, 0.58, 0.72):
+        shape(ic, circle(x, 0.68, 0.04, 14), (70, 70, 80), 0.015)
+    shape(ic, heart(0.22, 0.3, 0.1), (225, 60, 70), 0.02)
+    return ic
+
+
+def porcupine():  # 豪猪：刺球（金）
+    ic = Icon(212, "gold")
+    shape(ic, star(0.5, 0.52, 0.4, 0.22, 18, 3), (95, 70, 55))
+    shape(ic, circle(0.5, 0.52, 0.17, 24), (210, 170, 130), 0.02)
+    shape(ic, circle(0.44, 0.48, 0.025, 10), INK, 0.01)
+    shape(ic, circle(0.56, 0.48, 0.025, 10), INK, 0.01)
+    ic.line([(0.46, 0.58), (0.5, 0.6), (0.54, 0.58)], width=0.015, passes=1)
+    return ic
+
+
+def archmage():  # 大法师：巫师帽 + 星星（金）
+    ic = Icon(213, "gold")
+    hat = [(0.5, 0.12), (0.64, 0.42), (0.72, 0.66), (0.28, 0.66), (0.36, 0.42)]
+    shape(ic, hat, (110, 80, 190))
+    brim = [(0.14, 0.66), (0.86, 0.66), (0.8, 0.76), (0.2, 0.76)]
+    shape(ic, brim, (90, 60, 170))
+    shape(ic, star(0.5, 0.48, 0.07, 0.03, 5, -90), (250, 220, 70), 0.015)
+    ic.sparkle(0.2, 0.26)
+    ic.sparkle(0.8, 0.3)
+    return ic
+
+
+def dualwield():  # 双持：交叉的两把剑（棱彩）
+    ic = Icon(305, "prism")
+    for flip in (False, True):
+        def m(x, y):
+            return (1 - x, y) if flip else (x, y)
+        blade = [m(0.72, 0.14), m(0.8, 0.2), m(0.42, 0.62), m(0.36, 0.56)]
+        shape(ic, blade, (200, 210, 225) if flip else (150, 190, 240))
+        ic.line([m(0.28, 0.5), m(0.48, 0.7)], color=(150, 100, 60), width=0.05, passes=1)
+        ic.line([m(0.36, 0.62), m(0.22, 0.8)], color=(110, 70, 50), width=0.05, passes=1)
+    return ic
+
+
+def shell(ic, cx, cy, k=1.0):
+    """一发霰弹（红色弹身 + 铜色底）。"""
+    body = [(cx - 0.06 * k, cy - 0.16 * k), (cx + 0.06 * k, cy - 0.16 * k), (cx + 0.06 * k, cy + 0.1 * k), (cx - 0.06 * k, cy + 0.1 * k)]
+    shape(ic, body, (220, 70, 50), 0.022)
+    base = [(cx - 0.075 * k, cy + 0.1 * k), (cx + 0.075 * k, cy + 0.1 * k), (cx + 0.075 * k, cy + 0.17 * k), (cx - 0.075 * k, cy + 0.17 * k)]
+    shape(ic, base, (235, 180, 70), 0.022)
+
+
+def cannon1():  # 上膛：两发子弹（银）
+    ic = Icon(214, "silver")
+    shell(ic, 0.4, 0.5)
+    shell(ic, 0.6, 0.5)
+    return ic
+
+
+def cannon():  # 大炮：三发子弹 + 火花（金）
+    ic = Icon(215, "gold")
+    for x in (0.3, 0.5, 0.7):
+        shell(ic, x, 0.54, 0.95)
+    impact(ic, 0.5, 0.5, 0.36, 0.44, 45)
+    return ic
+
+
+def cannon3():  # 大炮·极：一排子弹 + 爆炸（棱彩）
+    ic = Icon(306, "prism")
+    shape(ic, star(0.5, 0.36, 0.22, 0.11, 9, 5), (245, 140, 40), 0.02)
+    for x in (0.22, 0.36, 0.5, 0.64, 0.78):
+        shell(ic, x, 0.66, 0.75)
+    return ic
+
 ICONS = {f.__name__: f for f in (blunt, deft, goredrink, stats, goldrush, mind,
                                   recursion, critical, colossus, axiom, manamune, bonk1, bonk, bonk3,
-                                  infinite, stats3, goliath, loop)}
+                                  infinite, stats3, goliath, loop,
+                                  excited, fruitify, tank, porcupine, archmage, dualwield, cannon1, cannon, cannon3)}
 
 if __name__ == "__main__":
     os.makedirs(OUT, exist_ok=True)

@@ -59,6 +59,27 @@ namespace DBModKit
                 AccessTools.Method(typeof(bpw), "ork", new[] { typeof(RoguelikeUIData), typeof(int), typeof(bool), typeof(int) }),
                 postfix: nameof(ChoiceIconHooks.CardPostfix));
 
+            // 男枪弹药 bcc：lpz 开始装填、lqb 推进装填、lqc 冲锋、lpx 补满（同签名的其他方法是诱饵）；
+            // PlayerShotgunMode.huq 每帧（补战术装填）、llk 同步；bij.LateUpdate 弹药条。前 4 个都装上才算可用
+            Shotgun.Available =
+                TryPatch(harmony, typeof(ShotgunHooks), "男枪弹药（开始装填）",
+                    AccessTools.Method(typeof(bcc), "lpz", Type.EmptyTypes), prefix: nameof(ShotgunHooks.StartReloadPrefix))
+                && TryPatch(harmony, typeof(ShotgunHooks), "男枪弹药（装填进度）",
+                    AccessTools.Method(typeof(bcc), "lqb", new[] { typeof(float), typeof(float), typeof(float) }), prefix: nameof(ShotgunHooks.AdvanceReloadPrefix))
+                && TryPatch(harmony, typeof(ShotgunHooks), "男枪弹药（冲锋）",
+                    AccessTools.Method(typeof(bcc), "lqc", Type.EmptyTypes), prefix: nameof(ShotgunHooks.DashPrefix))
+                && TryPatch(harmony, typeof(ShotgunHooks), "男枪弹药（补满）",
+                    AccessTools.Method(typeof(bcc), "lpx", Type.EmptyTypes), prefix: nameof(ShotgunHooks.FillPrefix));
+            if (Shotgun.Available)
+            {
+                TryPatch(harmony, typeof(ShotgunHooks), "男枪弹药（战术装填）",
+                    AccessTools.Method(typeof(PlayerShotgunMode), "huq", Type.EmptyTypes), postfix: nameof(ShotgunHooks.TickPostfix));
+                TryPatch(harmony, typeof(ShotgunHooks), "男枪弹药（同步）",
+                    AccessTools.Method(typeof(PlayerShotgunMode), "llk", Type.EmptyTypes), prefix: nameof(ShotgunHooks.SyncPrefix));
+                TryPatch(harmony, typeof(ShotgunHooks), "男枪弹药条",
+                    AccessTools.Method(typeof(bij), "LateUpdate", Type.EmptyTypes), prefix: nameof(ShotgunHooks.UiPrefix));
+            }
+
             // 沙漠死神噬魂一击的溅射：lkt 是强化普攻结算完、清除强化的方法（镜像 Boss 的子类在 GameRaw 里排除）
             SoulDevourer.Available = TryPatch(harmony, typeof(SoulDevourerHooks), "噬魂一击溅射",
                 AccessTools.Method(typeof(PlayerKoboldMode), "lkt", Type.EmptyTypes),
