@@ -58,7 +58,8 @@ namespace DBModKit
                 "heroType", "kzz", "bpnc", "bfru", "bfrv", "kqi", "kqh", "addDamagePercent", "addBossEnemy", "addEliteEnemy", "addNormalEnemy",
                 "ksd", "k4a25de8c63fe4a7192613346ae51af4e", "kfd63a19d353a42878846361e6af4f637",
                 "kqk", "kkl", "CmdPickItem", "playerAttribute", "roleSkillList", "ktb", "onPlayerLevelUp", "onPlayerRelife", "addBagItemEvent",
-                "kql", "kqn",
+                "kql", "kqn", "CmdAddBuff", "CmdAddNearbyHumanityShield", "onTeammateLevelUp", "CmdCreateItemByPosWithNum",
+                "dieEvent", "iqg", "iwl", "CmdCreateSkill",
             },
             ["EnemyDefeatContext"] = new[] { "IsBoss", "IsElite" },
             ["MyServerNetworkManager"] = new[] { "qhu", "bpue" },
@@ -74,6 +75,8 @@ namespace DBModKit
             ["bqa"] = new[] { "osj", "bacf" },
             ["RoguelikeUIData"] = new[] { "name", "dec", "icon", "quality", "data" },
             ["GoldIncomeSource"] = new[] { "Gameplay" },
+            ["LocalBuffType"] = new[] { "SacredEmberBlessing", "SkillHaste", "IronArmor" },
+            ["bee"] = new[] { "mec" },
             ["ciy"] = new[] { "bmyj", "bmyc" },
             ["cik"] = new[] { "bqcb", "bmvl" },
             ["xo"] = new[] { "isBoss", "isElite" },
@@ -115,13 +118,13 @@ namespace DBModKit
             // 嵌套类型 de.PlayerKingData / PlayerKingSkillData 的名字没混淆，按成员检查（映射重建工具不认 "de+X" 这种写法）
             ["de"] = new[] { "PlayerKingData", "PlayerKingSkillData", "PlayerKingRelicData", "PlayerKingEquipData" },
             ["bpe"] = new[] { "bjes", "bprr", "omt" },
-            ["bpf"] = new[] { "bjgk", "bjgm", "bjgj", "opi" },
+            ["bpf"] = new[] { "bjgk", "bjgm", "bjgj", "opi", "bjgl" },
             ["bht"] = new[]
             {
                 "bhne", "bhny", "bhnv", "bhng", "bhnd", "bpqi", "k896ff3548b31472b8b2cf8f649c25e65", "kacb7d091b5904139a602f04ed9552242",
                 "k4b2ca10ddec34cdb90bf84a3f664f727", "kbb80bea445ac47778d36b05d19be7f37", "kcac92c2266be41d3979b385715ce318e",
                 "kb7f88a1b0a6e4124b9b27921f2778742", "k443b7b692a1648099b5e5890ad35ed6d", "bhnj", "bhnp", "bhnq", "bhof",
-                "kb03f1a3bfdcd4ea8aecbd90f39216246", "gpc",
+                "kb03f1a3bfdcd4ea8aecbd90f39216246", "gpc", "mtt",
             },
             // 英雄专属技能：buff、重试波次、波次配置、开场界面（被动基类 qp、bff、AttackType、DamageSourceKind 在上面，
             // 字典初始化器里重复的键会让后一条覆盖前一条，这里不能再写一遍）
@@ -139,7 +142,11 @@ namespace DBModKit
                 "tags", "indicator", "castingRange", "range", "cd", "canAuto", "icon",
                 "damageBase", "damageValue", "cost", "duration", "interval", "chargingNum", "chargingCd",
             },
-            ["ActiveSkillEnum"] = new[] { "None", "D_Execution", "S_Execution", "D_Alchemy", "S_Alchemy", "Bite", "ChickenDance", "RealChickenDance" },
+            ["ActiveSkillEnum"] = new[]
+            {
+                "None", "D_Execution", "S_Execution", "D_Alchemy", "S_Alchemy", "Bite", "ChickenDance", "RealChickenDance",
+                "C_SpellThunder", "B_SwordMove", "A_SpellThunder",
+            },
             ["SkillTag"] = new[] { "Heal", "Revive", "Shield", "Defense", "Buff", "Summon", "Aura", "Area", "Move", "Control", "Henshin", "Duration" },
             // 英雄皮肤
             ["buj"] = new[] { "pwu", "pwm", "pwn", "pwh", "pwf", "pyb" },

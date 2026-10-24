@@ -1,5 +1,21 @@
 # DBModKit changelog (English)
 
+## 0.31.0
+- `SkillForms`: `mod.SetBiteGrowth`, `mod.SetBombRange`, `mod.SetThunderOrbs` (signature skill tweaks)
+
+## 0.30.0
+- `mod.OnLethalDamage` (cancel a killing blow on the local player), `Player.CastSkillFree` (fire an existing game skill for free)
+
+## 0.29.0
+- `GameEventKind.Died`, `Player.AddAttackRange`, `SkillSlot.SetAutoCast`
+
+## 0.28.0
+- Teammate APIs using the game's own commands (work even if teammates don't have mods): `Game.Teammates`, `Player.HealAlly`, `Player.ShieldNearbyPlayers`, `Player.GiveBuff` (skill haste, armor, DoT damage), `Player.PlayEffect`; `DamageArea` with a null effect plays no effect, `DamageArea(..., spareTeammates)`, `Role.IsTeammateMonster`, `GameEventKind.TeammateLevelUp`, `Player.GiveGold`
+
+## 0.27.0
+- Enemy attack boost now applies wherever the attacking monster is owned (each player owns their own monsters in multiplayer); HP/shield boosts only take effect on the host
+- `LobbySync.ReadHost(key)`: read the lobby owner's member data
+
 ## 0.26.0
 - `mod.SetShotgunAmmo` (Shotgun hero's ammo cap and dash reload), `Player.AddAttackCount`, `Player.DropItem`, `Player.DamageArea`
 

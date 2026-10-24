@@ -1,5 +1,47 @@
 # DBModKit 更新日志
 
+## 0.31.0
+海克斯招牌卡用的接口（`SkillForms`，**未实测**）：
+- `mod.SetBiteGrowth(倍率)`：哥布林之王撕咬击杀加的生命上限乘倍率（补丁 `bbe.kjv`，服务器上算，只在单人或房主时生效）
+- `mod.SetBombRange(倍率)`：炸弹客的十字爆炸范围乘倍率（补丁 `bhk.msj` 后缀改 `bhlh`）
+- `mod.SetThunderOrbs(加几个)`：雷电雷之一闪的雷球上限（`PlayerThunderMode.maxOrbCount`，游戏最多 32）。改过的实例都记下原值，撤销时全部改回去；
+  每秒检查一次，变身结束、新一局英雄重建后重新写上（英雄模型来自对象池，可能跨局复用）
+- 这三项是可选功能，不进兼容检查的必需列表：游戏更新后对不上时只停用对应的招牌卡，不影响整个 ModKit
+
+## 0.30.0
+海克斯中等触发卡用的接口（**未实测**）：
+- `mod.OnLethalDamage(伤害 => 是否拦下)`：本地玩家受到致命伤害前调用，返回 true 免死（伤害改成 0）。补丁 `yb.iwl` 前缀（所有伤害最后结算的地方），
+  `Combat.LethalGuardAvailable` 表示装上了
+- `Player.CastSkillFree(技能, 位置, 朝向点)`：免费放一个游戏现成的技能（`yb.CmdCreateSkill`，装备落雷、月光大剑同款），身上不需要有这个技能；
+  剑气类技能不读朝向点，用的是你面朝的方向
+- 致命伤害拦截：死后不拦（持续伤害、远端伤害不查死亡就进结算）；联机客户端把还没同步回来的伤害算进去；按游戏的取整比较
+- 修复：兼容检查表里 `ez` 和 `ActiveSkillEnum` 各有两条，后一条覆盖前一条，`ez` 的大部分成员没被检查
+
+## 0.29.0
+海克斯第三批用的接口（**未实测**）：
+- `GameEventKind.Died`：本地玩家死亡（原版 `dieEvent`，Target = 自己）
+- `Player.AddAttackRange(米)`：攻击距离（`yb.iqg`，遗物"瞄准镜"同款）
+- `SkillSlot.SetAutoCast(开/关)`：和右键技能图标一样开关自动释放，表里不允许自动的技能不会打开；`SkillSlot.IsOnSkillBar`
+- 范围伤害截到 20 亿以内（游戏按 int 转，超过会溢出成负数）
+
+## 0.28.0
+队友相关的接口（都走游戏原版的命令，队友没装 Mod 也生效；**未实测**，要两人联机）：
+- `Game.Teammates()`：除了自己以外的玩家
+- `Player.HealAlly(队友, 量)`：治疗队友（`yb.iwz`，和装备 MadMan 治疗队友一样）
+- `Player.ShieldNearbyPlayers(半径, 比例)`：周围所有玩家（含自己）各加 生命上限 × 比例 的护盾（`CmdAddNearbyHumanityShield`，服务器限制半径 ≤ 50、比例 ≤ 1）
+- `Player.GiveBuff(玩家, PlayerBuff, 数值, 秒)`：上原版 buff（`CmdAddBuff`）：技能急速、护甲、持续伤害（"圣焰祝福"只加持续伤害，普攻和技能不吃）
+- `Player.PlayEffect(特效, 位置, 缩放)`：播放特效
+- `Player.DamageArea` 的特效传 null 时不播特效（频繁判定时用）；新重载 `DamageArea(..., spareTeammates)` 不打队友的怪
+- `GameEventKind.TeammateLevelUp`：队友升级（Target = 队友，原版 `onTeammateLevelUp`）
+- `Player.GiveGold(队友, 花费, 掉落)`：花自己的金币，在队友脚下掉金币（照抄商店"丢金币"，掉的可以比花的多）
+- `Role.IsTeammateMonster`：联机时属于队友的怪（每个玩家有自己的怪，打别人的怪收益归动手的人；原版判断 `bee.mec`）
+
+## 0.27.0
+海克斯联机用的改动（**未实测**，要两人联机）：
+- 敌人攻击倍率（`EnemyBoosts`）改为在"攻击的怪归本机"时放大：联机时每个玩家有自己的怪，怪的命中在主人本机算，以前只对本地玩家挨打生效，
+  打到别的玩家时漏掉了。生命、护盾倍率只有房主的有效（只在主机刷怪时乘）
+- `LobbySync.ReadHost(键)`：读房主写的大厅数据
+
 ## 0.26.0
 海克斯第二批用的接口（2026-10-23 单人实测通过）：
 - `mod.SetShotgunAmmo(上限, 冲锋装填数)`（`Shotgun`）：男枪的弹药上限（原版写死 2）和冲锋装填数（原版 1），上限可以随属性变（每次需要时调用），最多 12；

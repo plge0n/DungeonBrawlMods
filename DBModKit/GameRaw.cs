@@ -102,6 +102,8 @@ namespace DBModKit
             public yb.DogeEvent Dodge;
             public Action LevelUp;
             public Action Relife;
+            public Action<bbe> TeammateLevelUp;
+            public yb.DieEvent Died;
             public bbe.AddBagItem BagItem;
             public yb.LocalActiveSkillCastEvent LocalCast;
         }
@@ -121,6 +123,10 @@ namespace DBModKit
                 Dodge = () => GameEvents.Raise(new GameEvent(GameEventKind.Dodged)),
                 LevelUp = () => GameEvents.Raise(new GameEvent(GameEventKind.LevelUp)),
                 Relife = () => GameEvents.Raise(new GameEvent(GameEventKind.Revived)),
+                // onTeammateLevelUp：队友升级时本地玩家身上触发（bbe.cs 10844，伙伴之刃被动用它）
+                TeammateLevelUp = mate => GameEvents.Raise(new GameEvent(GameEventKind.TeammateLevelUp, Role.Wrap(mate))),
+                // dieEvent(参数名叫 attackRole，实际传的是死者自己：yb.hky 里 dieEvent?.Invoke(this))
+                Died = dead => GameEvents.Raise(new GameEvent(GameEventKind.Died, Role.Wrap(dead))),
                 BagItem = item => GameEvents.Raise(new GameEvent(GameEventKind.ItemPicked, itemId: (int)item)),
                 // localActiveSkillCastEvent(玩家, 技能, 目标点, 朝向, 目标 netId, 技能书编号, 是否免费)：只在 ez.dyf 末尾触发（真正放出技能时），
                 // 免费释放（dyf 的 h = true）也会触发
@@ -132,6 +138,8 @@ namespace DBModKit
             p.dogeEvent += b.Dodge;
             p.onPlayerLevelUp += b.LevelUp;
             p.onPlayerRelife += b.Relife;
+            p.onTeammateLevelUp += b.TeammateLevelUp;
+            p.dieEvent += b.Died;
             p.addBagItemEvent += b.BagItem;
             p.localActiveSkillCastEvent += b.LocalCast;
             return b;
@@ -148,6 +156,8 @@ namespace DBModKit
             p.dogeEvent -= b.Dodge;
             p.onPlayerLevelUp -= b.LevelUp;
             p.onPlayerRelife -= b.Relife;
+            p.onTeammateLevelUp -= b.TeammateLevelUp;
+            p.dieEvent -= b.Died;
             p.addBagItemEvent -= b.BagItem;
             p.localActiveSkillCastEvent -= b.LocalCast;
         }
@@ -1820,6 +1830,65 @@ namespace DBModKit
         // 被动（qp）的 bhne 是默认值 0，而 0 是 D_SpellThunder，所以被动返回 None（-1）
         public static int SkillId(object s) => s is qp ? (int)ActiveSkillEnum.None : (int)((bht)s).bhne;
         public static bool IsAutoCastOn(object s) => ((bht)s).bhny;
+
+        // 在技能栏上：按钮 bhng 正显示这个技能
+        public static bool IsOnSkillBar(object s) => ((bht)s).bhng is bpf b && ReferenceEquals(b.bjgk, s);
+
+        // 自动释放开关：右键技能图标时游戏调 bht.mtt()（翻转 bhny 并显示按钮上的自动标记 bhng.bjgl）；不在技能栏上（没有按钮）时只改字段
+        public static void SetAutoCast(object s, bool on)
+        {
+            var b = (bht)s;
+            if (b.bhny == on) return;
+            // 按钮换绑到别的技能后旧技能的 bhng 不清，这时 mtt 会改错格子的标记：只在按钮正显示这个技能时走 mtt
+            if (b.bhng != null && b.bhng.bjgl != null && ReferenceEquals(b.bhng.bjgk, b)) b.mtt();
+            else b.bhny = on;
+        }
+
+        // 免费放一个现成技能：yb.CmdCreateSkill(技能, 位置, 朝向角度, 目标, 技能书) → 服务器 → RpcCreateSkill，每个客户端都生成技能实例。
+        // 不扣蓝、不进冷却、不播动作、不触发施法事件，身上也不需要有这个技能。原版用法：装备落雷 sc.cs（D_SpellThunder 落在敌人位置，目标 -1）、
+        // 月光大剑 mh.cs（在自己位置朝敌人方向，角度 ez.dxv(目标, 自己)）。伤害在施法者本机算、归施法者
+        public static void CastSkillFree(Component me, int skillId, Vector3 pos, float rotation) => ((yb)me).CmdCreateSkill((ActiveSkillEnum)skillId, pos, rotation, -1, 0);
+
+        // 从 from 看向 to 的朝向角度（游戏的 ez.dxv）
+        public static float Facing(Vector3 from, Vector3 to) => ez.dxv(to, from);
+
+        // 雷之一闪的雷球上限：PlayerThunderMode.maxOrbCount（序列化字段，默认 10，读的时候限制在 1~32），英雄模式在 yb.bpia。
+        // 改过的实例都记下原值：英雄模型从对象池取（下一局可能还是这个实例）、变身时 bpia 会换成别的组件，所以撤销时把记下的全部改回去，
+        // 不依赖撤销那一刻的本地玩家
+        private static readonly List<(WeakReference mode, int original)> thunderTouched = new List<(WeakReference, int)>();
+        private static AccessTools.FieldRef<PlayerThunderMode, int> maxOrbCount;
+
+        // 本地玩家当前的雷电模式（变身中、不是雷电时为 null）
+        public static object ThunderMode(Component p) => ((yb)p).bpia as PlayerThunderMode;
+
+        public static void SetThunderOrbs(object target, int extra)
+        {
+            maxOrbCount = maxOrbCount ?? AccessTools.FieldRefAccess<PlayerThunderMode, int>("maxOrbCount");
+            // 先把其他改过的实例改回原值、清掉已经销毁的
+            for (int i = thunderTouched.Count - 1; i >= 0; i--)
+            {
+                var mode = thunderTouched[i].mode.Target as PlayerThunderMode;
+                if (mode == null)
+                {
+                    thunderTouched.RemoveAt(i);
+                    continue;
+                }
+                if (ReferenceEquals(mode, target) && extra > 0) continue;
+                maxOrbCount(mode) = thunderTouched[i].original;
+                thunderTouched.RemoveAt(i);
+            }
+            if (!(target is PlayerThunderMode current) || extra <= 0) return;
+            int index = thunderTouched.FindIndex(t => ReferenceEquals(t.mode.Target, current));
+            if (index < 0)
+            {
+                thunderTouched.Add((new WeakReference(current), maxOrbCount(current)));
+                index = thunderTouched.Count - 1;
+            }
+            maxOrbCount(current) = thunderTouched[index].original + extra;
+        }
+
+        // 攻击距离：yb.iqg(加量)，遗物"瞄准镜"用的同一个，会同步给服务器（fbk 是诱饵）
+        public static void AddAttackRange(Component p, float amount) => ((yb)p).iqg(amount);
         public static float CooldownRemaining(object s) => ((bht)s).k896ff3548b31472b8b2cf8f649c25e65;
         public static int Cost(object s, Component p) => ((bht)s).kacb7d091b5904139a602f04ed9552242((bbe)p);
         // PayToWin 技能花的是金币不是蓝
@@ -2125,8 +2194,57 @@ namespace DBModKit
         public static void DropItem(Component p, int itemType, Vector3 pos, int count) => ((bbe)p).CmdCreateItemByPosWithNum((ItemType)itemType, pos, count, false);
 
         // 范围伤害：nn.fsp（死灵祭司"对死者的供奉"用的）——范围内的敌人各吃一次技能伤害（暴击照常判定），再播特效
-        public static void DamageArea(Component p, float damage, Vector3 center, float radius, string effect, float effectScale)
-            => nn.fsp((yb)p, damage, center, radius, effect, effectScale);
+        public static void DamageArea(Component p, float damage, Vector3 center, float radius, string effect, float effectScale, bool spareTeammates = false)
+        {
+            // 游戏按 (int) 转：float 的 int.MaxValue 是 2147483648，转过去溢出成负数
+            damage = Mathf.Min(damage, 2e9f);
+            if (effect != null && !spareTeammates)
+            {
+                nn.fsp((yb)p, damage, center, radius, effect, effectScale);
+                return;
+            }
+            // 照抄 fsp 的伤害部分：不播特效（频繁调用时每次都 CmdPlayEffect 会刷屏，也占网络），或者跳过队友的怪
+            var a = (yb)p;
+            bool crit = a.izi(AttackType.Skill);
+            foreach (yb item in cj.boyo.fvw(radius, center))
+            {
+                if (spareTeammates && IsTeammateMonster(p, item)) continue;
+                ez.dxt(a, item, (int)damage, ez.dxv(item.bphx.position, center), AttackType.Skill, crit, 0f);
+            }
+            if (effect != null) ((bbe)p).CmdPlayEffect(effect, 1f, center, effectScale);
+        }
+
+        // 联机时每个玩家有自己的怪（authorityId = 主人的 netId），打别人的怪收益归动手的人。bee.mec 是原版"队友的怪"判断
+        public static bool IsTeammateMonster(Component me, Component enemy) => bee.mec((bbe)me, ((yb)enemy).authorityId);
+
+        // 送金币：照抄商店"丢金币"（bbe.krl）——先用官方方法扣自己的钱，再在指定位置生成无主金币（谁都能捡）。
+        // drop 可以大于 pay：服务器不校验生成的数量（伙伴之刃分收益也是凭空发）
+        public static void GiveGold(Component me, Vector3 pos, int pay, int drop)
+        {
+            var p = (bbe)me;
+            if (pay > 0) p.kfd63a19d353a42878846361e6af4f637(p.iwh(), -pay, c: false);
+            if (drop > 0) p.CmdCreateItemByPosWithNum(ItemType.Gold, pos, drop, false);
+        }
+
+        // 特效：bbe.CmdPlayEffect(路径, 速度, 位置, 缩放)，广播给所有人（fsp 也这么播）
+        public static void PlayEffect(Component p, string effect, Vector3 pos, float scale) => ((bbe)p).CmdPlayEffect(effect, 1f, pos, scale);
+
+        // ---- 队友（都是原版的命令，队友没装 Mod 也能正常处理）----
+        // yb.iwz(量, 目标)：治疗目标，内部 CmdUpdateHp(+量, 目标 netId)，服务器不校验发送者（装备 MadMan 治疗队友就这么用）
+        public static void HealOther(Component me, Component target, double amount) => ((yb)me).iwz(amount, (yb)target);
+
+        // bbe.CmdAddNearbyHumanityShield(范围, 比例)：服务器 kxp 给自己周围的所有玩家（含自己）各加 最大生命 × 比例 的护盾，范围 ≤ 50、比例 ≤ 1
+        public static void ShieldNearbyPlayers(Component me, float radius, float ratio) => ((bbe)me).CmdAddNearbyHumanityShield(radius, ratio);
+
+        // bbe.CmdAddBuff(目标, 来源, 类型, 值, 时长, 等级) → 服务器 lcp → 目标 RpcAddBuff → yb 里按类型 new 效果类（yb.cs 4240 起的 switch）：
+        // SkillHaste → hy：skillCdReduce += 值（技能急速）；IronArmor → ha：护甲 bepy += 值；
+        // SacredEmberBlessing → hu：值加在 buffAddDamage 上——只有 AttackType.Buff（持续伤害）读它，普攻和技能不吃
+        public static void GiveBuff(Component me, Component target, PlayerBuff buff, float value, float seconds)
+        {
+            LocalBuffType type = buff == PlayerBuff.SkillHaste ? LocalBuffType.SkillHaste
+                : buff == PlayerBuff.Armor ? LocalBuffType.IronArmor : LocalBuffType.SacredEmberBlessing;
+            ((bbe)me).CmdAddBuff(((yb)target).bqbx, ((yb)me).bqbx, type, value, seconds, 0);
+        }
 
         // ---- 通用加成（海克斯通用强化）----
         // ez.ebt(键, 整数)：遗物、卡牌、锻体读"键|值"时走的就是它，作用于本地玩家 nn.bpbu。百分比类的键传 25 表示 25%。

@@ -77,12 +77,31 @@ namespace DBModKit
             return result;
         }
 
+        /// <summary>场上除了自己以外的玩家（不含国王对决的国王）。会遍历场景，不要每帧调用。</summary>
+        public static List<Player> Teammates()
+        {
+            var result = Players();
+            result.RemoveAll(p => p.IsLocal || GameRaw.IsKing(p.Native));
+            return result;
+        }
+
         /// <summary>游戏设置里的"自动战斗"开着。</summary>
         public static bool AutoBattle => ModKit.Compatible && GameRaw.AutoBattleOn();
 
         /// <summary>取游戏本地化文本，找不到时返回 fallback。</summary>
         public static string Localize(string key, string fallback = null)
             => ModKit.Compatible ? GameRaw.Localize(key, fallback ?? key) : fallback ?? key;
+    }
+
+    /// <summary>可以给玩家上的原版 buff（<see cref="Player.GiveBuff"/>）。</summary>
+    public enum PlayerBuff
+    {
+        /// <summary>技能急速 +value（整数，和属性键 CoolDown 一样：冷却 ×1/(1+急速/100)）。</summary>
+        SkillHaste,
+        /// <summary>护甲 +value（整数）。</summary>
+        Armor,
+        /// <summary>"圣焰祝福"：持续伤害（AttackType.Buff，比如灼烧、中毒）+value（0.2 = +20%），普攻和技能伤害不吃。</summary>
+        DotDamage,
     }
 
     /// <summary>场上的角色（玩家、敌人、召唤物）。同一个游戏对象总是对应同一个 Role 实例，可以直接比较。</summary>
@@ -115,6 +134,9 @@ namespace DBModKit
         public bool IsElite => GameRaw.IsElite(Native);
         /// <summary>召唤物（玩家召唤出来的单位）。</summary>
         public bool IsSummon => GameRaw.IsSummon(Native);
+
+        /// <summary>联机时属于队友的怪（每个玩家有自己的怪，打别人的怪收益归动手的人）。</summary>
+        public bool IsTeammateMonster => GameRaw.LocalPlayer() is Component me && GameRaw.IsTeammateMonster(me, Native);
 
         /// <summary>是 owner 的召唤物。</summary>
         public bool IsSummonOf(Player owner)
@@ -215,6 +237,23 @@ namespace DBModKit
             return got;
         }
 
+        /// <summary>
+        /// 花自己 pay 金币，在 target 脚下掉 drop 金币（无主金币，谁都能捡，一般是站在那里的人捡到）。drop 可以比 pay 多（"送出去更值钱"）。
+        /// 走游戏的扣钱和掉落，队友没装 Mod 也能捡。pay 超过身上的金币时按身上的算，drop 按同样的比例缩小。返回实际花了多少。
+        /// </summary>
+        public int GiveGold(Player target, int pay, int drop)
+        {
+            RequireLocal();
+            if (target == null || pay <= 0 || drop <= 0) return 0;
+            int have = Gold;
+            int paid = Math.Min(pay, have);
+            if (paid < pay) drop = (int)((long)drop * paid / pay);
+            if (drop <= 0) return 0;
+            GameRaw.GiveGold(Native, target.Position, paid, drop);
+            RunLog.Info(RunLog.CallerMod(), "队友", "送金币", ("对象", target.Name), ("花费", paid), ("掉落", drop), ("金币", $"{have}→{Gold}"));
+            return paid;
+        }
+
         /// <summary>获得一个遗物（ItemType 编号，见 RelicInfo）。超过本局获取上限等情况下返回 false。</summary>
         public bool GiveRelic(int relicId)
         {
@@ -276,6 +315,7 @@ namespace DBModKit
 
         /// <summary>
         /// 以 center 为圆心对范围内的敌人各造成一次技能伤害（暴击照常判定，算本地玩家打的），并播放特效（游戏的特效路径，例如 "Effect/DeathExplosion"）。
+        /// effect 传 null 不播特效（频繁调用时用，否则每次都广播一个特效）。
         /// </summary>
         public void DamageArea(float damage, Vector3 center, float radius, string effect = "Effect/DeathExplosion", float effectScale = 1f)
         {
@@ -283,6 +323,63 @@ namespace DBModKit
             if (damage <= 0f || radius <= 0f) return;
             GameRaw.DamageArea(Native, damage, center, radius, effect, effectScale);
             RunLog.Debug(RunLog.CallerMod(), "玩家", "范围伤害", ("伤害", Mathf.Round(damage)), ("半径", radius));
+        }
+
+        /// <summary>
+        /// 同 <see cref="DamageArea(float, Vector3, float, string, float)"/>，spareTeammates 为 true 时不打队友的怪。
+        /// 联机时每个玩家有自己的怪，打别人的怪收益归动手的人；在队友身边放的范围伤害应该跳过队友的怪，免得抢他的收益。
+        /// effect 为 null 时不播特效、也不写日志（给高频判定用）。
+        /// </summary>
+        public void DamageArea(float damage, Vector3 center, float radius, string effect, float effectScale, bool spareTeammates)
+        {
+            RequireLocal();
+            if (damage <= 0f || radius <= 0f) return;
+            GameRaw.DamageArea(Native, damage, center, radius, effect, effectScale, spareTeammates);
+            // 不播特效的一般是高频判定（每秒好几次），不写日志：取调用方要构造调用栈，也会把有用的日志挤出最近记录
+            if (effect != null) RunLog.Debug(RunLog.CallerMod(), "玩家", "范围伤害", ("伤害", Mathf.Round(damage)), ("半径", radius), ("跳过队友的怪", spareTeammates));
+        }
+
+        /// <summary>在某个位置播放游戏的特效（例如 "Effect/DeathExplosion"），所有玩家都看得到。不要每帧调用。</summary>
+        public void PlayEffect(string effect, Vector3 position, float scale = 1f)
+        {
+            RequireLocal();
+            if (string.IsNullOrEmpty(effect)) return;
+            GameRaw.PlayEffect(Native, effect, position, scale);
+        }
+
+        /// <summary>
+        /// 治疗另一个玩家（队友），算自己治疗的。走游戏原版的治疗同步，队友没装 Mod 也会回血。不能超过对方的生命上限。
+        /// </summary>
+        public void HealAlly(Player ally, double amount)
+        {
+            RequireLocal();
+            if (ally == null || ally == this || amount <= 0 || !ally.IsAlive || ally.Hp >= ally.MaxHp) return;
+            GameRaw.HealOther(Native, ally.Native, amount);
+            RunLog.Debug(RunLog.CallerMod(), "队友", "治疗", ("队友", ally.Name), ("量", Math.Round(amount)));
+        }
+
+        /// <summary>
+        /// 自己周围 radius 米内的所有玩家（含自己）各加一个护盾：各自生命上限 × ratio。游戏装备"人性"系列的原版效果，由服务器执行，
+        /// 范围最多 50、比例最多 1。
+        /// </summary>
+        public void ShieldNearbyPlayers(float radius, float ratio)
+        {
+            RequireLocal();
+            if (radius <= 0f || ratio <= 0f) return;
+            GameRaw.ShieldNearbyPlayers(Native, Mathf.Min(radius, 50f), Mathf.Min(ratio, 1f));
+            RunLog.Debug(RunLog.CallerMod(), "队友", "范围护盾", ("半径", radius), ("比例", ratio));
+        }
+
+        /// <summary>
+        /// 给一个玩家（可以是队友，也可以是自己）上游戏原版的 buff，持续 seconds 秒。走原版 buff 同步，队友没装 Mod 也生效。
+        /// value 的含义见 <see cref="PlayerBuff"/>。
+        /// </summary>
+        public void GiveBuff(Player target, PlayerBuff buff, float value, float seconds)
+        {
+            RequireLocal();
+            if (target == null || !target.IsAlive || seconds <= 0f || value <= 0f) return;
+            GameRaw.GiveBuff(Native, target.Native, buff, value, seconds);
+            RunLog.Debug(RunLog.CallerMod(), "队友", "上 buff", ("对象", target.Name), ("buff", buff), ("数值", value), ("秒", seconds));
         }
 
         /// <summary>身上所有的主动技能（专属技能、技能书学到的、自定义的），不含被动。</summary>
@@ -340,6 +437,29 @@ namespace DBModKit
             int before = Armor;
             GameRaw.AddArmor(Native, amount);
             RunLog.Info(RunLog.CallerMod(), "玩家", "改护甲", ("加成", amount), ("护甲", $"{before}→{Armor}"));
+        }
+
+        /// <summary>
+        /// 免费放一个游戏现成的技能（ActiveSkillEnum 编号，比如 100 = C 级落雷、201 = B 级剑气），身上不需要有这个技能：
+        /// 不扣蓝、不进冷却、不播动作、不触发 <see cref="Combat.Cast"/>。position 是技能生成的位置（落雷落在哪），
+        /// aimAt 是朝向点，但有的技能不读它：剑气用的是你当前面朝的方向。走原版同步，别人看得到；伤害算你的（命中带技能来源，处理命中时注意别无限连锁）。
+        /// 游戏的"有玩家生成技能"事件照常触发：带反击词缀的敌人会因此反击（有自己的冷却）。会在命中回调里高频调用，不写日志。
+        /// </summary>
+        public void CastSkillFree(int skillId, Vector3 position, Vector3? aimAt = null)
+        {
+            RequireLocal();
+            float rotation = aimAt.HasValue ? GameRaw.Facing(position, aimAt.Value) : 0f;
+            GameRaw.CastSkillFree(Native, skillId, position, rotation);
+        }
+
+        /// <summary>加攻击距离（米，负数撤销），遗物"瞄准镜"用的同一个方法，会同步。本局有效，不会自动撤销。</summary>
+        public void AddAttackRange(float meters)
+        {
+            RequireLocal();
+            if (meters == 0f) return;
+            float before = AttackRange;
+            GameRaw.AddAttackRange(Native, meters);
+            RunLog.Info(RunLog.CallerMod(), "玩家", "改攻击距离", ("加", meters), ("距离", $"{before:0.##}→{AttackRange:0.##}"));
         }
 
         /// <summary>无敌若干秒（游戏的无敌药水效果，重复使用时刷新时长）。</summary>
