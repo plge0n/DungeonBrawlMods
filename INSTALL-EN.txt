@@ -1,4 +1,4 @@
-DungeonBrawl Mods 0.1 - Installation and usage
+DungeonBrawl Mods 0.3 - Installation and usage
 中文说明见 安装说明.txt
 
 Note: the in-game UI of these mods is Chinese only for now.
@@ -9,14 +9,15 @@ The package contains 7 mods, each in its own folder under BepInEx\plugins. Delet
   SmartMove    Auto-dodge ground telegraphs
   AutoPickup   Auto-pickup
   DamageMeter  Damage meter
-  Hextech      Hextech augments (single-player)
+  Hextech      Hextech augments
   DBStudio     In-game mod workbench (F9)
 Features that haven't been fully verified in game yet are listed under "Not yet tested in game" in RELEASE_NOTES.md.
 
 [Install]
 1. In Steam, right-click the game -> Manage -> Browse local files to open the game folder (the one with DungeonBrawl.exe).
 2. First install: extract everything from the "full" package into that folder.
-   Updating: extract the "plugins" package into that folder and overwrite the old files.
+   Updating: extract the "plugins" package into that folder and overwrite the old files. Update all mods together, not just one.
+   Also using the Workshop: a same-named mod in BepInEx\plugins wins over the Workshop copy. To use the Workshop version, delete that folder in plugins (except DBModKit).
 3. Start the game. BepInEx initialises on the first launch, so it may take a little longer.
 4. A "Mod" button appears below "Workshop" in the main menu - that means it worked. It lists the installed mods and whether they're running.
    A red "!" on the button means a mod failed to load or needs your confirmation; open it to see why.
@@ -60,12 +61,15 @@ Wave and run summaries are written to BepInEx\LogOutput.log.
 Settings (position, size, opacity, rows, hotkey): BepInEx\config\plge0n.dungeonbrawl.damagemeter.cfg, or DBStudio -> Mod page.
 
 [Hextech - augments]
-4 picks per run (one at the start, then after the relic pick at roughly 1/4, 1/2 and 3/4 of the waves). Every card upgrades your hero's signature skill:
-damage, cooldown, mana cost, duration, charges, or on-cast effects like attack speed / armor / invulnerability / heal / mana refund,
-cooldown refund on skill kills, or a free extra cast.
-Cards come in silver, gold and prismatic tiers; prismatic gets more likely later on (max 2 per run). 2 rerolls per run (the 4th option; doesn't use the game's own rerolls).
-Chosen augments are shown to the right of the bag, under your portrait; hover for details. They're also listed in the signature skill's tooltip, and F7 lists them.
-Single-player only: disabled for the run as soon as anyone else is in the room. The 10 passive heroes without parameters (e.g. 赏金猎人, 黑衣剑士) aren't supported yet; you'll get a notice at the start.
+4 picks per run (one at the start, then after the relic pick at roughly 1/4, 1/2 and 3/4 of the waves). Silver, gold and prismatic tiers; prismatic gets more likely later on (max 2 per run).
+2 rerolls per run (the extra option; doesn't use the game's own rerolls).
+  Signature cards  upgrade your hero's signature skill: damage, cooldown, mana cost, duration, charges, on-cast effects; some heroes have hand-made signature cards
+                   (Desert Reaper, Shotgun hero, Goblin King, Bomber, Raiden)
+  Generic cards    for every hero, inspired by LoL ARAM: Mayhem and Arena: stats, on-kill triggers, cheat death, extra lightning / sword waves, quests (Prismatic Egg...), trade-offs...
+  Teammate cards   only when you have teammates: heals, shields, skill haste for teammates, and "feed the carry" cards (pick the teammate you support)
+Heroes with signature cards get 2 of those + 1 generic per pick. Chosen augments are shown to the right of the bag, under your portrait; hover for details. F7 lists them.
+Optional enemy augments (config EnemyAugments, off by default): enemies get one of the same tier whenever you pick, and you get an extra reroll per pick.
+Multiplayer: follows the rules in [Multiplayer] below; picks only appear during the rest phase (the game can't pause online); enemy augments follow the host's setting.
 Settings: BepInEx\config\plge0n.dungeonbrawl.hextech.cfg
 
 [DBStudio - mod workbench]
@@ -88,7 +92,7 @@ Gameplay-changing content (custom skills, relics, equipment, content packs, DBSt
 Otherwise only cosmetics such as skins stay on for that run; you'll see a notice when entering the dungeon. The state locks when combat starts:
 it can only be turned off mid-run, never back on, and anything you already got stays.
 LAN games have no Steam lobby, so the mods can't check what others have installed; gameplay content is always disabled there.
-Hextech is stricter: disabled as soon as anyone else is in the room.
+Hextech follows the same rule (from 0.3; a player with Hextech switched off doesn't count as having gameplay content). Everyone also needs the same mod versions, so update together.
 
 [Leaderboard]
 By the game author's rule, you can't upload to the leaderboard with mods installed. Your results won't be uploaded (you'll see a notice); nothing else is affected.

@@ -10,7 +10,7 @@ BepInEx 5 插件，目标游戏：地下城竞技场（Steam 4246640，Unity 202
 | [SmartMove](SmartMove) | 自动躲避地面预警（F8 开关） |
 | [AutoPickup](AutoPickup) | 战斗中自动拾取身边能捡的掉落物（和按 C 一样），可按类别过滤 |
 | [DamageMeter](DamageMeter) | 伤害统计：按普攻、技能、召唤物分开统计本波和本局的伤害与 DPS；Steam 联机时显示装了它的队友的伤害 |
-| [Hextech](Hextech) | 海克斯强化：每局 4 次三选一，自动生成强化英雄专属技能的卡（联机时要每个人装的一样或房主允许） |
+| [Hextech](Hextech) | 海克斯强化：每局 4 次三选一，专属技能强化 + 参照海克斯大乱斗、斗魂竞技场的通用卡和队友卡（联机时要每个人装的一样或房主允许） |
 
 玩家说明见 [安装说明.txt](安装说明.txt)（英文 [INSTALL-EN.txt](INSTALL-EN.txt)），当前版本的发版说明见 [RELEASE_NOTES.md](RELEASE_NOTES.md)。
 
