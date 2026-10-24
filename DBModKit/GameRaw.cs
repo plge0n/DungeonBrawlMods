@@ -2125,19 +2125,26 @@ namespace DBModKit
         public static void DropItem(Component p, int itemType, Vector3 pos, int count) => ((bbe)p).CmdCreateItemByPosWithNum((ItemType)itemType, pos, count, false);
 
         // 范围伤害：nn.fsp（死灵祭司"对死者的供奉"用的）——范围内的敌人各吃一次技能伤害（暴击照常判定），再播特效
-        public static void DamageArea(Component p, float damage, Vector3 center, float radius, string effect, float effectScale)
+        public static void DamageArea(Component p, float damage, Vector3 center, float radius, string effect, float effectScale, bool spareTeammates = false)
         {
-            if (effect != null)
+            if (effect != null && !spareTeammates)
             {
                 nn.fsp((yb)p, damage, center, radius, effect, effectScale);
                 return;
             }
-            // 不播特效：照抄 fsp 的伤害部分（频繁调用时每次都 CmdPlayEffect 会刷屏，也占网络）
+            // 照抄 fsp 的伤害部分：不播特效（频繁调用时每次都 CmdPlayEffect 会刷屏，也占网络），或者跳过队友的怪
             var a = (yb)p;
             bool crit = a.izi(AttackType.Skill);
             foreach (yb item in cj.boyo.fvw(radius, center))
+            {
+                if (spareTeammates && IsTeammateMonster(p, item)) continue;
                 ez.dxt(a, item, (int)damage, ez.dxv(item.bphx.position, center), AttackType.Skill, crit, 0f);
+            }
+            if (effect != null) ((bbe)p).CmdPlayEffect(effect, 1f, center, effectScale);
         }
+
+        // 联机时每个玩家有自己的怪（authorityId = 主人的 netId），打别人的怪收益归动手的人。bee.mec 是原版"队友的怪"判断
+        public static bool IsTeammateMonster(Component me, Component enemy) => bee.mec((bbe)me, ((yb)enemy).authorityId);
 
         // 特效：bbe.CmdPlayEffect(路径, 速度, 位置, 缩放)，广播给所有人（fsp 也这么播）
         public static void PlayEffect(Component p, string effect, Vector3 pos, float scale) => ((bbe)p).CmdPlayEffect(effect, 1f, pos, scale);

@@ -124,6 +124,9 @@ namespace DBModKit
         /// <summary>召唤物（玩家召唤出来的单位）。</summary>
         public bool IsSummon => GameRaw.IsSummon(Native);
 
+        /// <summary>联机时属于队友的怪（每个玩家有自己的怪，打别人的怪收益归动手的人）。</summary>
+        public bool IsTeammateMonster => GameRaw.LocalPlayer() is Component me && GameRaw.IsTeammateMonster(me, Native);
+
         /// <summary>是 owner 的召唤物。</summary>
         public bool IsSummonOf(Player owner)
             => owner != null && IsSummon && GameRaw.AuthorityId(Native) == GameRaw.NetId(owner.Native);
@@ -292,6 +295,18 @@ namespace DBModKit
             if (damage <= 0f || radius <= 0f) return;
             GameRaw.DamageArea(Native, damage, center, radius, effect, effectScale);
             RunLog.Debug(RunLog.CallerMod(), "玩家", "范围伤害", ("伤害", Mathf.Round(damage)), ("半径", radius));
+        }
+
+        /// <summary>
+        /// 同 <see cref="DamageArea(float, Vector3, float, string, float)"/>，spareTeammates 为 true 时不打队友的怪。
+        /// 联机时每个玩家有自己的怪，打别人的怪收益归动手的人；在队友身边放的范围伤害应该跳过队友的怪，免得抢他的收益。
+        /// </summary>
+        public void DamageArea(float damage, Vector3 center, float radius, string effect, float effectScale, bool spareTeammates)
+        {
+            RequireLocal();
+            if (damage <= 0f || radius <= 0f) return;
+            GameRaw.DamageArea(Native, damage, center, radius, effect, effectScale, spareTeammates);
+            RunLog.Debug(RunLog.CallerMod(), "玩家", "范围伤害", ("伤害", Mathf.Round(damage)), ("半径", radius), ("跳过队友的怪", spareTeammates));
         }
 
         /// <summary>在某个位置播放游戏的特效（例如 "Effect/DeathExplosion"），所有玩家都看得到。不要每帧调用。</summary>

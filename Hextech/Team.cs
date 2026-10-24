@@ -7,7 +7,8 @@ using UnityEngine;
 namespace Hextech
 {
     // 队友卡（参照斗魂竞技场）：读队友的位置、血量，用游戏原版的治疗、范围护盾、圣焰祝福影响队友，队友没装 Mod 也生效。
-    // 联机时没有重试波次，限时加成（复仇）在波次结束时撤销
+    // 联机时没有重试波次，限时加成（复仇）在波次结束时撤销。
+    // 每个玩家有自己的怪、打别人的怪收益归动手的人：在队友身边的范围伤害（音爆、晾衣绳）跳过队友的怪，不抢收益
     internal static class Team
     {
         // ---- 数值 ----
@@ -165,7 +166,7 @@ namespace Hextech
             float now = Time.time;
             if (boomAt.TryGetValue(m, out var at) && now < at) return;
             boomAt[m] = now + BoomCooldown;
-            me.DamageArea((float)Math.Min(float.MaxValue / 4, me.Attack * BoomDamage), m.Position, BoomRadius, "Effect/DeathExplosion", 1f);
+            me.DamageArea((float)Math.Min(float.MaxValue / 4, me.Attack * BoomDamage), m.Position, BoomRadius, "Effect/DeathExplosion", 1f, spareTeammates: true);
         }
 
         // 晾衣绳：沿两人连线每隔一个宽度判定一次（不播特效）；每秒在线的中点播一次小特效，让人知道线在哪
@@ -181,7 +182,7 @@ namespace Hextech
                 int steps = Mathf.Max(1, Mathf.CeilToInt(length / (LineWidth * 2f)));
                 // 两端各留一个宽度，不打到自己脚下（那里本来就有普攻）
                 for (int i = 1; i < steps; i++)
-                    me.DamageArea(damage, Vector3.Lerp(a, b, (float)i / steps), LineWidth, null);
+                    me.DamageArea(damage, Vector3.Lerp(a, b, (float)i / steps), LineWidth, null, 1f, spareTeammates: true);
                 if (effect) me.PlayEffect("Effect/DeathExplosion", Vector3.Lerp(a, b, 0.5f), 0.4f);
             }
         }

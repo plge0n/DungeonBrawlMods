@@ -75,6 +75,7 @@ namespace DBModKit
             ["RoguelikeUIData"] = new[] { "name", "dec", "icon", "quality", "data" },
             ["GoldIncomeSource"] = new[] { "Gameplay" },
             ["LocalBuffType"] = new[] { "SacredEmberBlessing" },
+            ["bee"] = new[] { "mec" },
             ["ciy"] = new[] { "bmyj", "bmyc" },
             ["cik"] = new[] { "bqcb", "bmvl" },
             ["xo"] = new[] { "isBoss", "isElite" },

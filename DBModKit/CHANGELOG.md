@@ -7,7 +7,8 @@
 - `Player.ShieldNearbyPlayers(半径, 比例)`：周围所有玩家（含自己）各加 生命上限 × 比例 的护盾（`CmdAddNearbyHumanityShield`，服务器限制半径 ≤ 50、比例 ≤ 1）
 - `Player.BlessPlayer(玩家, 增伤, 秒, 护甲)`：原版的"圣焰祝福" buff（`CmdAddBuff` + `SacredEmberBlessing`）
 - `Player.PlayEffect(特效, 位置, 缩放)`：播放特效
-- `Player.DamageArea` 的特效传 null 时不播特效（频繁判定时用）
+- `Player.DamageArea` 的特效传 null 时不播特效（频繁判定时用）；新重载 `DamageArea(..., spareTeammates)` 不打队友的怪
+- `Role.IsTeammateMonster`：联机时属于队友的怪（每个玩家有自己的怪，打别人的怪收益归动手的人；原版判断 `bee.mec`）
 
 ## 0.27.0
 海克斯联机用的改动（**未实测**，要两人联机）：
