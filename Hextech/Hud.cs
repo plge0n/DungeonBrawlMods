@@ -7,14 +7,16 @@ using UnityEngine.UI;
 
 namespace Hextech
 {
-    // 已选强化的图标：放在背包右边、传送头像（"F1"那格）下面，2×2 最多 4 个，悬停用游戏原生的提示框显示效果。
-    // 联机时那一栏下面是队友的头像，图标可能盖住（没实测）
+    // 已选强化的图标：放在背包右边、传送头像（"F1"那格）下面，4 张以内 2×2、更多时 3 列，悬停用游戏原生的提示框显示效果。
+    // 联机时那一栏里还有队友的头像：排在最下面那个头像的下面，有人进出时重新排（没实测）
     internal static class Hud
     {
         private const string StripName = "HextechStrip";
         private const float Gap = 6f;
         private static RectTransform strip;
         private static int shown = -1;
+        // 建图标栏时传送栏里有几个头像（不含图标栏自己）
+        private static int heads = -1;
 
         public static void Refresh() => shown = -1;
 
@@ -26,16 +28,21 @@ namespace Hextech
                 RemoveAll();
                 return;
             }
+            // 有人进出房间，头像数变了：重新排
+            if (strip != null && strip.parent != null && strip.parent.childCount - 1 != heads) RemoveAll();
             if (strip == null)
             {
                 strip = Create();
                 if (strip == null) return;
+                heads = strip.parent.childCount - 1;
                 shown = -1;
             }
             if (shown == picks.Count) return;
             shown = picks.Count;
             foreach (Transform c in strip) Object.Destroy(c.gameObject);
-            for (int i = 0; i < picks.Count && i < Engine.Rounds; i++) AddIcon(i, picks[i]);
+            // 4 张以内 2×2，多了（棱彩蛋、嬗变的额外选择）排成 3 列，免得往下太长
+            int columns = picks.Count > 4 ? 3 : 2;
+            for (int i = 0; i < picks.Count; i++) AddIcon(i, picks[i], columns);
         }
 
         // 找传送头像栏（ui_playerState 下的 trans_teleportTip），按它第一格的大小、位置排
@@ -55,15 +62,19 @@ namespace Hextech
             rt.anchorMin = rt.anchorMax = head.anchorMin;
             rt.pivot = new Vector2(0f, 1f);
             rt.sizeDelta = Vector2.zero;
-            // 以头像格的左下角为起点往下排
-            rt.anchoredPosition = head.anchoredPosition + new Vector2(-head.rect.width * head.pivot.x, -head.rect.height * head.pivot.y - Gap);
+            // 以头像格的左边、最下面那个头像的底边为起点往下排（联机时栏里有好几个头像）
+            float bottom = head.anchoredPosition.y - head.rect.height * head.pivot.y;
+            for (int i = 1; i < teleport.childCount; i++)
+                if (teleport.GetChild(i) is RectTransform other && other != rt && other.gameObject.activeSelf)
+                    bottom = Mathf.Min(bottom, other.anchoredPosition.y - other.rect.height * other.pivot.y);
+            rt.anchoredPosition = new Vector2(head.anchoredPosition.x - head.rect.width * head.pivot.x, bottom - Gap);
             rt.SetAsLastSibling();
             return rt;
         }
 
         private static float CellSize => strip.parent.GetChild(0) is RectTransform head ? head.rect.width : 40f;
 
-        private static void AddIcon(int index, Card card)
+        private static void AddIcon(int index, Card card, int columns)
         {
             float size = CellSize;
             var frame = new GameObject("augment" + index, typeof(RectTransform), typeof(Image));
@@ -71,7 +82,7 @@ namespace Hextech
             rt.SetParent(strip, false);
             rt.anchorMin = rt.anchorMax = rt.pivot = new Vector2(0f, 1f);
             rt.sizeDelta = new Vector2(size, size);
-            rt.anchoredPosition = new Vector2(index % 2 * (size + Gap), -(index / 2) * (size + Gap));
+            rt.anchoredPosition = new Vector2(index % columns * (size + Gap), -(index / columns) * (size + Gap));
             frame.GetComponent<Image>().color = TierColor(card.Tier);
 
             var icon = new GameObject("icon", typeof(RectTransform), typeof(Image));
@@ -117,6 +128,8 @@ namespace Hextech
             if (strip != null)
             {
                 NativeTip.Hide();
+                // 先移出传送栏：Destroy 到帧末才生效，同一帧重建时不能把它算进头像数
+                strip.SetParent(null, false);
                 Object.Destroy(strip.gameObject);
             }
             strip = null;
