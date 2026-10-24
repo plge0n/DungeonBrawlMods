@@ -6,7 +6,9 @@
 海克斯招牌卡用的接口（`SkillForms`，**未实测**）：
 - `mod.SetBiteGrowth(倍率)`：哥布林之王撕咬击杀加的生命上限乘倍率（补丁 `bbe.kjv`，服务器上算，只在单人或房主时生效）
 - `mod.SetBombRange(倍率)`：炸弹客的十字爆炸范围乘倍率（补丁 `bhk.msj` 后缀改 `bhlh`）
-- `mod.SetThunderOrbs(加几个)`：雷电雷之一闪的雷球上限（`PlayerThunderMode.maxOrbCount`，游戏最多 32）
+- `mod.SetThunderOrbs(加几个)`：雷电雷之一闪的雷球上限（`PlayerThunderMode.maxOrbCount`，游戏最多 32）。改过的实例都记下原值，撤销时全部改回去；
+  每秒检查一次，变身结束、新一局英雄重建后重新写上（英雄模型来自对象池，可能跨局复用）
+- 这三项是可选功能，不进兼容检查的必需列表：游戏更新后对不上时只停用对应的招牌卡，不影响整个 ModKit
 
 ## 0.30.0
 海克斯中等触发卡用的接口（**未实测**）：

@@ -57,14 +57,28 @@ namespace DBModKit
             if (thunder.Remove(owner)) SetThunder(ModKitPlugin.Name, 0);
         }
 
-        /// <summary>
-        /// 把雷球上限写到本地玩家身上（雷电以外的英雄什么也不做）。设置时会自动调用；英雄重新生成后（新的一局）要再调一次。
-        /// </summary>
-        public static void ApplyThunder()
+        private static float nextCheck;
+        private static object appliedTo;
+        private static int appliedExtra;
+
+        // 设置时、以及每秒检查一次：变身结束换回原组件、新一局英雄重建、设置撤销时，把上限写到当前的雷电模式上（其他实例改回原值）
+        internal static void ApplyThunder()
         {
             if (!ModKit.Compatible) return;
             var me = GameRaw.LocalPlayer();
-            if (me != null) Safe.Run("雷之一闪雷球上限", () => GameRaw.SetThunderOrbs(me, ThunderExtra));
+            object mode = me != null ? GameRaw.ThunderMode(me) : null;
+            if (ReferenceEquals(mode, appliedTo) && appliedExtra == ThunderExtra) return;
+            appliedTo = mode;
+            appliedExtra = ThunderExtra;
+            Safe.Run("雷之一闪雷球上限", () => GameRaw.SetThunderOrbs(mode, ThunderExtra));
+        }
+
+        internal static void Tick()
+        {
+            if (thunder.Count == 0 && appliedExtra == 0) return;
+            if (UnityEngine.Time.unscaledTime < nextCheck) return;
+            nextCheck = UnityEngine.Time.unscaledTime + 1f;
+            ApplyThunder();
         }
     }
 }
