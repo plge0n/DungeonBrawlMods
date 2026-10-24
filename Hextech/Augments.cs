@@ -24,6 +24,8 @@ namespace Hextech
         public bool Support;
         // 只给专属技能是主动、而且表里允许自动释放的英雄（自动施放）
         public bool NeedsAutoCast;
+        // 要 ModKit 的致命伤害拦截（免死卡）；补丁没装上时不出现
+        public bool NeedsLethalGuard;
         public AugmentPool Pool;
         public Tier Tier;
         public string[] Lines;
@@ -46,6 +48,11 @@ namespace Hextech
         public SoulSplash Splash;
         // 「大炮」：男枪弹药
         public AmmoRule Ammo;
+        // 第五批招牌：撕咬成长倍率、炸弹范围倍率、雷球上限加几个
+        public float BiteGrowth, BombRange;
+        public int ThunderOrbs;
+        // 能不能出现（补丁没装上、只在房主时生效的卡）；null = 总是可以
+        public Func<bool> Available;
 
         public float WeightFor(int heroId) => HeroWeights != null && HeroWeights.TryGetValue(heroId, out var w) ? w : 1f;
 
@@ -98,6 +105,7 @@ namespace Hextech
         public const float PorcupineTrigger = 0.2f, PorcupineDamage = 0.5f, PorcupineRadius = 5f;
         public const float ArchmageRatio = 0.3f;
         public const int ShotgunSkill = 520;
+        public const int BiteSkill = 518, BombSkill = 513, ThunderSkill = 521;
         // 第三批
         public const float ConvertRatio = 0.25f, AutoCastCost = 0.7f, ScopesRange = 1.5f;
         public const int EggKills = 5, UrfKills = 8, UrfForges = 2;
@@ -346,6 +354,40 @@ namespace Hextech
             Stats("heavy", "重装", null, null, Tier.Prism, new[] { "生命上限 +60%", "<color=#FF7070>代价：攻速 -20%</color>" },
                 ("HpPercent", 60), ("AttackSpeed", -20)),
 
+            // ---- 第四批：中等触发（效果见 Batch4.cs）----
+            new Augment
+            {
+                Id = "magicmissile", Name = "魔法飞弹", Origin = "魔法飞弹", Pool = AugmentPool.General, Tier = Tier.Silver, IconPath = EpicIcon,
+                Lines = new[] { $"技能命中敌人时，{Batch4.MissileChance:P0} 概率在它身上落一道 C 级落雷（每 {Batch4.MissileEvery:0.#} 秒最多一次）" },
+            },
+            new Augment
+            {
+                Id = "dawnbringer", Name = "破晓决意", Origin = "破晓决意", Pool = AugmentPool.General, Tier = Tier.Silver, IconPath = EpicIcon,
+                Lines = new[] { $"生命低于 {Batch4.DawnLowHp:P0} 时，{Batch4.DawnSeconds:0} 秒内回复 {Batch4.DawnHeal:P0} 生命上限（每 {Batch4.DawnCooldown:0} 秒一次）" },
+            },
+            new Augment
+            {
+                Id = "flyingsword", Name = "飞剑", Origin = "双生火", Pool = AugmentPool.General, Tier = Tier.Gold, IconPath = EpicIcon,
+                Lines = new[] { $"普攻每命中 {Batch4.SwordEvery} 次，朝你面朝的方向放一道 B 级剑气（半圆范围）" },
+            },
+            new Augment
+            {
+                Id = "stillhere", Name = "依然在此", Origin = "依然在此", Pool = AugmentPool.General, Tier = Tier.Gold, IconPath = EpicIcon, NeedsLethalGuard = true,
+                Lines = new[] { $"受到致命伤害时免死：无敌 {Batch4.StillInvulnerable:0.#} 秒并回复 {Batch4.StillHeal:P0} 生命上限", "每波一次" },
+            },
+            new Augment
+            {
+                Id = "skystrike", Name = "天雷", Origin = "魔法飞弹", Pool = AugmentPool.General, Tier = Tier.Prism, IconPath = EpicIcon,
+                Lines = new[] { $"暴击时在目标身上落一道 A 级落雷（每 {Batch4.SkyEvery:0.#} 秒最多一次）" },
+            },
+            new Augment
+            {
+                Id = "undying", Name = "不灭", Origin = "至死方休", Source = "斗魂竞技场", Pool = AugmentPool.General, Tier = Tier.Prism, IconPath = EpicIcon,
+                NeedsLethalGuard = true,
+                Lines = new[] { $"受到致命伤害时免死：回满生命、无敌 {Batch4.UndyingInvulnerable:0} 秒，这一波剩下的时间总伤害 +{Batch4.UndyingDamage}%",
+                    $"每局 {Batch4.UndyingCharges} 次（和依然在此一起拿时先用依然在此）" },
+            },
+
             // ---- 队友（参照斗魂竞技场；都走游戏原版的治疗、护盾、buff，队友没装 Mod 也生效）----
             TeamCard("sacrifice", "甘愿牺牲", "甘愿牺牲", Tier.Silver,
                 $"{Team.Range:0} 米内的队友生命低于 {Team.LowHp:P0} 时：消耗你 {Team.SacrificeMana:P0} 的当前法力，治疗他 你生命上限的 {Team.SacrificeHeal:P0}",
@@ -383,6 +425,61 @@ namespace Hextech
             SupportCard("allin", "举国之力", Tier.Prism,
                 $"每次休息开始时，交出你当前金币的 {Team.AllInPay:P0}，在你供养的队友脚下掉 {Team.AllInRate:0.#} 倍的金币",
                 $"他在 {Team.AllInRange:0} 米内时，持续获得技能急速 +{Team.AllInHaste}"),
+
+            // ---- 第五批招牌：哥布林之王撕咬（只在单人或房主时生效：成长在服务器上算）----
+            new Augment
+            {
+                Id = "bite1", Name = "贪吃", Origin = "叠角龙", Pool = AugmentPool.Signature, Tier = Tier.Silver, SkillId = BiteSkill, Series = "bite", Rank = 1,
+                BiteGrowth = 1.5f, Available = () => SkillForms.BiteAvailable && Game.IsHost,
+                Lines = new[] { "撕咬击杀加的生命上限 +50%", "联机时只有房主能用（成长在房主那边算）" },
+            },
+            new Augment
+            {
+                Id = "bite", Name = "叠角龙", Origin = "叠角龙", Pool = AugmentPool.Signature, Tier = Tier.Gold, SkillId = BiteSkill, Series = "bite", Rank = 2,
+                BiteGrowth = 2f, Available = () => SkillForms.BiteAvailable && Game.IsHost,
+                Lines = new[] { "撕咬击杀加的生命上限翻倍", "联机时只有房主能用（成长在房主那边算）" },
+            },
+            new Augment
+            {
+                Id = "bite3", Name = "叠角龙·极", Origin = "叠角龙", Pool = AugmentPool.Signature, Tier = Tier.Prism, SkillId = BiteSkill, Series = "bite", Rank = 3,
+                BiteGrowth = 3f, Available = () => SkillForms.BiteAvailable && Game.IsHost,
+                Lines = new[] { "撕咬击杀加的生命上限 ×3", "联机时只有房主能用（成长在房主那边算）" },
+            },
+            // ---- 炸弹客 ----
+            new Augment
+            {
+                Id = "bomb1", Name = "大炸弹", Pool = AugmentPool.Signature, Tier = Tier.Silver, SkillId = BombSkill, Series = "bomb", Rank = 1,
+                BombRange = 1.25f, Available = () => SkillForms.BombAvailable,
+                Lines = new[] { "炸弹的十字爆炸范围 +25%" },
+            },
+            new Augment
+            {
+                Id = "bomb", Name = "核弹", Pool = AugmentPool.Signature, Tier = Tier.Gold, SkillId = BombSkill, Series = "bomb", Rank = 2,
+                BombRange = 1.5f, Available = () => SkillForms.BombAvailable,
+                Lines = new[] { "炸弹的十字爆炸范围 +50%" },
+            },
+            new Augment
+            {
+                Id = "bomb3", Name = "核弹·极", Pool = AugmentPool.Signature, Tier = Tier.Prism, SkillId = BombSkill, Series = "bomb", Rank = 3,
+                BombRange = 2f, Available = () => SkillForms.BombAvailable,
+                Lines = new[] { "炸弹的十字爆炸范围翻倍" },
+            },
+            // ---- 雷电 ----
+            new Augment
+            {
+                Id = "thunder1", Name = "雷暴", Pool = AugmentPool.Signature, Tier = Tier.Silver, SkillId = ThunderSkill, Series = "thunder", Rank = 1,
+                ThunderOrbs = 2, Lines = new[] { "雷之一闪的雷球上限 +2（最多多闪 2 段）" },
+            },
+            new Augment
+            {
+                Id = "thunder", Name = "万雷", Pool = AugmentPool.Signature, Tier = Tier.Gold, SkillId = ThunderSkill, Series = "thunder", Rank = 2,
+                ThunderOrbs = 4, Lines = new[] { "雷之一闪的雷球上限 +4（最多多闪 4 段）" },
+            },
+            new Augment
+            {
+                Id = "thunder3", Name = "雷神", Pool = AugmentPool.Signature, Tier = Tier.Prism, SkillId = ThunderSkill, Series = "thunder", Rank = 3,
+                ThunderOrbs = 8, Lines = new[] { "雷之一闪的雷球上限 +8（最多多闪 8 段，每段伤害照常递增）" },
+            },
 
             // ---- 敌人 ----
             new Augment { Id = "e_tough", Name = "坚韧", Pool = AugmentPool.Enemy, Tier = Tier.Silver, EnemyHp = 1.1f, Lines = new[] { "敌人生命 +10%" } },

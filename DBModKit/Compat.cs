@@ -59,7 +59,7 @@ namespace DBModKit
                 "ksd", "k4a25de8c63fe4a7192613346ae51af4e", "kfd63a19d353a42878846361e6af4f637",
                 "kqk", "kkl", "CmdPickItem", "playerAttribute", "roleSkillList", "ktb", "onPlayerLevelUp", "onPlayerRelife", "addBagItemEvent",
                 "kql", "kqn", "CmdAddBuff", "CmdAddNearbyHumanityShield", "onTeammateLevelUp", "CmdCreateItemByPosWithNum",
-                "dieEvent", "iqg",
+                "dieEvent", "iqg", "iwl", "CmdCreateSkill",
             },
             ["EnemyDefeatContext"] = new[] { "IsBoss", "IsElite" },
             ["MyServerNetworkManager"] = new[] { "qhu", "bpue" },
@@ -142,7 +142,11 @@ namespace DBModKit
                 "tags", "indicator", "castingRange", "range", "cd", "canAuto", "icon",
                 "damageBase", "damageValue", "cost", "duration", "interval", "chargingNum", "chargingCd",
             },
-            ["ActiveSkillEnum"] = new[] { "None", "D_Execution", "S_Execution", "D_Alchemy", "S_Alchemy", "Bite", "ChickenDance", "RealChickenDance" },
+            ["ActiveSkillEnum"] = new[]
+            {
+                "None", "D_Execution", "S_Execution", "D_Alchemy", "S_Alchemy", "Bite", "ChickenDance", "RealChickenDance",
+                "C_SpellThunder", "B_SwordMove", "A_SpellThunder",
+            },
             ["SkillTag"] = new[] { "Heal", "Revive", "Shield", "Defense", "Buff", "Summon", "Aura", "Area", "Move", "Control", "Henshin", "Duration" },
             // 英雄皮肤
             ["buj"] = new[] { "pwu", "pwm", "pwn", "pwh", "pwf", "pyb" },

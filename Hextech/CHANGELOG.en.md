@@ -1,5 +1,11 @@
 # Hextech changelog (English)
 
+## 0.8.0
+- Signature augments (3 tiers each): Goblin King's Bite growth (Stackosaurus, host only in multiplayer), Bomber's bomb range (Nuke), Raiden's Thunder Flash orb cap
+
+## 0.7.0
+- 6 medium trigger augments: Magic Missile, Dawnbringer's Resolve, Flying Sword, Still Here (cheat death once per wave), Sky Strike, Undying (cheat death 3 times per run)
+
 ## 0.6.0
 - 14 new generic augments: Dive Bomber, Slow Cooker, Restless Restoration, Scopes, two stat conversions, Prismatic Egg and Urf's Champion (quests), Transmute: Gold, Mystic Punch, Auto-cast, and three trade-off prismatics (Glass Cannon, All or Nothing, Heavy)
 

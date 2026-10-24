@@ -81,6 +81,24 @@ namespace DBModKit
             }
 
             // 沙漠死神噬魂一击的溅射：lkt 是强化普攻结算完、清除强化的方法（镜像 Boss 的子类在 GameRaw 里排除）
+            // 致命伤害拦截：yb.iwl 是所有伤害最后结算的地方（怪物打本机、bbe.lfr 远端伤害都走到这里）
+            Combat.LethalGuardAvailable = TryPatch(harmony, typeof(LethalHooks), "致命伤害拦截",
+                AccessTools.Method(typeof(yb), "iwl", new[]
+                {
+                    typeof(double), typeof(AttackType), typeof(yb), typeof(float), typeof(bool), typeof(bool), typeof(RoleHitFeedbackType),
+                    typeof(ActiveSkillEnum), typeof(bdc.Origin).MakeByRefType(), typeof(PlayerDamageFeedbackKind),
+                }),
+                prefix: nameof(LethalHooks.SettlePrefix));
+
+            // 撕咬击杀加生命上限：服务器上的 bbe.kjv（只在主机执行）
+            SkillForms.BiteAvailable = TryPatch(harmony, typeof(SkillFormHooks), "撕咬成长",
+                AccessTools.Method(typeof(bbe), "kjv", new[] { typeof(xo) }),
+                prefix: nameof(SkillFormHooks.BitePrefix), postfix: nameof(SkillFormHooks.BitePostfix));
+            // 炸弹的十字范围：bhk.msj 初始化时算 bhlh（bws、eiz 是诱饵副本）
+            SkillForms.BombAvailable = TryPatch(harmony, typeof(SkillFormHooks), "炸弹范围",
+                AccessTools.Method(typeof(bhk), "msj", new[] { typeof(ActiveSkillEnum), typeof(yb), typeof(Vector3), typeof(ActiveSkillData), typeof(int), typeof(float), typeof(float) }),
+                postfix: nameof(SkillFormHooks.BombPostfix));
+
             SoulDevourer.Available = TryPatch(harmony, typeof(SoulDevourerHooks), "噬魂一击溅射",
                 AccessTools.Method(typeof(PlayerKoboldMode), "lkt", Type.EmptyTypes),
                 prefix: nameof(SoulDevourerHooks.StrikeEndPrefix));
@@ -825,6 +843,66 @@ namespace DBModKit
         internal static void CardPostfix(bpw __instance, RoguelikeUIData __0)
         {
             if (ModAssets.IsOurs(__0.icon) && __instance.iconImg != null) __instance.iconImg.color = Color.white;
+        }
+    }
+
+    internal static class SkillFormHooks
+    {
+        // kjv：哥布林之王击杀时 bpmz（累计成长，背后是 bfpe）+= 成长量，再 iww(成长量) 加生命上限。前缀记下之前的值，后缀按差额补上多出来的部分
+        internal static void BitePrefix(bbe __instance, out long __state) => __state = __instance.bpmz;
+
+        internal static void BitePostfix(bbe __instance, long __state)
+        {
+            float m = SkillForms.BiteMultiplier;
+            if (m <= 1f || (object)__instance != nn.bpbu) return;
+            long gained = __instance.bpmz - __state;
+            if (gained <= 0) return;
+            long extra = (long)Math.Min(long.MaxValue / 4, gained * (double)(m - 1f));
+            if (extra <= 0) return;
+            __instance.bpmz = __instance.bpmz + Math.Min(extra, long.MaxValue - __instance.bpmz);
+            __instance.iww(extra);
+            (__instance.bpia as PlayerBiteMode)?.kcr();
+        }
+
+        // msj(技能, 施法者, 位置, 表, 敏捷, 时长, 范围倍率)：十字长度 bhlh，宽度是 bhlh / 6，爆炸特效按 bhlh / 40 缩放，都跟着变。
+        // 每个客户端都会生成炸弹实例；伤害只在施法者本机算，所以只改本地玩家放的
+        internal static void BombPostfix(yb __1, ref float ___bhlh, GameObject ___bhli)
+        {
+            float m = SkillForms.BombMultiplier;
+            if (m <= 1f || (object)__1 != nn.bpbu) return;
+            ___bhlh *= m;
+            if (___bhli != null) ___bhli.transform.localScale *= 1f + (m - 1f) * 0.5f;
+        }
+    }
+
+    internal static class LethalHooks
+    {
+        // 联机客户端：血量是服务器同步回来的，刚打出去的伤害还没扣到本机的 hp 上。短时间内的伤害记在这里，估算时一起减掉
+        private static double unsynced;
+        private static float unsyncedUntil;
+
+        // iwl(伤害, 类型, 攻击方, 角度, 乘全局倍率, ...)：本地玩家这一下会死（伤害 ≥ 血 + 护盾）时问各个 Mod，有一个要拦就把伤害改成 0。
+        // 估算和 iwl 一致：e 为真时乘 nn.fsb()，按 no.fto 四舍五入取整；破盾的额外伤害只打护盾，不影响会不会死。
+        // 已经死了不拦：iwr（持续伤害）和 lfr（远端伤害）不查死亡就进 iwl，死后 hp = 0 的任何伤害都会被当成致命
+        internal static void SettlePrefix(yb __instance, ref double __0, bool __4)
+        {
+            if (!Combat.HasLethalGuards || __0 <= 0.0 || __instance.beqd || (object)__instance != nn.bpbu) return;
+            if (__instance.hp <= 0 || __instance.bphy == RoleState.Dead) return;
+            double damage = Math.Round(__0 * (__4 ? nn.fsb() : 1f));
+            bool client = !ciy.bmyj;
+            if (client && Time.time > unsyncedUntil) unsynced = 0;
+            double left = __instance.hp + GameRaw.Shield(__instance) - (client ? unsynced : 0);
+            if (damage >= left && Combat.RaiseLethal(damage))
+            {
+                __0 = 0.0;
+                unsynced = 0;
+                return;
+            }
+            if (client)
+            {
+                unsynced += damage;
+                unsyncedUntil = Time.time + 0.3f;
+            }
         }
     }
 
