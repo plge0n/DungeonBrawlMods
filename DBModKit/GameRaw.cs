@@ -1853,17 +1853,38 @@ namespace DBModKit
         public static float Facing(Vector3 from, Vector3 to) => ez.dxv(to, from);
 
         // 雷之一闪的雷球上限：PlayerThunderMode.maxOrbCount（序列化字段，默认 10，读的时候限制在 1~32），英雄模式在 yb.bpia。
-        // 第一次改时记下原值，extra = 0 时改回去
-        private static readonly System.Runtime.CompilerServices.ConditionalWeakTable<PlayerThunderMode, object> thunderOriginal =
-            new System.Runtime.CompilerServices.ConditionalWeakTable<PlayerThunderMode, object>();
+        // 改过的实例都记下原值：英雄模型从对象池取（下一局可能还是这个实例）、变身时 bpia 会换成别的组件，所以撤销时把记下的全部改回去，
+        // 不依赖撤销那一刻的本地玩家
+        private static readonly List<(WeakReference mode, int original)> thunderTouched = new List<(WeakReference, int)>();
         private static AccessTools.FieldRef<PlayerThunderMode, int> maxOrbCount;
 
-        public static void SetThunderOrbs(Component p, int extra)
+        // 本地玩家当前的雷电模式（变身中、不是雷电时为 null）
+        public static object ThunderMode(Component p) => ((yb)p).bpia as PlayerThunderMode;
+
+        public static void SetThunderOrbs(object target, int extra)
         {
-            if (!(((yb)p).bpia is PlayerThunderMode mode)) return;
             maxOrbCount = maxOrbCount ?? AccessTools.FieldRefAccess<PlayerThunderMode, int>("maxOrbCount");
-            int original = (int)thunderOriginal.GetValue(mode, m => maxOrbCount(m));
-            maxOrbCount(mode) = original + Math.Max(0, extra);
+            // 先把其他改过的实例改回原值、清掉已经销毁的
+            for (int i = thunderTouched.Count - 1; i >= 0; i--)
+            {
+                var mode = thunderTouched[i].mode.Target as PlayerThunderMode;
+                if (mode == null)
+                {
+                    thunderTouched.RemoveAt(i);
+                    continue;
+                }
+                if (ReferenceEquals(mode, target) && extra > 0) continue;
+                maxOrbCount(mode) = thunderTouched[i].original;
+                thunderTouched.RemoveAt(i);
+            }
+            if (!(target is PlayerThunderMode current) || extra <= 0) return;
+            int index = thunderTouched.FindIndex(t => ReferenceEquals(t.mode.Target, current));
+            if (index < 0)
+            {
+                thunderTouched.Add((new WeakReference(current), maxOrbCount(current)));
+                index = thunderTouched.Count - 1;
+            }
+            maxOrbCount(current) = thunderTouched[index].original + extra;
         }
 
         // 攻击距离：yb.iqg(加量)，遗物"瞄准镜"用的同一个，会同步给服务器（fbk 是诱饵）

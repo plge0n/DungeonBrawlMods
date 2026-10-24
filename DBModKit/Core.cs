@@ -159,6 +159,7 @@ namespace DBModKit
             Safe.Run("GameEvents", GameEvents.Tick);
             if (SkillTuning.Available) Safe.Run("技能调整", SkillTuning.Tick);
             Safe.Run("技能提示", SkillTooltips.Tick);
+            Safe.Run("技能形态", SkillForms.Tick);
             Safe.Run("语言", Localization.Tick);
             ModEvents.RaiseUpdate();
             Safe.Run("皮肤同步", HeroSkinSync.Tick);
