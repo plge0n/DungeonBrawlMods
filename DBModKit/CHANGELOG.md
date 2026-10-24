@@ -8,6 +8,8 @@
 - `Player.BlessPlayer(玩家, 增伤, 秒, 护甲)`：原版的"圣焰祝福" buff（`CmdAddBuff` + `SacredEmberBlessing`）
 - `Player.PlayEffect(特效, 位置, 缩放)`：播放特效
 - `Player.DamageArea` 的特效传 null 时不播特效（频繁判定时用）；新重载 `DamageArea(..., spareTeammates)` 不打队友的怪
+- `GameEventKind.TeammateLevelUp`：队友升级（Target = 队友，原版 `onTeammateLevelUp`）
+- `Player.GiveGold(队友, 花费, 掉落)`：花自己的金币，在队友脚下掉金币（照抄商店"丢金币"，掉的可以比花的多）
 - `Role.IsTeammateMonster`：联机时属于队友的怪（每个玩家有自己的怪，打别人的怪收益归动手的人；原版判断 `bee.mec`）
 
 ## 0.27.0

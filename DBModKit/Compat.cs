@@ -58,7 +58,7 @@ namespace DBModKit
                 "heroType", "kzz", "bpnc", "bfru", "bfrv", "kqi", "kqh", "addDamagePercent", "addBossEnemy", "addEliteEnemy", "addNormalEnemy",
                 "ksd", "k4a25de8c63fe4a7192613346ae51af4e", "kfd63a19d353a42878846361e6af4f637",
                 "kqk", "kkl", "CmdPickItem", "playerAttribute", "roleSkillList", "ktb", "onPlayerLevelUp", "onPlayerRelife", "addBagItemEvent",
-                "kql", "kqn", "CmdAddBuff", "CmdAddNearbyHumanityShield",
+                "kql", "kqn", "CmdAddBuff", "CmdAddNearbyHumanityShield", "onTeammateLevelUp", "CmdCreateItemByPosWithNum",
             },
             ["EnemyDefeatContext"] = new[] { "IsBoss", "IsElite" },
             ["MyServerNetworkManager"] = new[] { "qhu", "bpue" },

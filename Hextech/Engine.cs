@@ -225,6 +225,11 @@ namespace Hextech
                 if (Active) OnRevived();
                 return;
             }
+            if (e.Kind == GameEventKind.TeammateLevelUp)
+            {
+                if (Active && Game.LocalPlayer is Player self) Team.OnTeammateLevelUp(self);
+                return;
+            }
             if (e.Kind == GameEventKind.WaveStarted)
             {
                 waveStarted = inWave = true;
@@ -419,6 +424,7 @@ namespace Hextech
             mod.RunLog.Info("三选一", "选中", ("强化", card.Name), ("品质", TierName(tier)), ("效果", string.Join("；", card.Lines)));
             var player = Game.LocalPlayer;
             if (card.Augment?.OnPick != null && player != null) card.Augment.OnPick(player);
+            if (card.Augment?.Support == true) Team.OnSupportPicked();
             string notice = $"获得海克斯强化「{card.Name}」";
             if (OwnEnemy && Plugin.EnemyAugments.Value)
             {
@@ -782,6 +788,7 @@ namespace Hextech
             var lines = run.Picks.Select(c => $"{c.Name}（{TierName(c.Tier)}）：{string.Join("；", c.Lines)}").ToList();
             if (run.InfiniteBonus > 0) lines.Add($"无限循环往复：击杀已累计技能急速 +{run.InfiniteBonus}");
             if (run.Forges.Count > 0) lines.Add($"还有 {run.Forges.Count} 次属性锻造，休息时打开");
+            if (Team.Carry != null) lines.Add($"正在供养：{Team.Carry.Name}");
             lines.AddRange(run.EnemyPicks.Select(c => $"<color=#FF6060>敌人·{c.Name}：{string.Join("；", c.Lines)}</color>"));
             return head + "\n" + string.Join("\n", lines);
         }

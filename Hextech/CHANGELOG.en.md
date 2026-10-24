@@ -1,6 +1,7 @@
 # Hextech changelog (English)
 
 ## 0.5.0
+- 4 "feed the carry" augments: give gold to the teammate you support, grow when teammates level up, buff your supported teammate
 - 9 teammate augments inspired by Arena (only offered when you have teammates; they use the game's own heal, shield and buff, so teammates don't need mods)
 
 ## 0.4.0

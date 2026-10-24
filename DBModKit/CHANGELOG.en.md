@@ -1,7 +1,7 @@
 # DBModKit changelog (English)
 
 ## 0.28.0
-- Teammate APIs using the game's own commands (work even if teammates don't have mods): `Game.Teammates`, `Player.HealAlly`, `Player.ShieldNearbyPlayers`, `Player.BlessPlayer`, `Player.PlayEffect`; `DamageArea` with a null effect plays no effect
+- Teammate APIs using the game's own commands (work even if teammates don't have mods): `Game.Teammates`, `Player.HealAlly`, `Player.ShieldNearbyPlayers`, `Player.BlessPlayer`, `Player.PlayEffect`; `DamageArea` with a null effect plays no effect, `DamageArea(..., spareTeammates)`, `Role.IsTeammateMonster`, `GameEventKind.TeammateLevelUp`, `Player.GiveGold`
 
 ## 0.27.0
 - Enemy boosts follow the host in multiplayer and apply to the whole room (the host now scales monster damage to every player, not just itself); boosts set on clients have no effect

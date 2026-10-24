@@ -102,6 +102,7 @@ namespace DBModKit
             public yb.DogeEvent Dodge;
             public Action LevelUp;
             public Action Relife;
+            public Action<bbe> TeammateLevelUp;
             public bbe.AddBagItem BagItem;
             public yb.LocalActiveSkillCastEvent LocalCast;
         }
@@ -121,6 +122,8 @@ namespace DBModKit
                 Dodge = () => GameEvents.Raise(new GameEvent(GameEventKind.Dodged)),
                 LevelUp = () => GameEvents.Raise(new GameEvent(GameEventKind.LevelUp)),
                 Relife = () => GameEvents.Raise(new GameEvent(GameEventKind.Revived)),
+                // onTeammateLevelUp：队友升级时本地玩家身上触发（bbe.cs 10844，伙伴之刃被动用它）
+                TeammateLevelUp = mate => GameEvents.Raise(new GameEvent(GameEventKind.TeammateLevelUp, Role.Wrap(mate))),
                 BagItem = item => GameEvents.Raise(new GameEvent(GameEventKind.ItemPicked, itemId: (int)item)),
                 // localActiveSkillCastEvent(玩家, 技能, 目标点, 朝向, 目标 netId, 技能书编号, 是否免费)：只在 ez.dyf 末尾触发（真正放出技能时），
                 // 免费释放（dyf 的 h = true）也会触发
@@ -132,6 +135,7 @@ namespace DBModKit
             p.dogeEvent += b.Dodge;
             p.onPlayerLevelUp += b.LevelUp;
             p.onPlayerRelife += b.Relife;
+            p.onTeammateLevelUp += b.TeammateLevelUp;
             p.addBagItemEvent += b.BagItem;
             p.localActiveSkillCastEvent += b.LocalCast;
             return b;
@@ -148,6 +152,7 @@ namespace DBModKit
             p.dogeEvent -= b.Dodge;
             p.onPlayerLevelUp -= b.LevelUp;
             p.onPlayerRelife -= b.Relife;
+            p.onTeammateLevelUp -= b.TeammateLevelUp;
             p.addBagItemEvent -= b.BagItem;
             p.localActiveSkillCastEvent -= b.LocalCast;
         }
@@ -2145,6 +2150,15 @@ namespace DBModKit
 
         // 联机时每个玩家有自己的怪（authorityId = 主人的 netId），打别人的怪收益归动手的人。bee.mec 是原版"队友的怪"判断
         public static bool IsTeammateMonster(Component me, Component enemy) => bee.mec((bbe)me, ((yb)enemy).authorityId);
+
+        // 送金币：照抄商店"丢金币"（bbe.krl）——先用官方方法扣自己的钱，再在指定位置生成无主金币（谁都能捡）。
+        // drop 可以大于 pay：服务器不校验生成的数量（伙伴之刃分收益也是凭空发）
+        public static void GiveGold(Component me, Vector3 pos, int pay, int drop)
+        {
+            var p = (bbe)me;
+            if (pay > 0) p.kfd63a19d353a42878846361e6af4f637(p.iwh(), -pay, c: false);
+            if (drop > 0) p.CmdCreateItemByPosWithNum(ItemType.Gold, pos, drop, false);
+        }
 
         // 特效：bbe.CmdPlayEffect(路径, 速度, 位置, 缩放)，广播给所有人（fsp 也这么播）
         public static void PlayEffect(Component p, string effect, Vector3 pos, float scale) => ((bbe)p).CmdPlayEffect(effect, 1f, pos, scale);

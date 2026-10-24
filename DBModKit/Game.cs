@@ -226,6 +226,23 @@ namespace DBModKit
             return got;
         }
 
+        /// <summary>
+        /// 花自己 pay 金币，在 target 脚下掉 drop 金币（无主金币，谁都能捡，一般是站在那里的人捡到）。drop 可以比 pay 多（"送出去更值钱"）。
+        /// 走游戏的扣钱和掉落，队友没装 Mod 也能捡。pay 超过身上的金币时按身上的算，drop 按同样的比例缩小。返回实际花了多少。
+        /// </summary>
+        public int GiveGold(Player target, int pay, int drop)
+        {
+            RequireLocal();
+            if (target == null || pay < 0 || drop <= 0) return 0;
+            int have = Gold;
+            int paid = Math.Min(pay, have);
+            if (pay > 0 && paid < pay) drop = (int)((long)drop * paid / pay);
+            if (drop <= 0) return 0;
+            GameRaw.GiveGold(Native, target.Position, paid, drop);
+            RunLog.Info(RunLog.CallerMod(), "队友", "送金币", ("对象", target.Name), ("花费", paid), ("掉落", drop), ("金币", $"{have}→{Gold}"));
+            return paid;
+        }
+
         /// <summary>获得一个遗物（ItemType 编号，见 RelicInfo）。超过本局获取上限等情况下返回 false。</summary>
         public bool GiveRelic(int relicId)
         {

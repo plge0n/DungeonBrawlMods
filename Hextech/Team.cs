@@ -22,6 +22,13 @@ namespace Hextech
         public const float BoomRadius = 4f, BoomDamage = 3f, BoomCooldown = 2f;
         public const float DivineInterval = 20f, DivineRadius = 12f, DivineShield = 0.15f, DivineInvulnerable = 1.5f;
         public const float LineRange = 25f, LineInterval = 0.5f, LineDamage = 0.4f, LineWidth = 1.5f;
+        // 让经济
+        public const float PatronPay = 0.2f, PatronRate = 1.5f;
+        public const int BacklineStats = 3;
+        public const float OathRange = 15f, OathDamage = 0.15f;
+        public const float AllInPay = 0.4f, AllInRate = 2f, AllInRange = 25f, AllInDamage = 0.25f;
+        // 祝福每隔这么久续一次，持续时间比间隔长一点，不会断
+        private const float BlessEvery = 4f, BlessSeconds = 5f;
 
         // 队友列表每秒刷新一次（Game.Teammates 会遍历场景）
         private static List<Player> mates = new List<Player>();
@@ -34,6 +41,12 @@ namespace Hextech
         private static float maneuverAt, divineAt, lineAt, lineEffectAt, linkBudgetAt;
         private static double linkBudget;
         private static bool vengeanceOn;
+        // 供养的队友；要（重新）指定时 carryPending
+        private static Player carry;
+        private static bool carryPending;
+        private static float blessAt;
+
+        public static Player Carry => carry;
 
         public static bool HasTeammates => mates.Count > 0;
 
@@ -51,6 +64,9 @@ namespace Hextech
             divineAt = Time.time + DivineInterval;
             linkBudget = 0;
             vengeanceOn = false;
+            carry = null;
+            carryPending = false;
+            blessAt = 0f;
         }
 
         // 不管选没选队友卡都要刷新：抽卡时要知道有没有队友
@@ -102,6 +118,83 @@ namespace Hextech
                 lineAt = now + LineInterval;
                 Clothesline(me, now);
             }
+            TickCarry(me, inWave, now);
+        }
+
+        // ---- 供养 ----
+        private static bool AnySupport => Augments.All.Any(a => a.Support && Has(a.Id));
+
+        // 选中供养卡时调用：还没有供养对象（或者他走了）就去指定
+        public static void OnSupportPicked()
+        {
+            RefreshMates();
+            if (carry == null || !mates.Contains(carry)) carryPending = true;
+        }
+
+        private static void TickCarry(Player me, bool inWave, float now)
+        {
+            if (!AnySupport) return;
+            // 供养的队友离开了房间：重新指定
+            if (carry != null && !mates.Contains(carry))
+            {
+                carry = null;
+                carryPending = true;
+            }
+            if (carryPending && mates.Count > 0) ChooseCarry(inWave);
+            if (carry == null || !carry.IsAlive || now < blessAt) return;
+            blessAt = now + BlessEvery;
+            float bonus = 0f;
+            if (Has("oath") && carry.DistanceTo(me) <= OathRange) bonus = Math.Max(bonus, OathDamage);
+            if (Has("allin") && carry.DistanceTo(me) <= AllInRange) bonus = Math.Max(bonus, AllInDamage);
+            if (bonus > 0f) me.BlessPlayer(carry, bonus, BlessSeconds);
+        }
+
+        private static void ChooseCarry(bool inWave)
+        {
+            if (mates.Count == 1)
+            {
+                SetCarry(mates[0]);
+                return;
+            }
+            // 有好几个队友时弹一个选择；不在波次中弹（联机不能暂停），三选一界面被占用就等下一帧
+            if (inWave || ChoicePanel.IsBusy) return;
+            var list = mates.Take(ChoicePanel.MaxOptions).ToList();
+            var options = list.Select(m => new ChoiceOption
+            {
+                Name = m.Name,
+                Description = "你的供养卡（慷慨供养、守护之誓、举国之力）都给他",
+                IconPath = "Bundles/UI/Icon/Shop/forging_epic",
+            }).ToList();
+            if (ChoicePanel.TryShow("海克斯 · 选择你要供养的队友", options, i => SetCarry(list[Mathf.Clamp(i, 0, list.Count - 1)])))
+                carryPending = false;
+        }
+
+        private static void SetCarry(Player m)
+        {
+            carry = m;
+            carryPending = false;
+            blessAt = 0f;
+            mod.RunLog.Info("供养", "指定供养的队友", ("队友", m.Name));
+            ScreenNotice.Show($"你正在供养 {m.Name}", 3f);
+        }
+
+        // 休息开始：交出一部分金币，在供养的队友脚下掉更多
+        private static void GiveGold(Player me)
+        {
+            if (carry == null || !carry.IsAlive) return;
+            float pay = (Has("patron") ? PatronPay : 0f) + (Has("allin") ? AllInPay : 0f);
+            if (pay <= 0f) return;
+            float rate = Has("allin") ? AllInRate : PatronRate;
+            int gold = Mathf.FloorToInt(me.Gold * Mathf.Min(1f, pay));
+            if (gold <= 0) return;
+            int paid = me.GiveGold(carry, gold, Mathf.FloorToInt(gold * rate));
+            if (paid > 0) ScreenNotice.Show($"供养：交出 {paid} 金币，{carry.Name} 脚下掉了 {Mathf.FloorToInt(paid * rate)} 金币", 3f);
+        }
+
+        // 后排成长：队友升级时加属性
+        public static void OnTeammateLevelUp(Player me)
+        {
+            if (Has("backline")) me.AddStats(BacklineStats, BacklineStats, BacklineStats, 0);
         }
 
         private static IEnumerable<Player> Near(Player me, float radius) => mates.Where(m => m.IsAlive && m.DistanceTo(me) <= radius);
@@ -187,10 +280,11 @@ namespace Hextech
             }
         }
 
-        // 休息阶段：复仇结束（之后的重试快照里不能带着它）；果汁盒给每个人脚下掉痊愈神符
+        // 休息阶段：复仇结束（之后的重试快照里不能带着它）；供养交金币；果汁盒给每个人脚下掉痊愈神符
         public static void OnWaveEnded(Player me)
         {
             StopVengeance(me);
+            GiveGold(me);
             if (!Has("juicebox")) return;
             RefreshMates();
             me.DropItem(JuiceItem, me.Position);

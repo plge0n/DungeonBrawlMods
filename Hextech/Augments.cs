@@ -20,6 +20,8 @@ namespace Hextech
         public string Source = "海克斯大乱斗";
         // 队友卡：房间里有队友时才出现（效果见 Team.cs）
         public bool Team;
+        // 供养卡：选中后指定一个要供养的队友（只有一个队友时自动选他）
+        public bool Support;
         public AugmentPool Pool;
         public Tier Tier;
         public string[] Lines;
@@ -106,6 +108,12 @@ namespace Hextech
         private static Augment TeamCard(string id, string name, string origin, Tier tier, params string[] lines) => new Augment
         {
             Id = id, Name = name, Origin = origin, Source = "斗魂竞技场", Pool = AugmentPool.General, Tier = tier, Lines = lines, IconPath = EpicIcon, Team = true,
+        };
+
+        private static Augment SupportCard(string id, string name, Tier tier, params string[] lines) => new Augment
+        {
+            Id = id, Name = name, Pool = AugmentPool.General, Tier = tier, IconPath = EpicIcon, Team = true, Support = true,
+            Lines = lines.Append("选中后指定一个要供养的队友（只有一个队友时自动选他）").ToArray(),
         };
 
         private static readonly Dictionary<int, float> Frieren = new Dictionary<int, float> { [FrierenHero] = 3f };
@@ -283,6 +291,20 @@ namespace Hextech
                 $"每 {Team.DivineInterval:0} 秒，{Team.DivineRadius:0} 米内的所有玩家得到 {Team.DivineShield:P0} 生命上限的护盾，你无敌 {Team.DivineInvulnerable:0.#} 秒"),
             TeamCard("clothesline", "晾衣绳", "晾衣绳", Tier.Prism,
                 $"你和 {Team.LineRange:0} 米内的每个队友之间连一条线，每 {Team.LineInterval:0.#} 秒对线上的敌人造成你攻击 {Team.LineDamage:P0} 的伤害"),
+
+            // ---- 让经济（联机时常把经济让给能 C 的队友）：供养卡选中后指定一个队友 ----
+            SupportCard("patron", "慷慨供养", Tier.Silver,
+                $"每次休息开始时，交出你当前金币的 {Team.PatronPay:P0}，在你供养的队友脚下掉 {Team.PatronRate:0.#} 倍的金币"),
+            new Augment
+            {
+                Id = "backline", Name = "后排成长", Pool = AugmentPool.General, Tier = Tier.Silver, IconPath = EpicIcon, Team = true,
+                Lines = new[] { $"队友每升一级，你的力量、敏捷、体力各 +{Team.BacklineStats}", "让出经济的人也能跟着成长" },
+            },
+            SupportCard("oath", "守护之誓", Tier.Gold,
+                $"你供养的队友在 {Team.OathRange:0} 米内时，持续获得圣焰祝福：伤害 +{Team.OathDamage:P0}"),
+            SupportCard("allin", "举国之力", Tier.Prism,
+                $"每次休息开始时，交出你当前金币的 {Team.AllInPay:P0}，在你供养的队友脚下掉 {Team.AllInRate:0.#} 倍的金币",
+                $"他在 {Team.AllInRange:0} 米内时，持续获得圣焰祝福：伤害 +{Team.AllInDamage:P0}"),
 
             // ---- 敌人 ----
             new Augment { Id = "e_tough", Name = "坚韧", Pool = AugmentPool.Enemy, Tier = Tier.Silver, EnemyHp = 1.1f, Lines = new[] { "敌人生命 +10%" } },

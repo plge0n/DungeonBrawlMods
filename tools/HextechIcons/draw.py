@@ -462,11 +462,60 @@ def clothesline():  # 晾衣绳：两个小人拉着一条闪电绳（棱彩）
     return ic
 
 
+# ---------- 让经济 ----------
+def coin(ic, cx, cy, r=0.09):
+    shape(ic, circle(cx, cy, r, 22), GOLD, 0.02)
+    ic.line([(cx, cy - r * 0.5), (cx, cy + r * 0.5)], color=(190, 130, 20), width=0.018, passes=1)
+
+
+def patron():  # 慷慨供养：手递出金币（银）
+    ic = Icon(114, "silver")
+    hand = [(0.12, 0.62), (0.44, 0.58), (0.6, 0.64), (0.58, 0.72), (0.4, 0.72), (0.12, 0.76)]
+    shape(ic, hand, (250, 215, 180), 0.02)
+    coin(ic, 0.56, 0.44)
+    coin(ic, 0.74, 0.32, 0.075)
+    ic.line([(0.62, 0.52), (0.78, 0.5)], color=(240, 120, 40), width=0.02, passes=1)
+    ic.sparkle(0.84, 0.2)
+    return ic
+
+
+def backline():  # 后排成长：小芽从土里长出来（银）
+    ic = Icon(115, "silver")
+    soil = [(0.16, 0.74), (0.84, 0.74), (0.8, 0.86), (0.2, 0.86)]
+    shape(ic, soil, (140, 100, 70), 0.02)
+    ic.line([(0.5, 0.74), (0.5, 0.36)], color=(80, 150, 70), width=0.035, passes=1)
+    shape(ic, [(0.5, 0.48), (0.3, 0.36), (0.24, 0.44), (0.4, 0.54)], (110, 190, 90), 0.02)
+    shape(ic, [(0.5, 0.4), (0.7, 0.26), (0.78, 0.34), (0.6, 0.46)], (110, 190, 90), 0.02)
+    ic.line([(0.76, 0.66), (0.76, 0.5), (0.7, 0.56)], color=(240, 120, 40), width=0.02, passes=1)
+    return ic
+
+
+def oath():  # 守护之誓：盾牌 + 小星星（金）
+    ic = Icon(218, "gold")
+    sh = [(0.2, 0.18), (0.5, 0.12), (0.8, 0.18), (0.78, 0.5), (0.5, 0.86), (0.22, 0.5)]
+    shape(ic, sh, (225, 80, 70))
+    shape(ic, star(0.5, 0.44, 0.15, 0.07, 5, -90), (250, 220, 70), 0.02)
+    ic.sparkle(0.86, 0.72)
+    return ic
+
+
+def allin():  # 举国之力：一堆金币 + 王冠（棱彩）
+    ic = Icon(309, "prism")
+    for x, y in ((0.3, 0.74), (0.5, 0.76), (0.7, 0.74), (0.4, 0.62), (0.6, 0.62), (0.5, 0.5)):
+        coin(ic, x, y, 0.085)
+    crown = [(0.3, 0.38), (0.34, 0.16), (0.42, 0.28), (0.5, 0.12), (0.58, 0.28), (0.66, 0.16), (0.7, 0.38)]
+    shape(ic, crown, (245, 200, 60))
+    ic.sparkle(0.16, 0.3)
+    ic.sparkle(0.84, 0.3)
+    return ic
+
+
 ICONS = {f.__name__: f for f in (blunt, deft, goredrink, stats, goldrush, mind,
                                   recursion, critical, colossus, axiom, manamune, bonk1, bonk, bonk3,
                                   infinite, stats3, goliath, loop,
                                   excited, fruitify, tank, porcupine, archmage, dualwield, cannon1, cannon, cannon3,
-                                  sacrifice, vengeance, juicebox, maneuvers, spiritlink, banner, sonicboom, divine, clothesline)}
+                                  sacrifice, vengeance, juicebox, maneuvers, spiritlink, banner, sonicboom, divine, clothesline,
+                                  patron, backline, oath, allin)}
 
 if __name__ == "__main__":
     os.makedirs(OUT, exist_ok=True)
