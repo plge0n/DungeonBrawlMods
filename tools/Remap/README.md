@@ -6,10 +6,10 @@
 ```powershell
 dotnet build tools/Remap -c Release
 $remap = "tools/Remap/bin/Release/net8.0/Remap.dll"
-dotnet $remap update --old ../backup/7.02                 # 只检查，报告在 tools/Remap/out/report.md
-dotnet $remap update --old ../backup/7.02 --write         # 写回 DBModKit 源码
-dotnet $remap snapshot --version 7.03                                   # 适配完新版本后保存，作为下次的 --old
-dotnet $remap selftest --old ../backup/7.02 --mutate 0.03 # 自测
+dotnet $remap update --old ../backup/7.03                 # 只检查，报告在 tools/Remap/out/report.md
+dotnet $remap update --old ../backup/7.03 --write         # 写回 DBModKit 源码
+dotnet $remap snapshot --version 7.04                                   # 适配完新版本后保存，作为下次的 --old
+dotnet $remap selftest --old ../backup/7.03 --mutate 0.03 # 自测
 ```
 `dotnet $remap help` 查看全部选项。`--notes ../tools/NOTES.md` 会同时改笔记里反引号中的 `类型.成员`。
 
@@ -45,3 +45,5 @@ dotnet $remap selftest --old ../backup/7.02 --mutate 0.03 # 自测
 
 **7.01 → 7.02（2026-10-24）**：大部分混淆名没变，对应上 72.0%，DBModKit 改名 735 处；还是只有 `cgk` 的大厅成员数据包装方法要手动补（新版同类里有多个逐字节相同的副本，按 P/Invoke 入口核对后任选一个）。
 报告里的"重载对应到不同的名字"是同名的另一个重载被删了，实际用到的重载名字没变，可以忽略。
+
+**7.02 → 7.03（2026-10-24）**：这次又全部重新混淆了，DBModKit 改名 1813 处。手动补：`che` 的大厅成员数据读取方法；类型改名后 Compat 里写成字符串的类型名（`"bbr"` → `"bbs"`，因为旧的 `yh` 里恰好有同名成员，工具不敢改）；`ez.dyq` → `dzk`（工具报"重载对应到不同的名字"，但映射本身是确定的，按报告表格里的对应改）。

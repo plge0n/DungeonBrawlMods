@@ -1,4 +1,4 @@
-地下城竞技场 Mods 0.33 —— 安装和使用说明
+地下城竞技场 Mods 0.34 —— 安装和使用说明
 English: see INSTALL-EN.txt
 
 包里有 7 个 Mod，都装在 BepInEx\plugins 下各自的文件夹里，不想要哪个就删掉它的文件夹：
