@@ -42,6 +42,6 @@ python gen-catalog.py --excel <导出的配置表文件夹> --decompiled <反编
 `test/` 里是对照测试：`test/cases/*.json` 是各种写错的内容包，`test/expected.json` 是 DBModKit 的 `ContentReader` 读它们报的错。
 
 1. 改 DBModKit 的读包代码时同步改 `validate.js`。
-2. 编译 DBModKit（`-p:DeployToGame=false`），用它重新生成 `expected.json`（生成工具在仓库外的 `_DungeonBrawl_tools/tests/WorkbenchParity`，
+2. 编译 DBModKit（`-p:DeployToGame=false`），用它重新生成 `expected.json`（生成工具在仓库外的 `../tools/tests/WorkbenchParity`，
    反射调用 `ContentReader.ReadFile`）。
 3. `node test/run.js`：工作台的报错要和 `expected.json` 一字不差，另外断言包级检查（重复的键、装备 / 变体的引用、Content 路径）。
