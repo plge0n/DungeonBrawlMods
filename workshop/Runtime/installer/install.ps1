@@ -68,6 +68,14 @@ Get-ChildItem $files -Recurse -File -Force | ForEach-Object {
     $count++
 }
 
+# 游戏目录带中文时，Mono 的 bug 会让 BepInEx 从内存加载的 UnityEngine.CoreModule 打不了补丁，改从文件加载（DBModKit 的 AsciiPath 也会补上，但要多重启一次）
+$cfg = Join-Path $GameDir "BepInEx\config\BepInEx.cfg"
+if (($GameDir -match '[^\x00-\x7F]') -and (Test-Path $cfg)) {
+    $text = [IO.File]::ReadAllText($cfg)
+    $fixed = $text -replace '(?m)^LoadDumpedAssemblies\s*=\s*false', 'LoadDumpedAssemblies = true'
+    if ($fixed -ne $text) { [IO.File]::WriteAllText($cfg, $fixed) }
+}
+
 # 记下装的是哪个版本，DBModKit 据此提示工坊里有没有更新
 $meta = Get-Content (Join-Path $item "dbmod.json") -Raw -Encoding UTF8 | ConvertFrom-Json
 $marker = Join-Path $GameDir "BepInEx\DBModKit\runtime.json"

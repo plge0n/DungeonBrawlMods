@@ -1863,7 +1863,9 @@ namespace DBModKit
 
         public static void SetThunderOrbs(object target, int extra)
         {
-            maxOrbCount = maxOrbCount ?? AccessTools.FieldRefAccess<PlayerThunderMode, int>("maxOrbCount");
+            if (maxOrbCount == null)
+                using (AsciiPath.Enter())
+                    maxOrbCount = AccessTools.FieldRefAccess<PlayerThunderMode, int>("maxOrbCount");
             // 先把其他改过的实例改回原值、清掉已经销毁的
             for (int i = thunderTouched.Count - 1; i >= 0; i--)
             {
