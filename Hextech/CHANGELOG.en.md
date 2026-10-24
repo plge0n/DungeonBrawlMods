@@ -1,8 +1,8 @@
 # Hextech changelog (English)
 
-## 0.8.0
+## 0.31.0 (aligned with suite release 0.31: development versions 0.4.0–0.7.0 and the planned 0.8.0 ship together as 0.31.0)
 **Needs runtime DBModKit 0.31.0: after updating, quit the game and run install.bat in the runtime item again.** In multiplayer everyone needs the same version.
-Nothing from 0.4.0 to 0.8.0 has been tested in game yet.
+Nothing from 0.4.0 to 0.31.0 has been tested in game yet.
 
 - Signature augments (3 tiers each): Goblin King's Bite growth (Stackosaurus, host only in multiplayer), Bomber's bomb range (Nuke), Raiden's Thunder Flash orb cap
 

@@ -1,4 +1,4 @@
-# 地下城竞技场 Mods 0.3
+# 地下城竞技场 Mods 0.31
 
 [English](#dungeonbrawl-mods-03)
 
@@ -10,7 +10,7 @@
   （`<Steam 库>\steamapps\workshop\content\4246640\3824690979\`）里**再双击一次 `install.bat`**，然后启动游戏。
   游戏里看到"运行环境有更新"的提示也是这个意思。
 - **用压缩包装的**：退出游戏，把「仅插件」包（plugins）解压到游戏目录、覆盖旧文件。**所有 Mod 要一起更新**，不要只换 Hextech。
-- 装好后点主菜单的「Mod」按钮，确认 DBModKit 是 0.31.0、Hextech 是 0.8.0，都在运行。
+- 装好后点主菜单的「Mod」按钮，确认 DBModKit 是 0.31.0、Hextech 是 0.31.0，都在运行。
 
 ### 可能的冲突和处理
 
@@ -19,15 +19,18 @@
 | 「Mod」按钮上有红色「!」，Hextech 显示"需要 DBModKit 0.31.0" | 运行环境还是旧的 | 退出游戏，重新运行运行环境的 `install.bat`（压缩包用户：覆盖「仅插件」包） |
 | 订阅了工坊的新版，游戏里还是旧版（Mod 列表显示"已经装了同一个插件，用的是本地那份"） | `BepInEx\plugins` 里有以前用压缩包装的同名 Mod，**本地那份优先** | 二选一：要用工坊版，就删掉 `BepInEx\plugins` 下对应的文件夹（比如 `Hextech`；**不要删 `DBModKit`**，它由 install.bat 管理）；要用压缩包版，就用新的压缩包覆盖 |
 | 开发者环境：`BepInEx\scripts` 里有同名 dll | 同上，`scripts` 里的优先 | 删掉 `scripts` 里的旧 dll |
-| 联机时提示"装的不一样"，海克斯等改玩法的内容停用 | 房间里有人还是旧版本（联机握手会比对 DBModKit 和每个 Mod 的版本） | **房间里每个人都更新到 0.3**；或者房主在 F9 → Mod 页 → DBModKit → 联机里勾选"允许改玩法的内容" |
-| 关掉了 Hextech 的总开关，联机还是提示"装的不一样" | 0.3 起关着的 Hextech 不算改玩法的内容；对方如果还是旧版，旧版会把自己的 Hextech 算进去 | 让对方也更新 |
+| 联机时提示"装的不一样"，海克斯等改玩法的内容停用 | 房间里有人还是旧版本（联机握手会比对 DBModKit 和每个 Mod 的版本） | **房间里每个人都更新到 0.31**；或者房主在 F9 → Mod 页 → DBModKit → 联机里勾选"允许改玩法的内容" |
+| 关掉了 Hextech 的总开关，联机还是提示"装的不一样" | 0.31 起关着的 Hextech 不算改玩法的内容；对方如果还是旧版，旧版会把自己的 Hextech 算进去 | 让对方也更新 |
 | 更新后进游戏报错、Mod 都没加载 | 运行环境文件不完整（比如游戏开着时运行了 install.bat） | 退出游戏，运行 `uninstall.bat`，再运行 `install.bat`；工坊条目可以在 Steam 里"验证"后再装 |
 
 设置文件（`BepInEx\config` 下的 .cfg、.json）和存档都不受影响，不需要删。
 
-## 0.3 的改动
+## 0.31 的改动
 
-- **Hextech 0.8.0：开放联机，新增约 50 张卡**
+从这一版起，版本号和整套发版对齐：整套发版用两位小数（0.31、0.32……），这一版改过的 Mod 用同样的版本号（DBModKit、Hextech 都是 0.31.0，
+Hextech 从 0.3.0 直接跳到 0.31.0，中间的 0.4.0–0.8.0 是开发中的版本，没有单独发布）。没改的 Mod 保持原来的版本号，下次改动时再对齐。
+
+- **Hextech 0.31.0：开放联机，新增约 50 张卡**
   - **联机**：房间里每个人都装了同样的 Mod（或者房主允许）时生效，以前是"有人进房就停用"。联机时游戏不能暂停，三选一只在休息阶段弹。
     敌人海克斯以房主的设置为准（敌人生命对全房间生效，敌人攻击只对装了 Hextech 的人生效）
   - **队友卡**（参照 LoL 斗魂竞技场，只在有队友时出现，队友不用装 Mod）：甘愿牺牲、复仇、果汁盒、防御策略、灵魂连接、号令之旗、音爆、神圣干预、晾衣绳
@@ -76,7 +79,7 @@
 | SmartMove | 0.3.0 | 自动躲避地面红色预警（F8 开关） |
 | AutoPickup | 0.1.0 | 战斗中自动捡身边的掉落物，可按类别开关 |
 | DamageMeter | 0.4.1 | 伤害统计：按普攻、技能、召唤物、装备等拆开；Steam 联机时显示队友的伤害 |
-| Hextech | 0.8.0 | 海克斯强化：每局 4 次三选一，专属技能强化 + 参照海克斯大乱斗、斗魂竞技场的通用卡和队友卡；联机时每个人装的一样才生效 |
+| Hextech | 0.31.0 | 海克斯强化：每局 4 次三选一，专属技能强化 + 参照海克斯大乱斗、斗魂竞技场的通用卡和队友卡；联机时每个人装的一样才生效 |
 | DBStudio | 0.10.0 | 游戏内的 Mod 工作台（F9）：调试、规则、强化、数值、皮肤、Mod 设置 |
 
 安装和用法见包里的《安装说明.txt》。
@@ -105,7 +108,7 @@
 | 国王对决 | 在别人的房间里不把国王快照发给房主 |
 | 和没装 Mod 的人同房 | 握手应显示"有人没装 · 停用"；你放自定义内容时对方不应掉线 |
 | 局域网模式 | 局域网没有 Steam 大厅，确认不了别人装了什么：改玩法的内容一律停用，皮肤同步、队伍伤害统计不支持。整体没测过 |
-| Hextech 0.4.0–0.8.0（0.3 新增，**全部未实测**） | 联机（握手、休息时才弹、房主的敌人海克斯）；全部队友卡和让经济的卡（要两人联机）；第三批到第五批的卡（单人也没测）：免死、追加落雷剑气、棱彩蛋和嬗变的额外选择、自动施放、代价卡、撕咬 / 炸弹 / 雷之一闪招牌 |
+| Hextech 0.4.0–0.31.0（0.31 新增，**全部未实测**） | 联机（握手、休息时才弹、房主的敌人海克斯）；全部队友卡和让经济的卡（要两人联机）；第三批到第五批的卡（单人也没测）：免死、追加落雷剑气、棱彩蛋和嬗变的额外选择、自动施放、代价卡、撕咬 / 炸弹 / 雷之一闪招牌 |
 | Hextech（0.3.0 及以前） | "回响"等释放时触发的效果、坦克引擎死亡时扣一半、第二批的卡（男枪、坦克引擎、豪猪等）在重试波次时的还原 |
 | DamageMeter | 联机时召唤物伤害的归属 |
 | SmartSkill 斩杀预测 | 处决、点金术、撕咬的"能斩杀的敌人 ≥"条件和命中校准 |
@@ -119,7 +122,7 @@
 
 ---
 
-# DungeonBrawl Mods 0.3
+# DungeonBrawl Mods 0.31
 
 [中文](#地下城竞技场-mods-03)
 
@@ -130,7 +133,7 @@
 - **Installed from the Steam Workshop**: wait for Steam to download the update, **quit the game**, and **double-click `install.bat` again** in the runtime item's folder
   (`<Steam library>\steamapps\workshop\content\4246640\3824690979\`), then start the game. The in-game "runtime update available" notice means the same thing.
 - **Installed from the zip**: quit the game and extract the "plugins" package into the game folder, overwriting the old files. **Update all mods together**, not just Hextech.
-- Afterwards, click the main-menu "Mod" button and check that DBModKit is 0.31.0 and Hextech is 0.8.0, both running.
+- Afterwards, click the main-menu "Mod" button and check that DBModKit is 0.31.0 and Hextech is 0.31.0, both running.
 
 ### Possible conflicts
 
@@ -139,15 +142,18 @@
 | Red "!" on the "Mod" button, Hextech says it needs DBModKit 0.31.0 | The runtime is still the old version | Quit the game and run the runtime's `install.bat` again (zip users: extract the new "plugins" package) |
 | You subscribed to the new Workshop version but the game still runs the old one (the mod list says "already installed, using the local copy") | `BepInEx\plugins` has an older copy from the zip; **the local copy wins** | Pick one: to use the Workshop version, delete that mod's folder under `BepInEx\plugins` (e.g. `Hextech`; **don't delete `DBModKit`**, install.bat manages it); to use the zip version, extract the new zip |
 | Developer setups: a same-named dll in `BepInEx\scripts` | Same as above, `scripts` wins | Delete the old dll in `scripts` |
-| In multiplayer, "installed differently" and Hextech / other gameplay content is disabled | Someone in the room is still on an old version (the handshake compares DBModKit and every mod's version) | **Everyone updates to 0.3**, or the host ticks "allow gameplay content" under F9 → Mod → DBModKit → Multiplayer |
-| Hextech's main switch is off but multiplayer still says "installed differently" | From 0.3 a disabled Hextech doesn't count as gameplay content, but an older version on the other side still counts its own | Ask them to update too |
+| In multiplayer, "installed differently" and Hextech / other gameplay content is disabled | Someone in the room is still on an old version (the handshake compares DBModKit and every mod's version) | **Everyone updates to 0.31**, or the host ticks "allow gameplay content" under F9 → Mod → DBModKit → Multiplayer |
+| Hextech's main switch is off but multiplayer still says "installed differently" | From 0.31 a disabled Hextech doesn't count as gameplay content, but an older version on the other side still counts its own | Ask them to update too |
 | After updating, errors on start and no mods load | Incomplete runtime files (e.g. install.bat ran while the game was open) | Quit the game, run `uninstall.bat`, then `install.bat`; for the Workshop item you can "verify" it in Steam first |
 
 Your settings (the .cfg / .json files under `BepInEx\config`) and saves are unaffected; don't delete them.
 
-## Changes in 0.3
+## Changes in 0.31
 
-- **Hextech 0.8.0: multiplayer, and about 50 new augments**
+From this release on, version numbers follow the suite release: releases use two decimals (0.31, 0.32, …), and mods changed in a release get the same number
+(DBModKit and Hextech are both 0.31.0; Hextech jumps from 0.3.0 to 0.31.0, the 0.4.0–0.8.0 in between were development versions and never released). Unchanged mods keep their version until they change.
+
+- **Hextech 0.31.0: multiplayer, and about 50 new augments**
   - **Multiplayer**: works when everyone in the room has the same mods (or the host allows it); it used to switch off as soon as anyone joined. The game can't pause online, so picks only appear during the rest phase.
     Enemy augments follow the host's setting (enemy HP applies to the whole room, enemy attack only to players with Hextech)
   - **Teammate augments** (inspired by LoL Arena; only offered when you have teammates, who don't need the mods): Willing Sacrifice, Vengeance, Juice Box, Defensive Maneuvers, Spirit Link, Banner of Command, Sonic Boom, Divine Intervention, Clothesline
@@ -196,7 +202,7 @@ First public release. Everything was built and tested against game version 6.45.
 | SmartMove | 0.3.0 | Automatically steps out of red ground telegraphs (toggle with F8) |
 | AutoPickup | 0.1.0 | Picks up nearby drops during combat, filterable by category |
 | DamageMeter | 0.4.1 | Damage breakdown by basic attacks, skills, summons, equipment…; shows teammates' damage in Steam lobbies |
-| Hextech | 0.8.0 | Hextech augments: 4 picks per run — signature-skill upgrades plus generic and teammate augments inspired by ARAM: Mayhem and Arena; in multiplayer everyone needs the same mods |
+| Hextech | 0.31.0 | Hextech augments: 4 picks per run — signature-skill upgrades plus generic and teammate augments inspired by ARAM: Mayhem and Arena; in multiplayer everyone needs the same mods |
 | DBStudio | 0.10.0 | In-game mod workbench (F9): debug, rules, augments, values, skins, mod settings |
 
 See `INSTALL-EN.txt` in the package for installation and usage.
@@ -225,7 +231,7 @@ These are implemented and compile, but haven't been fully verified in the game y
 | King duel | Not sending the king snapshot to the host when you're in someone else's room |
 | Rooms with players who don't have the mods | Handshake should show "someone doesn't have it · disabled"; they shouldn't disconnect when you use custom content |
 | LAN mode | There's no Steam lobby on LAN, so the mods can't check what others have installed: gameplay-changing content is always disabled, skin sync and team damage aren't supported. Not tested at all |
-| Hextech 0.4.0–0.8.0 (new in 0.3, **all untested**) | Multiplayer (handshake, rest-phase picks, host's enemy augments); all teammate and feed-the-carry augments (need two players); batches 3–5 (not even single-player): cheat death, extra lightning / sword waves, extra picks from Prismatic Egg and Transmute, Auto-cast, trade-offs, Bite / Bomb / Thunder Flash signatures |
+| Hextech 0.4.0–0.31.0 (new in 0.31, **all untested**) | Multiplayer (handshake, rest-phase picks, host's enemy augments); all teammate and feed-the-carry augments (need two players); batches 3–5 (not even single-player): cheat death, extra lightning / sword waves, extra picks from Prismatic Egg and Transmute, Auto-cast, trade-offs, Bite / Bomb / Thunder Flash signatures |
 | Hextech (0.3.0 and earlier) | On-cast effects such as "Echo", Tank Engine losing half on death, restoring the second-batch augments (Shotgun, Tank Engine, Porcupine…) after retrying a wave |
 | DamageMeter | Attribution of summon damage in multiplayer |
 | SmartSkill execute prediction | The "killable enemies >=" condition for 处决 / 点金术 / 撕咬 and its hit-based calibration |

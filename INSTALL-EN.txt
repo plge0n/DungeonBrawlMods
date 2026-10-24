@@ -1,4 +1,4 @@
-DungeonBrawl Mods 0.3 - Installation and usage
+DungeonBrawl Mods 0.31 - Installation and usage
 中文说明见 安装说明.txt
 
 Note: the in-game UI of these mods is Chinese only for now.
@@ -92,7 +92,7 @@ Gameplay-changing content (custom skills, relics, equipment, content packs, DBSt
 Otherwise only cosmetics such as skins stay on for that run; you'll see a notice when entering the dungeon. The state locks when combat starts:
 it can only be turned off mid-run, never back on, and anything you already got stays.
 LAN games have no Steam lobby, so the mods can't check what others have installed; gameplay content is always disabled there.
-Hextech follows the same rule (from 0.3; a player with Hextech switched off doesn't count as having gameplay content). Everyone also needs the same mod versions, so update together.
+Hextech follows the same rule (from 0.31; a player with Hextech switched off doesn't count as having gameplay content). Everyone also needs the same mod versions, so update together.
 
 [Leaderboard]
 By the game author's rule, you can't upload to the leaderboard with mods installed. Your results won't be uploaded (you'll see a notice); nothing else is affected.

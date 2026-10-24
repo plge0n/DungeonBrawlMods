@@ -100,6 +100,8 @@ pwsh ./pack.ps1                                 # 生成 dist/ 下的发布包�
 
 - 游戏不在默认位置：设置环境变量 `GameDir`，或加 `-p:GameDir="X:\...\地下城竞技场"`。
 - 公共构建配置在 `Directory.Build.props/.targets`：Mod 项目只需写 `AssemblyName` 和对 DBModKit 的 `ProjectReference`（`Private="false"`）。模板在 `templates/DBMod`。
+- 版本号（0.31 起）：整套发版用两位小数（0.31、0.32……，根目录 `VERSION`）；这次发版改过的 Mod 把 `Version` 设成同一个号（`0.31.0`），
+  没改的保持原样，下次改动时再对齐。版本号只能往上走（BepInEx 的依赖检查、工坊的更新提示都按大小比），开发中的版本可以照常递增，发版时再对齐。
 - 发布新版本：改源码里的 `Version` 常量 → 在对应目录的 `CHANGELOG.md` 和 `CHANGELOG.en.md`（英文，创意工坊的更新说明会带上）加条目 → 整套发版时改根目录的 `VERSION`，在 `RELEASE_NOTES.md` 写中英文发版说明（包括哪些功能没实测）→ `pack.ps1`（缺少更新日志条目或发版说明时会报错）。
   发布包是 `dist/DungeonBrawlMods-<VERSION>-full.zip`（带 BepInEx）和 `-plugins.zip`，根目录放 `安装说明.txt`、`INSTALL-EN.txt`、`RELEASE_NOTES.md`。
 
