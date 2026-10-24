@@ -362,7 +362,7 @@ namespace Hextech
             new Augment
             {
                 Id = "flyingsword", Name = "飞剑", Origin = "双生火", Pool = AugmentPool.General, Tier = Tier.Gold, IconPath = EpicIcon,
-                Lines = new[] { $"普攻每命中 {Batch4.SwordEvery} 次，朝目标放一道 B 级剑气" },
+                Lines = new[] { $"普攻每命中 {Batch4.SwordEvery} 次，朝你面朝的方向放一道 B 级剑气（半圆范围）" },
             },
             new Augment
             {

@@ -839,14 +839,32 @@ namespace DBModKit
 
     internal static class LethalHooks
     {
+        // 联机客户端：血量是服务器同步回来的，刚打出去的伤害还没扣到本机的 hp 上。短时间内的伤害记在这里，估算时一起减掉
+        private static double unsynced;
+        private static float unsyncedUntil;
+
         // iwl(伤害, 类型, 攻击方, 角度, 乘全局倍率, ...)：本地玩家这一下会死（伤害 ≥ 血 + 护盾）时问各个 Mod，有一个要拦就把伤害改成 0。
-        // 估算和 iwl 一致：e 为真时乘 nn.fsb()；破盾的额外伤害只打护盾，不影响会不会死
+        // 估算和 iwl 一致：e 为真时乘 nn.fsb()，按 no.fto 四舍五入取整；破盾的额外伤害只打护盾，不影响会不会死。
+        // 已经死了不拦：iwr（持续伤害）和 lfr（远端伤害）不查死亡就进 iwl，死后 hp = 0 的任何伤害都会被当成致命
         internal static void SettlePrefix(yb __instance, ref double __0, bool __4)
         {
             if (!Combat.HasLethalGuards || __0 <= 0.0 || __instance.beqd || (object)__instance != nn.bpbu) return;
-            double damage = __0 * (__4 ? nn.fsb() : 1f);
-            if (damage < __instance.hp + GameRaw.Shield(__instance)) return;
-            if (Combat.RaiseLethal(damage)) __0 = 0.0;
+            if (__instance.hp <= 0 || __instance.bphy == RoleState.Dead) return;
+            double damage = Math.Round(__0 * (__4 ? nn.fsb() : 1f));
+            bool client = !ciy.bmyj;
+            if (client && Time.time > unsyncedUntil) unsynced = 0;
+            double left = __instance.hp + GameRaw.Shield(__instance) - (client ? unsynced : 0);
+            if (damage >= left && Combat.RaiseLethal(damage))
+            {
+                __0 = 0.0;
+                unsynced = 0;
+                return;
+            }
+            if (client)
+            {
+                unsynced += damage;
+                unsyncedUntil = Time.time + 0.3f;
+            }
         }
     }
 

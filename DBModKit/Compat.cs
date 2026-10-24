@@ -77,8 +77,6 @@ namespace DBModKit
             ["GoldIncomeSource"] = new[] { "Gameplay" },
             ["LocalBuffType"] = new[] { "SacredEmberBlessing", "SkillHaste", "IronArmor" },
             ["bee"] = new[] { "mec" },
-            ["ez"] = new[] { "dxv" },
-            ["ActiveSkillEnum"] = new[] { "C_SpellThunder", "B_SwordMove", "A_SpellThunder" },
             ["ciy"] = new[] { "bmyj", "bmyc" },
             ["cik"] = new[] { "bqcb", "bmvl" },
             ["xo"] = new[] { "isBoss", "isElite" },
@@ -144,7 +142,11 @@ namespace DBModKit
                 "tags", "indicator", "castingRange", "range", "cd", "canAuto", "icon",
                 "damageBase", "damageValue", "cost", "duration", "interval", "chargingNum", "chargingCd",
             },
-            ["ActiveSkillEnum"] = new[] { "None", "D_Execution", "S_Execution", "D_Alchemy", "S_Alchemy", "Bite", "ChickenDance", "RealChickenDance" },
+            ["ActiveSkillEnum"] = new[]
+            {
+                "None", "D_Execution", "S_Execution", "D_Alchemy", "S_Alchemy", "Bite", "ChickenDance", "RealChickenDance",
+                "C_SpellThunder", "B_SwordMove", "A_SpellThunder",
+            },
             ["SkillTag"] = new[] { "Heal", "Revive", "Shield", "Defense", "Buff", "Summon", "Aura", "Area", "Move", "Control", "Henshin", "Duration" },
             // 英雄皮肤
             ["buj"] = new[] { "pwu", "pwm", "pwn", "pwh", "pwf", "pyb" },

@@ -363,6 +363,8 @@ namespace Hextech
 
         public static bool Has(string augmentId) => Active && Picked(augmentId);
 
+        public static bool InWave => inWave;
+
         // 不灭：还有次数就用掉一次（次数跟着重试波次还原）
         public static bool TryUseUndying(int charges, out int left)
         {

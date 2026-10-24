@@ -92,12 +92,13 @@ namespace Hextech
             {
                 me.GiveInvulnerable(UndyingInvulnerable);
                 me.Heal(me.MaxHp);
-                if (!undyingOn)
+                // 休息阶段不加增伤：马上要拍重试快照，带进去就撤不掉了
+                if (!undyingOn && Engine.InWave)
                 {
                     undyingOn = true;
                     me.AddAttribute("AddDamage", UndyingDamage);
                 }
-                ScreenNotice.Show($"不灭：免死、回满生命，这一波伤害 +{UndyingDamage}%（本局还剩 {left} 次）", 3f);
+                ScreenNotice.Show(Engine.InWave ? $"不灭：免死、回满生命，这一波伤害 +{UndyingDamage}%（本局还剩 {left} 次）" : $"不灭：免死、回满生命（本局还剩 {left} 次）", 3f);
                 return true;
             }
             return false;

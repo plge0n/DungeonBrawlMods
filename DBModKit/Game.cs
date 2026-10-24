@@ -442,14 +442,14 @@ namespace DBModKit
         /// <summary>
         /// 免费放一个游戏现成的技能（ActiveSkillEnum 编号，比如 100 = C 级落雷、201 = B 级剑气），身上不需要有这个技能：
         /// 不扣蓝、不进冷却、不播动作、不触发 <see cref="Combat.Cast"/>。position 是技能生成的位置（落雷落在哪），
-        /// aimAt 给了就朝那个点放（剑气这类有方向的）。走原版同步，别人看得到；伤害算你的（命中带技能来源，处理命中时注意别无限连锁）。
+        /// aimAt 是朝向点，但有的技能不读它：剑气用的是你当前面朝的方向。走原版同步，别人看得到；伤害算你的（命中带技能来源，处理命中时注意别无限连锁）。
+        /// 游戏的"有玩家生成技能"事件照常触发：带反击词缀的敌人会因此反击（有自己的冷却）。会在命中回调里高频调用，不写日志。
         /// </summary>
         public void CastSkillFree(int skillId, Vector3 position, Vector3? aimAt = null)
         {
             RequireLocal();
             float rotation = aimAt.HasValue ? GameRaw.Facing(position, aimAt.Value) : 0f;
             GameRaw.CastSkillFree(Native, skillId, position, rotation);
-            RunLog.Debug(RunLog.CallerMod(), "玩家", "免费放现成技能", ("技能", SkillInfo.Get(skillId)?.Name ?? skillId.ToString()));
         }
 
         /// <summary>加攻击距离（米，负数撤销），遗物"瞄准镜"用的同一个方法，会同步。本局有效，不会自动撤销。</summary>
