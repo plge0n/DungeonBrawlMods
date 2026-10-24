@@ -1,4 +1,4 @@
-DungeonBrawl Mods 0.33 - Installation and usage
+DungeonBrawl Mods 0.34 - Installation and usage
 中文说明见 安装说明.txt
 
 Note: the in-game UI of these mods is Chinese only for now.
