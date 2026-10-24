@@ -1,5 +1,11 @@
 # DBModKit 更新日志
 
+## 0.30.0
+海克斯中等触发卡用的接口（**未实测**）：
+- `mod.OnLethalDamage(伤害 => 是否拦下)`：本地玩家受到致命伤害前调用，返回 true 免死（伤害改成 0）。补丁 `yb.iwl` 前缀（所有伤害最后结算的地方），
+  `Combat.LethalGuardAvailable` 表示装上了
+- `Player.CastSkillFree(技能, 位置, 朝向点)`：免费放一个游戏现成的技能（`yb.CmdCreateSkill`，装备落雷、月光大剑同款），身上不需要有这个技能
+
 ## 0.29.0
 海克斯第三批用的接口（**未实测**）：
 - `GameEventKind.Died`：本地玩家死亡（原版 `dieEvent`，Target = 自己）

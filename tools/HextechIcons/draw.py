@@ -651,6 +651,70 @@ def heavy():  # 重装：铁头盔（棱彩）
     return ic
 
 
+# ---------- 第四批 ----------
+def bolt(ic, cx, cy, k=1.0, color=(250, 210, 60)):
+    pts = [(0.06, -0.38), (-0.12, 0.02), (0.0, 0.02), (-0.08, 0.38), (0.16, -0.06), (0.04, -0.06), (0.14, -0.38)]
+    shape(ic, [(cx + x * k, cy + y * k) for x, y in pts], color)
+
+
+def magicmissile():  # 魔法飞弹：魔杖 + 小闪电（银）
+    ic = Icon(125, "silver")
+    ic.line([(0.16, 0.86), (0.5, 0.48)], color=(120, 80, 50), width=0.045, passes=1)
+    shape(ic, star(0.54, 0.44, 0.08, 0.035, 5, -90), (250, 220, 70), 0.015)
+    bolt(ic, 0.74, 0.32, 0.6)
+    ic.sparkle(0.3, 0.3)
+    return ic
+
+
+def dawnbringer():  # 破晓决意：地平线上的太阳 + 红心（银）
+    ic = Icon(126, "silver")
+    shape(ic, arc(0.5, 0.66, 0.26, 180, 360, 24), (250, 180, 60))
+    ic.line([(0.12, 0.66), (0.88, 0.66)], width=0.035, passes=1)
+    for a in (200, 240, 270, 300, 340):
+        import math
+        x, y = math.cos(math.radians(a)), math.sin(math.radians(a))
+        ic.line([(0.5 + 0.32 * x, 0.66 + 0.32 * y), (0.5 + 0.42 * x, 0.66 + 0.42 * y)], color=(240, 140, 40), width=0.025, passes=1)
+    shape(ic, heart(0.5, 0.8, 0.1), (225, 60, 70), 0.02)
+    return ic
+
+
+def flyingsword():  # 飞剑：横飞的剑 + 速度线（金）
+    ic = Icon(221, "gold")
+    blade = [(0.3, 0.46), (0.82, 0.46), (0.9, 0.5), (0.82, 0.54), (0.3, 0.54)]
+    shape(ic, blade, (190, 210, 235))
+    ic.line([(0.3, 0.38), (0.3, 0.62)], color=(150, 100, 60), width=0.04, passes=1)
+    ic.line([(0.12, 0.5), (0.28, 0.5)], color=(110, 70, 50), width=0.05, passes=1)
+    for y in (0.3, 0.7):
+        ic.line([(0.1, y), (0.3, y)], color=(90, 150, 220), width=0.02, passes=1)
+    return ic
+
+
+def stillhere():  # 依然在此：裂开但没碎的心（金）
+    ic = Icon(222, "gold")
+    shape(ic, heart(0.5, 0.52, 0.32), (225, 60, 70))
+    ic.line([(0.5, 0.28), (0.44, 0.42), (0.56, 0.52), (0.46, 0.66), (0.5, 0.78)], width=0.03, passes=1)
+    ic.line([(0.66, 0.34), (0.74, 0.26)], color=(255, 255, 255), width=0.025, passes=1)
+    return ic
+
+
+def skystrike():  # 天雷：云 + 大闪电（棱彩）
+    ic = Icon(313, "prism")
+    cloud = arc(0.36, 0.3, 0.14, 180, 360, 14) + arc(0.6, 0.26, 0.16, 180, 360, 14) + [(0.8, 0.36), (0.18, 0.36)]
+    shape(ic, cloud, (150, 155, 175))
+    bolt(ic, 0.5, 0.64, 0.75)
+    return ic
+
+
+def undying():  # 不灭：凤凰火焰里的心（棱彩）
+    ic = Icon(314, "prism")
+    flame = [(0.5, 0.08), (0.62, 0.3), (0.76, 0.2), (0.82, 0.5), (0.72, 0.84), (0.28, 0.84), (0.18, 0.5), (0.24, 0.2), (0.38, 0.3)]
+    shape(ic, flame, (245, 130, 50))
+    inner = [(0.5, 0.36), (0.62, 0.56), (0.6, 0.78), (0.4, 0.78), (0.38, 0.56)]
+    shape(ic, inner, (250, 210, 80), 0.02)
+    shape(ic, heart(0.5, 0.66, 0.09), (225, 60, 70), 0.015)
+    return ic
+
+
 ICONS = {f.__name__: f for f in (blunt, deft, goredrink, stats, goldrush, mind,
                                   recursion, critical, colossus, axiom, manamune, bonk1, bonk, bonk3,
                                   infinite, stats3, goliath, loop,
@@ -658,7 +722,8 @@ ICONS = {f.__name__: f for f in (blunt, deft, goredrink, stats, goldrush, mind,
                                   sacrifice, vengeance, juicebox, maneuvers, spiritlink, banner, sonicboom, divine, clothesline,
                                   patron, backline, oath, allin,
                                   divebomb, slowcook, restless, scopes, agi2str, str2agi, egg, urf, transmute,
-                                  mysticpunch, autocast, glasscannon, allornothing, heavy)}
+                                  mysticpunch, autocast, glasscannon, allornothing, heavy,
+                                  magicmissile, dawnbringer, flyingsword, stillhere, skystrike, undying)}
 
 if __name__ == "__main__":
     os.makedirs(OUT, exist_ok=True)

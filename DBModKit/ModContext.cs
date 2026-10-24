@@ -325,6 +325,17 @@ namespace DBModKit
             AddCleanup(() => Combat.Hit -= handler);
         }
 
+        /// <summary>
+        /// 本地玩家受到致命伤害（这一下打完血 + 护盾 ≤ 0）之前调用 handler(伤害)，返回 true 就把这次伤害改成 0（免死）。
+        /// 多个 handler 时第一个返回 true 的生效。拦下之后要不要给无敌、回血由 handler 自己做（否则下一下还是会死）。
+        /// 绕过伤害结算直接改血量的少数效果（部分被动、献祭类自伤）拦不到。卸载时自动注销。
+        /// </summary>
+        public void OnLethalDamage(Func<double, bool> handler)
+        {
+            Combat.AddLethalGuard(handler);
+            AddCleanup(() => Combat.RemoveLethalGuard(handler));
+        }
+
         /// <summary>订阅本地玩家放技能（见 <see cref="Combat.Cast"/>）。</summary>
         public void OnSkillCast(Action<SkillCast> handler)
         {

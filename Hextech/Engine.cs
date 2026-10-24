@@ -50,6 +50,8 @@ namespace Hextech
             public bool EggDone, UrfDone;
             // 属性互转已经加上去的力量、敏捷
             public int ConvStr, ConvAgi;
+            // 第四批：不灭已经用了几次
+            public int UndyingUsed;
 
             public Run Clone()
             {
@@ -114,6 +116,8 @@ namespace Hextech
             mod.OnSkillCast(OnAnyCast);
             mod.OnHit(Triggers.OnHit);
             mod.OnHit(Batch3.OnHit);
+            mod.OnHit(Batch4.OnHit);
+            mod.OnLethalDamage(d => Active && Batch4.OnLethal(d));
             mod.OnCheckpointSaved(() => checkpoint = run.Clone());
             mod.OnCheckpointRestored(Restore);
             mod.OnUpdate(Tick);
@@ -141,6 +145,7 @@ namespace Hextech
             Triggers.Clear(revert: false);
             Team.Reset();
             Batch3.Reset();
+            Batch4.Reset();
         }
 
         // 持续状态（溅射、怪物倍率）清空：只改 ModKit 里的设置，不碰英雄
@@ -193,6 +198,7 @@ namespace Hextech
             Triggers.Tick(player);
             Team.Tick(player, inWave);
             Batch3.Tick(player, inWave);
+            Batch4.Tick(player);
             TickHostEnemy();
             TickOffer();
             TickForge();
@@ -250,6 +256,7 @@ namespace Hextech
             }
             if (e.Kind == GameEventKind.WaveStarted)
             {
+                Batch4.OnWaveStarted();
                 waveStarted = inWave = true;
                 run.WaveForges = run.WaveFruits = 0;
             }
@@ -263,6 +270,7 @@ namespace Hextech
                 StopExcited(me);
                 FlushTank(me);
                 if (Active) Team.OnWaveEnded(me);
+                Batch4.OnWaveEnded(me);
             }
             // 休息阶段：限时加成提前结束（游戏随后拍重试快照，快照里不能带着加成）
             Triggers.Clear(revert: true);
@@ -355,6 +363,16 @@ namespace Hextech
 
         public static bool Has(string augmentId) => Active && Picked(augmentId);
 
+        // 不灭：还有次数就用掉一次（次数跟着重试波次还原）
+        public static bool TryUseUndying(int charges, out int left)
+        {
+            left = charges - run.UndyingUsed;
+            if (left <= 0) return false;
+            run.UndyingUsed++;
+            left--;
+            return true;
+        }
+
         // 海克斯三选一在等着弹（Team 的供养选择要让它先）
         public static bool OfferPending => (run.Pending || run.Extra.Count > 0) && !blocked;
 
@@ -384,7 +402,8 @@ namespace Hextech
             // 队友卡只在房间里有队友时出现
             var pool = Augments.All.Where(a => a.Pool == AugmentPool.General && a.Tier == tier && !Picked(a.Id)
                 && (a.Requires == null || a.Requires.Any(Picked)) && (!a.Team || Team.HasTeammates)
-                && (!a.NeedsAutoCast || profile?.Active == true && SkillInfo.Get(profile.SkillId)?.CanAutoCast == true)).ToList();
+                && (!a.NeedsAutoCast || profile?.Active == true && SkillInfo.Get(profile.SkillId)?.CanAutoCast == true)
+                && (!a.NeedsLethalGuard || Combat.LethalGuardAvailable)).ToList();
             var fresh = pool.Where(a => !run.Shown.Contains("a:" + a.Id)).ToList();
             int heroId = Game.LocalPlayer?.HeroId ?? -1;
             cards.AddRange(Augments.Draw(fresh.Count >= general ? fresh : pool, heroId, general, rng).Select(a => a.ToCard()));
@@ -829,6 +848,7 @@ namespace Hextech
                 RevertMana(me);
                 if (run.ConvStr != 0 || run.ConvAgi != 0) me.AddStats(-run.ConvStr, -run.ConvAgi, 0, 0);
                 Batch3.Revert();
+                Batch4.Revert(me);
                 run.ConvStr = run.ConvAgi = 0;
                 StopExcited(me);
                 if (run.TankHp > 0) me.AddAttribute("HP", -run.TankHp);
@@ -857,6 +877,7 @@ namespace Hextech
             Triggers.Clear(revert: false);
             // 游戏把技能实例的字段写回快照（自动释放回到关），实例不换：自动施放要重新开；无休恢复的位置重新记
             Batch3.Reset();
+            Batch4.Reset();
             excitedOn = false;
             appliedPassive = null;
             mod.RunLog.Info("重试波次", "还原", ("已选", run.Picks.Count), ("待弹", run.Pending));
@@ -876,6 +897,7 @@ namespace Hextech
             if (run.Forges.Count > 0) lines.Add($"还有 {run.Forges.Count} 次属性锻造，休息时打开");
             if (Team.Carry != null) lines.Add($"正在供养：{Team.Carry.Name}");
             if (Picked("egg") && !run.EggDone) lines.Add($"棱彩蛋：已击杀 {run.EggKills}/{Augments.EggKills} 只变异怪或 Boss");
+            if (Picked("undying")) lines.Add($"不灭：本局还剩 {Math.Max(0, Batch4.UndyingCharges - run.UndyingUsed)} 次");
             if (Picked("urf") && !run.UrfDone) lines.Add($"乌尔夫的勇士：已击杀 {run.UrfKills}/{Augments.UrfKills} 只变异怪或 Boss");
             lines.AddRange(run.EnemyPicks.Select(c => $"<color=#FF6060>敌人·{c.Name}：{string.Join("；", c.Lines)}</color>"));
             return head + "\n" + string.Join("\n", lines);

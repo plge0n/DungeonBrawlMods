@@ -81,6 +81,15 @@ namespace DBModKit
             }
 
             // 沙漠死神噬魂一击的溅射：lkt 是强化普攻结算完、清除强化的方法（镜像 Boss 的子类在 GameRaw 里排除）
+            // 致命伤害拦截：yb.iwl 是所有伤害最后结算的地方（怪物打本机、bbe.lfr 远端伤害都走到这里）
+            Combat.LethalGuardAvailable = TryPatch(harmony, typeof(LethalHooks), "致命伤害拦截",
+                AccessTools.Method(typeof(yb), "iwl", new[]
+                {
+                    typeof(double), typeof(AttackType), typeof(yb), typeof(float), typeof(bool), typeof(bool), typeof(RoleHitFeedbackType),
+                    typeof(ActiveSkillEnum), typeof(bdc.Origin).MakeByRefType(), typeof(PlayerDamageFeedbackKind),
+                }),
+                prefix: nameof(LethalHooks.SettlePrefix));
+
             SoulDevourer.Available = TryPatch(harmony, typeof(SoulDevourerHooks), "噬魂一击溅射",
                 AccessTools.Method(typeof(PlayerKoboldMode), "lkt", Type.EmptyTypes),
                 prefix: nameof(SoulDevourerHooks.StrikeEndPrefix));
@@ -825,6 +834,19 @@ namespace DBModKit
         internal static void CardPostfix(bpw __instance, RoguelikeUIData __0)
         {
             if (ModAssets.IsOurs(__0.icon) && __instance.iconImg != null) __instance.iconImg.color = Color.white;
+        }
+    }
+
+    internal static class LethalHooks
+    {
+        // iwl(伤害, 类型, 攻击方, 角度, 乘全局倍率, ...)：本地玩家这一下会死（伤害 ≥ 血 + 护盾）时问各个 Mod，有一个要拦就把伤害改成 0。
+        // 估算和 iwl 一致：e 为真时乘 nn.fsb()；破盾的额外伤害只打护盾，不影响会不会死
+        internal static void SettlePrefix(yb __instance, ref double __0, bool __4)
+        {
+            if (!Combat.HasLethalGuards || __0 <= 0.0 || __instance.beqd || (object)__instance != nn.bpbu) return;
+            double damage = __0 * (__4 ? nn.fsb() : 1f);
+            if (damage < __instance.hp + GameRaw.Shield(__instance)) return;
+            if (Combat.RaiseLethal(damage)) __0 = 0.0;
         }
     }
 

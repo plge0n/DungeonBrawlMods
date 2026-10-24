@@ -9,13 +9,13 @@ namespace Hextech
     // 专属卡由积木按品质点数自动生成（加少量手写招牌），通用卡参照 LoL 海克斯大乱斗手写；
     // 单人，或者联机时房间里每个人都装了同样的 Mod（或房主允许）时生效。企划见 docs/设计/海克斯企划.md
     [BepInPlugin(Guid, Name, Version)]
-    [BepInDependency(ModKitPlugin.Guid, "0.29.0")]
+    [BepInDependency(ModKitPlugin.Guid, "0.30.0")]
     public class Plugin : BaseUnityPlugin
     {
         public const string Guid = "plge0n.dungeonbrawl.hextech";
         public const string Name = "Hextech";
         // 发布时同步修改 CHANGELOG.md；pack.ps1 从这里读取版本号
-        public const string Version = "0.6.0";
+        public const string Version = "0.7.0";
 
         internal static ConfigEntry<bool> Enabled;
         internal static ConfigEntry<int> Refreshes;

@@ -1,5 +1,8 @@
 # DBModKit changelog (English)
 
+## 0.30.0
+- `mod.OnLethalDamage` (cancel a killing blow on the local player), `Player.CastSkillFree` (fire an existing game skill for free)
+
 ## 0.29.0
 - `GameEventKind.Died`, `Player.AddAttackRange`, `SkillSlot.SetAutoCast`
 

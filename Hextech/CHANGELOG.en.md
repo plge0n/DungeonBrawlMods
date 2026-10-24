@@ -1,5 +1,8 @@
 # Hextech changelog (English)
 
+## 0.7.0
+- 6 medium trigger augments: Magic Missile, Dawnbringer's Resolve, Flying Sword, Still Here (cheat death once per wave), Sky Strike, Undying (cheat death 3 times per run)
+
 ## 0.6.0
 - 14 new generic augments: Dive Bomber, Slow Cooker, Restless Restoration, Scopes, two stat conversions, Prismatic Egg and Urf's Champion (quests), Transmute: Gold, Mystic Punch, Auto-cast, and three trade-off prismatics (Glass Cannon, All or Nothing, Heavy)
 

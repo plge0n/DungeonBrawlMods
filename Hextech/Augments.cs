@@ -24,6 +24,8 @@ namespace Hextech
         public bool Support;
         // 只给专属技能是主动、而且表里允许自动释放的英雄（自动施放）
         public bool NeedsAutoCast;
+        // 要 ModKit 的致命伤害拦截（免死卡）；补丁没装上时不出现
+        public bool NeedsLethalGuard;
         public AugmentPool Pool;
         public Tier Tier;
         public string[] Lines;
@@ -345,6 +347,40 @@ namespace Hextech
                 ("Critical", 30), ("CriticalDamage", 60), ("HpPercent", -20)),
             Stats("heavy", "重装", null, null, Tier.Prism, new[] { "生命上限 +60%", "<color=#FF7070>代价：攻速 -20%</color>" },
                 ("HpPercent", 60), ("AttackSpeed", -20)),
+
+            // ---- 第四批：中等触发（效果见 Batch4.cs）----
+            new Augment
+            {
+                Id = "magicmissile", Name = "魔法飞弹", Origin = "魔法飞弹", Pool = AugmentPool.General, Tier = Tier.Silver, IconPath = EpicIcon,
+                Lines = new[] { $"技能命中敌人时，{Batch4.MissileChance:P0} 概率在它身上落一道 C 级落雷（每 {Batch4.MissileEvery:0.#} 秒最多一次）" },
+            },
+            new Augment
+            {
+                Id = "dawnbringer", Name = "破晓决意", Origin = "破晓决意", Pool = AugmentPool.General, Tier = Tier.Silver, IconPath = EpicIcon,
+                Lines = new[] { $"生命低于 {Batch4.DawnLowHp:P0} 时，{Batch4.DawnSeconds:0} 秒内回复 {Batch4.DawnHeal:P0} 生命上限（每 {Batch4.DawnCooldown:0} 秒一次）" },
+            },
+            new Augment
+            {
+                Id = "flyingsword", Name = "飞剑", Origin = "双生火", Pool = AugmentPool.General, Tier = Tier.Gold, IconPath = EpicIcon,
+                Lines = new[] { $"普攻每命中 {Batch4.SwordEvery} 次，朝目标放一道 B 级剑气" },
+            },
+            new Augment
+            {
+                Id = "stillhere", Name = "依然在此", Origin = "依然在此", Pool = AugmentPool.General, Tier = Tier.Gold, IconPath = EpicIcon, NeedsLethalGuard = true,
+                Lines = new[] { $"受到致命伤害时免死：无敌 {Batch4.StillInvulnerable:0.#} 秒并回复 {Batch4.StillHeal:P0} 生命上限", "每波一次" },
+            },
+            new Augment
+            {
+                Id = "skystrike", Name = "天雷", Origin = "魔法飞弹", Pool = AugmentPool.General, Tier = Tier.Prism, IconPath = EpicIcon,
+                Lines = new[] { $"暴击时在目标身上落一道 A 级落雷（每 {Batch4.SkyEvery:0.#} 秒最多一次）" },
+            },
+            new Augment
+            {
+                Id = "undying", Name = "不灭", Origin = "至死方休", Source = "斗魂竞技场", Pool = AugmentPool.General, Tier = Tier.Prism, IconPath = EpicIcon,
+                NeedsLethalGuard = true,
+                Lines = new[] { $"受到致命伤害时免死：回满生命、无敌 {Batch4.UndyingInvulnerable:0} 秒，这一波剩下的时间总伤害 +{Batch4.UndyingDamage}%",
+                    $"每局 {Batch4.UndyingCharges} 次（和依然在此一起拿时先用依然在此）" },
+            },
 
             // ---- 队友（参照斗魂竞技场；都走游戏原版的治疗、护盾、buff，队友没装 Mod 也生效）----
             TeamCard("sacrifice", "甘愿牺牲", "甘愿牺牲", Tier.Silver,
