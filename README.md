@@ -133,10 +133,10 @@ pwsh ./pack.ps1                                 # 生成 dist/ 下的发布包�
 ```powershell
 dotnet build tools/Remap -c Release
 $remap = "tools/Remap/bin/Release/net8.0/Remap.dll"
-dotnet $remap update --old ../_DungeonBrawl_backup/7.01 --notes ../_DungeonBrawl_tools/NOTES.md          # 只检查，看 tools/Remap/out/report.md
-dotnet $remap update --old ../_DungeonBrawl_backup/7.01 --notes ../_DungeonBrawl_tools/NOTES.md --write  # 写回源码和笔记
+dotnet $remap update --old ../backup/7.01 --notes ../tools/NOTES.md          # 只检查，看 tools/Remap/out/report.md
+dotnet $remap update --old ../backup/7.01 --notes ../tools/NOTES.md --write  # 写回源码和笔记
 ```
-1. 先跑一遍不带 `--write` 的，看报告里"需要人工处理"和标 ⚠ 的项，必要时对照反编译代码（`../_DungeonBrawl_tools/` 里的工具重新解密字符串、反编译）。
+1. 先跑一遍不带 `--write` 的，看报告里"需要人工处理"和标 ⚠ 的项，必要时对照反编译代码（`../tools/` 里的工具重新解密字符串、反编译）。
 2. 加 `--write` 写回，检查 `git diff`，编译，进游戏看 `BepInEx/LogOutput.log`（DBModKit 会列出找不到的成员），实机测一遍。
 3. 把新版本号加进 `Compat.TestedVersions`，然后 `dotnet $remap snapshot --version <新版本>` 保存这一版，作为下次的 `--old`。
 

@@ -6,12 +6,12 @@
 ```powershell
 dotnet build tools/Remap -c Release
 $remap = "tools/Remap/bin/Release/net8.0/Remap.dll"
-dotnet $remap update --old ../_DungeonBrawl_backup/7.01                 # 只检查，报告在 tools/Remap/out/report.md
-dotnet $remap update --old ../_DungeonBrawl_backup/7.01 --write         # 写回 DBModKit 源码
+dotnet $remap update --old ../backup/7.01                 # 只检查，报告在 tools/Remap/out/report.md
+dotnet $remap update --old ../backup/7.01 --write         # 写回 DBModKit 源码
 dotnet $remap snapshot --version 7.02                                   # 适配完新版本后保存，作为下次的 --old
-dotnet $remap selftest --old ../_DungeonBrawl_backup/7.01 --mutate 0.03 # 自测
+dotnet $remap selftest --old ../backup/7.01 --mutate 0.03 # 自测
 ```
-`dotnet $remap help` 查看全部选项。`--notes ../_DungeonBrawl_tools/NOTES.md` 会同时改笔记里反引号中的 `类型.成员`。
+`dotnet $remap help` 查看全部选项。`--notes ../tools/NOTES.md` 会同时改笔记里反引号中的 `类型.成员`。
 
 ## 原理
 处理 DBModKit 引用的三个会被混淆的程序集：Assembly-CSharp、Mirror、com.rlabrecque.steamworks.net。

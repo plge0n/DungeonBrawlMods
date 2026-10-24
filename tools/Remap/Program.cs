@@ -18,7 +18,7 @@ namespace Remap
 
 用法：
   remap snapshot --version 6.45 [--out 目录]
-      把当前游戏里会被混淆的程序集复制一份（默认 <游戏目录>/../_DungeonBrawl_backup/<版本>），作为下次更新的旧版。
+      把当前游戏里会被混淆的程序集复制一份（默认 ../backup/<版本>，相对当前目录，在仓库根目录运行），作为下次更新的旧版。
       每次适配完新版本都要做一次。
 
   remap update --old 旧版快照目录 [--new 新版目录] [--src 源码目录 ...] [--notes NOTES.md] [--out 输出目录] [--write]
@@ -143,7 +143,7 @@ namespace Remap
         {
             var game = GameDir(o);
             var version = Required(o, "version");
-            var outDir = Opt(o, "out") ?? Path.Combine(Path.GetDirectoryName(Path.GetFullPath(game)), "_DungeonBrawl_backup", version);
+            var outDir = Opt(o, "out") ?? Path.GetFullPath(Path.Combine("..", "backup", version));
             Directory.CreateDirectory(outDir);
             foreach (var name in Assemblies(o))
             {
