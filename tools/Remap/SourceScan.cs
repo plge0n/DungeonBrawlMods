@@ -141,7 +141,13 @@ namespace Remap
                     _ => null,
                 };
             }
+            else if (node is ParameterSyntax) symbol = model.GetDeclaredSymbol(node);
             else return;
+            if (symbol is IParameterSymbol hp && hp.Name.StartsWith("___"))
+            {
+                ScanHarmonyField(path, model, token, hp.Name.Substring(3));
+                return;
+            }
             if (symbol == null) return;
             var (def, param) = ToCecil(symbol);
             if (def == null) return;
@@ -151,6 +157,25 @@ namespace Remap
             Uses.Add(new Use
             {
                 File = path, Span = token.Span, Kind = UseKind.Code, OldText = token.Text, Def = def, ParameterIndex = param,
+                Line = model.SyntaxTree.GetLineSpan(token.Span).StartLinePosition.Line + 1,
+            });
+        }
+
+        // Harmony 补丁的 ___字段 参数（声明和方法体里的引用）：补丁目标类型从语法上看不出来，按字段名在整个程序集里找，唯一时才改
+        private readonly HashSet<string> harmonyWarned = new HashSet<string>();
+
+        private void ScanHarmonyField(string path, SemanticModel model, SyntaxToken token, string field)
+        {
+            var cands = side.Types.Where(t => !Names.IsStringHolder(t)).SelectMany(t => t.Fields).Where(f => f.Name == field).ToList();
+            if (cands.Count != 1)
+            {
+                if (harmonyWarned.Add(field))
+                    Warnings.Add($"{Where(path, token.Span, model.SyntaxTree)}：Harmony 参数 ___{field} " + (cands.Count == 0 ? "找不到这个字段" : $"对应 {cands.Count} 个同名字段") + "，未处理");
+                return;
+            }
+            Uses.Add(new Use
+            {
+                File = path, Span = new TextSpan(token.SpanStart + 3, field.Length), Kind = UseKind.Code, OldText = field, Def = cands[0],
                 Line = model.SyntaxTree.GetLineSpan(token.Span).StartLinePosition.Line + 1,
             });
         }
@@ -222,6 +247,22 @@ namespace Remap
         private void ScanLiteral(string path, SemanticModel model, SyntaxToken token)
         {
             string value = token.ValueText;
+            // 自动属性的后备字段 "<属性>k__BackingField"：跟着上下文类型里的同名属性改
+            var backing = BackingField.Match(value);
+            if (backing.Success && !token.Text.StartsWith("@"))
+            {
+                string prop = backing.Groups[1].Value;
+                var props = ContextTypes(model, token).SelectMany(t => t.Properties).Where(x => x.Name == prop).ToList();
+                if (props.Count == 1)
+                    Uses.Add(new Use
+                    {
+                        File = path, Span = new TextSpan(token.SpanStart + 2, prop.Length), Kind = UseKind.Literal, OldText = prop, Def = props[0],
+                        Line = model.SyntaxTree.GetLineSpan(token.Span).StartLinePosition.Line + 1,
+                    });
+                else
+                    Warnings.Add($"{Where(path, token.Span, model.SyntaxTree)}：后备字段 \"{value}\" " + (props.Count == 0 ? "在上下文类型里找不到属性" : "对应多个属性") + "，未处理");
+                return;
+            }
             if (string.IsNullOrEmpty(value) || value.Any(c => !(char.IsLetterOrDigit(c) || c == '_' || c == '.' || c == '`')))
             {
                 ScanText(path, token.Span, token.Text);
@@ -230,8 +271,9 @@ namespace Remap
             var contentSpan = new TextSpan(token.SpanStart + (token.Text.StartsWith("@") ? 2 : 1), value.Length);
             if (token.Text.Length != value.Length + (token.Text.StartsWith("@") ? 3 : 2)) return; // 带转义的不处理
 
-            // 1) 名字本身是一个被处理的类型
-            var types = side.FindTypesBySimpleName(value);
+            // 1) 名字本身是一个被处理的类型。只认参数位置上的（TypeByName("ez")、Compat 的 ["ez"]、CheckSignature 的参数类型数组）：
+            //    字段里的字符串数组（语言代码 "ja"、"it"）只是恰好和混淆类型同名
+            var types = IsArgument(token) ? side.FindTypesBySimpleName(value) : new List<TypeDefinition>();
             // 2) 上下文里出现的类型的成员
             var context = ContextTypes(model, token);
             var members = context.SelectMany(t => side.FindMembers(t, value)).Distinct().ToList();
@@ -270,6 +312,18 @@ namespace Remap
                 File = path, Span = contentSpan, Kind = UseKind.Literal, OldText = value, Def = def,
                 Line = model.SyntaxTree.GetLineSpan(token.Span).StartLinePosition.Line + 1,
             });
+        }
+
+        private static readonly Regex BackingField = new Regex(@"^<(\w+)>k__BackingField$");
+
+        // 直接作为参数，或在作为参数传入的数组里
+        private static bool IsArgument(SyntaxToken token)
+        {
+            if (!(token.Parent is LiteralExpressionSyntax lit)) return false;
+            SyntaxNode n = lit.Parent;
+            if (n is InitializerExpressionSyntax init && (init.Parent is ArrayCreationExpressionSyntax || init.Parent is ImplicitArrayCreationExpressionSyntax))
+                n = init.Parent.Parent;
+            return n is ArgumentSyntax;
         }
 
         // 字符串所在的调用 / 字典项里提到的类型：typeof(X)、泛型参数、"X" 形式的类型名、由 TypeByName("X") 得到的变量
