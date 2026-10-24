@@ -40,7 +40,7 @@ namespace Hextech
             if (shown == picks.Count) return;
             shown = picks.Count;
             foreach (Transform c in strip) Object.Destroy(c.gameObject);
-            for (int i = 0; i < picks.Count && i < Engine.Rounds; i++) AddIcon(i, picks[i]);
+            for (int i = 0; i < picks.Count; i++) AddIcon(i, picks[i]);
         }
 
         // 找传送头像栏（ui_playerState 下的 trans_teleportTip），按它第一格的大小、位置排

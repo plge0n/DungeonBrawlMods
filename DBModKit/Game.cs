@@ -439,6 +439,16 @@ namespace DBModKit
             RunLog.Info(RunLog.CallerMod(), "玩家", "改护甲", ("加成", amount), ("护甲", $"{before}→{Armor}"));
         }
 
+        /// <summary>加攻击距离（米，负数撤销），遗物"瞄准镜"用的同一个方法，会同步。本局有效，不会自动撤销。</summary>
+        public void AddAttackRange(float meters)
+        {
+            RequireLocal();
+            if (meters == 0f) return;
+            float before = AttackRange;
+            GameRaw.AddAttackRange(Native, meters);
+            RunLog.Info(RunLog.CallerMod(), "玩家", "改攻击距离", ("加", meters), ("距离", $"{before:0.##}→{AttackRange:0.##}"));
+        }
+
         /// <summary>无敌若干秒（游戏的无敌药水效果，重复使用时刷新时长）。</summary>
         public void GiveInvulnerable(float seconds)
         {

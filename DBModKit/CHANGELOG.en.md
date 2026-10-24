@@ -1,5 +1,8 @@
 # DBModKit changelog (English)
 
+## 0.29.0
+- `GameEventKind.Died`, `Player.AddAttackRange`, `SkillSlot.SetAutoCast`
+
 ## 0.28.0
 - Teammate APIs using the game's own commands (work even if teammates don't have mods): `Game.Teammates`, `Player.HealAlly`, `Player.ShieldNearbyPlayers`, `Player.GiveBuff` (skill haste, armor, DoT damage), `Player.PlayEffect`; `DamageArea` with a null effect plays no effect, `DamageArea(..., spareTeammates)`, `Role.IsTeammateMonster`, `GameEventKind.TeammateLevelUp`, `Player.GiveGold`
 

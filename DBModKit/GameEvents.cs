@@ -33,6 +33,8 @@ namespace DBModKit
         GameOver,
         /// <summary>队友升级（Target = 队友）。</summary>
         TeammateLevelUp,
+        /// <summary>本地玩家死亡（Target = 打死你的角色，可能为 null）。复活见 <see cref="Revived"/>。</summary>
+        Died,
     }
 
     /// <summary>一次战斗事件。只包含本地玩家相关的事件（游戏的这些回调只在本地玩家的客户端触发）。</summary>

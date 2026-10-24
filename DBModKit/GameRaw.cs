@@ -103,6 +103,7 @@ namespace DBModKit
             public Action LevelUp;
             public Action Relife;
             public Action<bbe> TeammateLevelUp;
+            public yb.DieEvent Died;
             public bbe.AddBagItem BagItem;
             public yb.LocalActiveSkillCastEvent LocalCast;
         }
@@ -124,6 +125,8 @@ namespace DBModKit
                 Relife = () => GameEvents.Raise(new GameEvent(GameEventKind.Revived)),
                 // onTeammateLevelUp：队友升级时本地玩家身上触发（bbe.cs 10844，伙伴之刃被动用它）
                 TeammateLevelUp = mate => GameEvents.Raise(new GameEvent(GameEventKind.TeammateLevelUp, Role.Wrap(mate))),
+                // dieEvent(凶手)：在 yb.hky 里触发（死灵祭司"对死者的供奉"也挂它）
+                Died = killer => GameEvents.Raise(new GameEvent(GameEventKind.Died, Role.Wrap(killer))),
                 BagItem = item => GameEvents.Raise(new GameEvent(GameEventKind.ItemPicked, itemId: (int)item)),
                 // localActiveSkillCastEvent(玩家, 技能, 目标点, 朝向, 目标 netId, 技能书编号, 是否免费)：只在 ez.dyf 末尾触发（真正放出技能时），
                 // 免费释放（dyf 的 h = true）也会触发
@@ -136,6 +139,7 @@ namespace DBModKit
             p.onPlayerLevelUp += b.LevelUp;
             p.onPlayerRelife += b.Relife;
             p.onTeammateLevelUp += b.TeammateLevelUp;
+            p.dieEvent += b.Died;
             p.addBagItemEvent += b.BagItem;
             p.localActiveSkillCastEvent += b.LocalCast;
             return b;
@@ -153,6 +157,7 @@ namespace DBModKit
             p.onPlayerLevelUp -= b.LevelUp;
             p.onPlayerRelife -= b.Relife;
             p.onTeammateLevelUp -= b.TeammateLevelUp;
+            p.dieEvent -= b.Died;
             p.addBagItemEvent -= b.BagItem;
             p.localActiveSkillCastEvent -= b.LocalCast;
         }
@@ -1825,6 +1830,18 @@ namespace DBModKit
         // 被动（qp）的 bhne 是默认值 0，而 0 是 D_SpellThunder，所以被动返回 None（-1）
         public static int SkillId(object s) => s is qp ? (int)ActiveSkillEnum.None : (int)((bht)s).bhne;
         public static bool IsAutoCastOn(object s) => ((bht)s).bhny;
+
+        // 自动释放开关：右键技能图标时游戏调 bht.mtt()（翻转 bhny 并显示按钮上的自动标记 bhng.bjgl）；不在技能栏上（没有按钮）时只改字段
+        public static void SetAutoCast(object s, bool on)
+        {
+            var b = (bht)s;
+            if (b.bhny == on) return;
+            if (b.bhng != null && b.bhng.bjgl != null) b.mtt();
+            else b.bhny = on;
+        }
+
+        // 攻击距离：yb.iqg(加量)，遗物"瞄准镜"用的同一个，会同步给服务器（fbk 是诱饵）
+        public static void AddAttackRange(Component p, float amount) => ((yb)p).iqg(amount);
         public static float CooldownRemaining(object s) => ((bht)s).k896ff3548b31472b8b2cf8f649c25e65;
         public static int Cost(object s, Component p) => ((bht)s).kacb7d091b5904139a602f04ed9552242((bbe)p);
         // PayToWin 技能花的是金币不是蓝

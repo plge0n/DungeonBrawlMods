@@ -22,6 +22,8 @@ namespace Hextech
         public bool Team;
         // 供养卡：选中后指定一个要供养的队友（只有一个队友时自动选他）
         public bool Support;
+        // 只给专属技能是主动、而且表里允许自动释放的英雄（自动施放）
+        public bool NeedsAutoCast;
         public AugmentPool Pool;
         public Tier Tier;
         public string[] Lines;
@@ -96,6 +98,9 @@ namespace Hextech
         public const float PorcupineTrigger = 0.2f, PorcupineDamage = 0.5f, PorcupineRadius = 5f;
         public const float ArchmageRatio = 0.3f;
         public const int ShotgunSkill = 520;
+        // 第三批
+        public const float ConvertRatio = 0.25f, AutoCastCost = 0.7f, ScopesRange = 1.5f;
+        public const int EggKills = 5, UrfKills = 8, UrfForges = 2;
 
         private static Augment Stat(string id, string name, string origin, Tier tier, string line, string key, int amount, string icon = EpicIcon,
             Dictionary<int, float> weights = null) => new Augment
@@ -114,6 +119,14 @@ namespace Hextech
         {
             Id = id, Name = name, Pool = AugmentPool.General, Tier = tier, IconPath = EpicIcon, Team = true, Support = true,
             Lines = lines.Append("选中后指定一个要供养的队友（只有一个队友时自动选他）").ToArray(),
+        };
+
+        // 多个属性一起加（代价卡：有加有减），撤销时全部减回去
+        private static Augment Stats(string id, string name, string origin, string source, Tier tier, string[] lines, params (string key, int amount)[] stats) => new Augment
+        {
+            Id = id, Name = name, Origin = origin, Source = source ?? "海克斯大乱斗", Pool = AugmentPool.General, Tier = tier, Lines = lines, IconPath = EpicIcon,
+            OnPick = p => { foreach (var s in stats) p.AddAttribute(s.key, s.amount); },
+            Revert = p => { foreach (var s in stats) p.AddAttribute(s.key, -s.amount); },
         };
 
         private static readonly Dictionary<int, float> Frieren = new Dictionary<int, float> { [FrierenHero] = 3f };
@@ -267,6 +280,71 @@ namespace Hextech
                 Ammo = new AmmoRule { Flat = 1, Dash = 2, PerCrit = 0.5f },
                 Lines = new[] { "弹药上限 +1，暴击伤害超过 150% 的部分每 50% 再 +1 发（最多 12 发）", "冲锋装填一次装 2 发" },
             },
+
+            // ---- 第三批：触发、属性、任务、代价（效果见 Batch3.cs 和 Engine 的击杀、属性互转）----
+            new Augment
+            {
+                Id = "divebomb", Name = "俯冲轰炸", Origin = "俯冲轰炸", Pool = AugmentPool.General, Tier = Tier.Silver, IconPath = EpicIcon,
+                Lines = new[] { $"你死亡时爆炸，对周围 {Batch3.DiveRadius:0} 米的敌人造成你生命上限 {Batch3.DiveDamage:P0} 的伤害" },
+            },
+            new Augment
+            {
+                Id = "slowcook", Name = "慢炖", Origin = "慢炖", Source = "斗魂竞技场", Pool = AugmentPool.General, Tier = Tier.Silver, IconPath = EpicIcon,
+                Lines = new[] { $"波次中每秒对周围 {Batch3.CookRadius:0} 米的敌人造成你攻击 {Batch3.CookDamage:P0} 的伤害" },
+            },
+            new Augment
+            {
+                Id = "restless", Name = "无休恢复", Origin = "无休恢复", Source = "斗魂竞技场", Pool = AugmentPool.General, Tier = Tier.Silver, IconPath = EpicIcon,
+                Lines = new[] { $"每移动 {Batch3.RestlessMeters:0} 米，回复 {Batch3.RestlessHeal:P0} 生命上限" },
+            },
+            new Augment
+            {
+                Id = "scopes", Name = "瞄准镜", Origin = "瞄准镜", Pool = AugmentPool.General, Tier = Tier.Silver, IconPath = EpicIcon,
+                Lines = new[] { $"攻击距离 +{ScopesRange:0.#} 米" },
+                OnPick = p => p.AddAttackRange(ScopesRange),
+                Revert = p => p.AddAttackRange(-ScopesRange),
+            },
+            new Augment
+            {
+                Id = "agi2str", Name = "以巧补拙", Origin = "属性互转", Pool = AugmentPool.General, Tier = Tier.Silver, IconPath = EpicIcon,
+                Lines = new[] { $"获得等于你敏捷 {ConvertRatio:P0} 的力量（随敏捷变化）" },
+            },
+            new Augment
+            {
+                Id = "str2agi", Name = "以力带巧", Origin = "属性互转", Pool = AugmentPool.General, Tier = Tier.Silver, IconPath = EpicIcon,
+                Lines = new[] { $"获得等于你力量 {ConvertRatio:P0} 的敏捷（随力量变化）" },
+            },
+            new Augment
+            {
+                Id = "egg", Name = "棱彩蛋", Origin = "棱彩蛋", Source = "斗魂竞技场", Pool = AugmentPool.General, Tier = Tier.Silver, IconPath = EpicIcon,
+                Lines = new[] { $"任务：击杀 {EggKills} 只变异怪或 Boss", "完成后孵化：休息时多一次棱彩海克斯选择" },
+            },
+            new Augment
+            {
+                Id = "urf", Name = "乌尔夫的勇士", Origin = "乌尔夫的勇士", Source = "斗魂竞技场", Pool = AugmentPool.General, Tier = Tier.Silver, IconPath = GoldForgeIcon,
+                Lines = new[] { $"任务：击杀 {UrfKills} 只变异怪或 Boss", $"完成后获得 {UrfForges} 次黄金属性锻造" },
+            },
+            new Augment
+            {
+                Id = "transmute", Name = "嬗变：黄金", Origin = "嬗变：黄金", Source = "斗魂竞技场", Pool = AugmentPool.General, Tier = Tier.Silver, IconPath = EpicIcon,
+                Lines = new[] { "选中后马上多一次金色海克斯选择" },
+            },
+            new Augment
+            {
+                Id = "mysticpunch", Name = "神秘拳", Origin = "神秘拳", Pool = AugmentPool.General, Tier = Tier.Gold, IconPath = EpicIcon,
+                Lines = new[] { $"普攻命中时，所有主动技能的剩余冷却 -{Batch3.PunchSeconds:0.#} 秒（每 {Batch3.PunchEvery:0.#} 秒最多一次）" },
+            },
+            new Augment
+            {
+                Id = "autocast", Name = "自动施放", Origin = "自动施放", Pool = AugmentPool.General, Tier = Tier.Gold, IconPath = EpicIcon, NeedsAutoCast = true,
+                Lines = new[] { $"专属技能开启自动释放，蓝耗 -{1f - AutoCastCost:P0}", "可以右键技能图标关掉自动释放，蓝耗减免保留；技能被替换后对新技能再开一次" },
+            },
+            Stats("glasscannon", "玻璃大炮", "玻璃大炮", "斗魂竞技场", Tier.Prism, new[] { "总伤害 +40%", "<color=#FF7070>代价：生命上限 -25%</color>" },
+                ("AddDamage", 40), ("HpPercent", -25)),
+            Stats("allornothing", "孤注一掷", null, null, Tier.Prism, new[] { "暴击率 +30%、暴击伤害 +60%", "<color=#FF7070>代价：生命上限 -20%</color>" },
+                ("Critical", 30), ("CriticalDamage", 60), ("HpPercent", -20)),
+            Stats("heavy", "重装", null, null, Tier.Prism, new[] { "生命上限 +60%", "<color=#FF7070>代价：攻速 -20%</color>" },
+                ("HpPercent", 60), ("AttackSpeed", -20)),
 
             // ---- 队友（参照斗魂竞技场；都走游戏原版的治疗、护盾、buff，队友没装 Mod 也生效）----
             TeamCard("sacrifice", "甘愿牺牲", "甘愿牺牲", Tier.Silver,

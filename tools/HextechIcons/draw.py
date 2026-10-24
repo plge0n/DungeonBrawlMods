@@ -510,12 +510,155 @@ def allin():  # 举国之力：一堆金币 + 王冠（棱彩）
     return ic
 
 
+# ---------- 第三批 ----------
+def divebomb():  # 俯冲轰炸：往下冲的炸弹（银）
+    ic = Icon(116, "silver")
+    shape(ic, circle(0.48, 0.58, 0.22, 26), (60, 60, 70))
+    ic.line([(0.62, 0.4), (0.74, 0.24), (0.8, 0.14)], color=(150, 110, 60), width=0.03, passes=1)
+    ic.sparkle(0.82, 0.12, 0.05, (245, 140, 40))
+    for x in (0.2, 0.3, 0.4):
+        ic.line([(x, 0.12), (x + 0.06, 0.3)], color=(90, 150, 220), width=0.02, passes=1)
+    ic.line([(0.4, 0.5), (0.36, 0.58)], color=(255, 255, 255), width=0.025, passes=1)
+    return ic
+
+
+def slowcook():  # 慢炖：冒热气的锅（银）
+    ic = Icon(117, "silver")
+    pot = [(0.18, 0.46), (0.82, 0.46), (0.74, 0.82), (0.26, 0.82)]
+    shape(ic, pot, (110, 110, 125))
+    ic.line([(0.12, 0.46), (0.88, 0.46)], width=0.04, passes=1)
+    for x in (0.36, 0.5, 0.64):
+        ic.line([(x, 0.4), (x - 0.04, 0.3), (x + 0.02, 0.2), (x - 0.02, 0.12)], color=(230, 120, 60), width=0.025, passes=1)
+    return ic
+
+
+def restless():  # 无休恢复：跑鞋 + 红心（银）
+    ic = Icon(118, "silver")
+    shoe = [(0.14, 0.7), (0.2, 0.5), (0.4, 0.52), (0.62, 0.62), (0.86, 0.66), (0.86, 0.78), (0.14, 0.78)]
+    shape(ic, shoe, (90, 150, 220))
+    ic.line([(0.14, 0.74), (0.86, 0.74)], color=(255, 255, 255), width=0.025, passes=1)
+    shape(ic, heart(0.66, 0.3, 0.12), (225, 60, 70), 0.02)
+    for y in (0.56, 0.64):
+        ic.line([(0.04, y), (0.12, y)], color=(150, 155, 165), width=0.02, passes=1)
+    return ic
+
+
+def scopes():  # 瞄准镜：准星（银）
+    ic = Icon(119, "silver")
+    ic.line(circle(0.5, 0.5, 0.3, 30), closed=True, color=(215, 50, 50), width=0.04, passes=1)
+    ic.line(circle(0.5, 0.5, 0.12, 20), closed=True, color=(215, 50, 50), width=0.03, passes=1)
+    for a, b in (((0.5, 0.1), (0.5, 0.32)), ((0.5, 0.68), (0.5, 0.9)), ((0.1, 0.5), (0.32, 0.5)), ((0.68, 0.5), (0.9, 0.5))):
+        ic.line([a, b], width=0.03, passes=1)
+    return ic
+
+
+def agi2str():  # 以巧补拙：羽毛 → 哑铃（银）
+    ic = Icon(120, "silver")
+    feather = [(0.14, 0.62), (0.3, 0.2), (0.36, 0.24), (0.22, 0.64)]
+    shape(ic, feather, (120, 200, 170), 0.02)
+    ic.line([(0.4, 0.46), (0.56, 0.46), (0.5, 0.4)], color=(240, 120, 40), width=0.025, passes=1)
+    ic.line([(0.56, 0.46), (0.5, 0.52)], color=(240, 120, 40), width=0.025, passes=1)
+    shape(ic, [(0.62, 0.34), (0.7, 0.34), (0.7, 0.62), (0.62, 0.62)], (70, 70, 80), 0.02)
+    shape(ic, [(0.8, 0.34), (0.88, 0.34), (0.88, 0.62), (0.8, 0.62)], (70, 70, 80), 0.02)
+    ic.line([(0.7, 0.48), (0.8, 0.48)], color=(160, 160, 170), width=0.03, passes=1)
+    return ic
+
+
+def str2agi():  # 以力带巧：哑铃 → 羽毛（银）
+    ic = Icon(121, "silver")
+    shape(ic, [(0.12, 0.34), (0.2, 0.34), (0.2, 0.62), (0.12, 0.62)], (70, 70, 80), 0.02)
+    shape(ic, [(0.3, 0.34), (0.38, 0.34), (0.38, 0.62), (0.3, 0.62)], (70, 70, 80), 0.02)
+    ic.line([(0.2, 0.48), (0.3, 0.48)], color=(160, 160, 170), width=0.03, passes=1)
+    ic.line([(0.44, 0.46), (0.6, 0.46), (0.54, 0.4)], color=(240, 120, 40), width=0.025, passes=1)
+    ic.line([(0.6, 0.46), (0.54, 0.52)], color=(240, 120, 40), width=0.025, passes=1)
+    feather = [(0.66, 0.66), (0.8, 0.2), (0.88, 0.24), (0.74, 0.68)]
+    shape(ic, feather, (120, 200, 170), 0.02)
+    return ic
+
+
+def egg():  # 棱彩蛋：带花纹的蛋（银）
+    ic = Icon(122, "silver")
+    oval = arc(0.5, 0.54, 0.26, 0, 360, 40, 1.3)
+    shape(ic, oval, (235, 220, 250))
+    ic.line([(0.26, 0.5), (0.36, 0.44), (0.46, 0.52), (0.56, 0.44), (0.66, 0.52), (0.74, 0.46)], color=(170, 110, 230), width=0.025, passes=1)
+    ic.sparkle(0.42, 0.66, 0.03, (90, 180, 230))
+    ic.sparkle(0.6, 0.7, 0.03, (240, 170, 60))
+    return ic
+
+
+def urf():  # 乌尔夫的勇士：锅铲（银）
+    ic = Icon(123, "silver")
+    ic.line([(0.24, 0.84), (0.58, 0.44)], color=(150, 100, 60), width=0.05, passes=1)
+    blade = [(0.54, 0.4), (0.7, 0.16), (0.88, 0.3), (0.66, 0.52)]
+    shape(ic, blade, (245, 200, 60))
+    ic.sparkle(0.2, 0.26)
+    return ic
+
+
+def transmute():  # 嬗变：黄金：银卡变金卡（银）
+    ic = Icon(124, "silver")
+    shape(ic, [(0.12, 0.3), (0.38, 0.3), (0.38, 0.7), (0.12, 0.7)], (200, 205, 215), 0.025)
+    ic.line([(0.42, 0.5), (0.58, 0.5), (0.52, 0.44)], color=(240, 120, 40), width=0.03, passes=1)
+    ic.line([(0.58, 0.5), (0.52, 0.56)], color=(240, 120, 40), width=0.03, passes=1)
+    shape(ic, [(0.62, 0.26), (0.9, 0.26), (0.9, 0.74), (0.62, 0.74)], GOLD, 0.025)
+    ic.sparkle(0.76, 0.5)
+    return ic
+
+
+def mysticpunch():  # 神秘拳：拳头 + 漩涡（金）
+    ic = Icon(219, "gold")
+    fist = [(0.22, 0.4), (0.62, 0.4), (0.68, 0.5), (0.62, 0.72), (0.22, 0.72)]
+    shape(ic, fist, (250, 215, 180))
+    for y in (0.48, 0.56, 0.64):
+        ic.line([(0.5, y), (0.64, y)], width=0.015, passes=1)
+    ic.line(arc(0.78, 0.3, 0.12, 0, 300, 20), color=(150, 90, 220), width=0.03, passes=1)
+    ic.line(arc(0.78, 0.3, 0.05, 0, 300, 14), color=(150, 90, 220), width=0.025, passes=1)
+    return ic
+
+
+def autocast():  # 自动施放：循环箭头 + 蓝滴（金）
+    ic = Icon(220, "gold")
+    ic.line(arc(0.5, 0.5, 0.3, -60, 230, 30), color=(240, 140, 40), width=0.045, passes=1)
+    shape(ic, [(0.66, 0.2), (0.78, 0.26), (0.66, 0.34)], (240, 140, 40), 0.02)
+    shape(ic, drop(0.5, 0.56, 0.12), (70, 120, 230), 0.02)
+    return ic
+
+
+def glasscannon():  # 玻璃大炮：透明的炮（棱彩）
+    ic = Icon(310, "prism")
+    barrel = [(0.2, 0.56), (0.62, 0.3), (0.7, 0.42), (0.28, 0.68)]
+    shape(ic, barrel, (190, 225, 245))
+    shape(ic, circle(0.3, 0.72, 0.1, 20), (150, 110, 70), 0.02)
+    ic.line([(0.4, 0.5), (0.46, 0.46)], color=(255, 255, 255), width=0.025, passes=1)
+    ic.sparkle(0.8, 0.26, 0.05, (245, 140, 40))
+    return ic
+
+
+def allornothing():  # 孤注一掷：骰子（棱彩）
+    ic = Icon(311, "prism")
+    shape(ic, [(0.22, 0.26), (0.74, 0.26), (0.74, 0.78), (0.22, 0.78)], (250, 250, 245))
+    for x, y in ((0.34, 0.38), (0.62, 0.38), (0.48, 0.52), (0.34, 0.66), (0.62, 0.66)):
+        shape(ic, circle(x, y, 0.045, 12), (215, 50, 50), 0.01)
+    return ic
+
+
+def heavy():  # 重装：铁头盔（棱彩）
+    ic = Icon(312, "prism")
+    helm = arc(0.5, 0.56, 0.3, 180, 360, 24) + [(0.8, 0.56), (0.8, 0.78), (0.2, 0.78), (0.2, 0.56)]
+    shape(ic, helm, (150, 155, 170))
+    shape(ic, [(0.3, 0.56), (0.7, 0.56), (0.7, 0.64), (0.3, 0.64)], (60, 60, 70), 0.02)
+    ic.line([(0.5, 0.26), (0.5, 0.5)], color=(215, 50, 50), width=0.04, passes=1)
+    return ic
+
+
 ICONS = {f.__name__: f for f in (blunt, deft, goredrink, stats, goldrush, mind,
                                   recursion, critical, colossus, axiom, manamune, bonk1, bonk, bonk3,
                                   infinite, stats3, goliath, loop,
                                   excited, fruitify, tank, porcupine, archmage, dualwield, cannon1, cannon, cannon3,
                                   sacrifice, vengeance, juicebox, maneuvers, spiritlink, banner, sonicboom, divine, clothesline,
-                                  patron, backline, oath, allin)}
+                                  patron, backline, oath, allin,
+                                  divebomb, slowcook, restless, scopes, agi2str, str2agi, egg, urf, transmute,
+                                  mysticpunch, autocast, glasscannon, allornothing, heavy)}
 
 if __name__ == "__main__":
     os.makedirs(OUT, exist_ok=True)

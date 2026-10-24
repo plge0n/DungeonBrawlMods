@@ -1,5 +1,8 @@
 # Hextech changelog (English)
 
+## 0.6.0
+- 14 new generic augments: Dive Bomber, Slow Cooker, Restless Restoration, Scopes, two stat conversions, Prismatic Egg and Urf's Champion (quests), Transmute: Gold, Mystic Punch, Auto-cast, and three trade-off prismatics (Glass Cannon, All or Nothing, Heavy)
+
 ## 0.5.0
 - 4 "feed the carry" augments: give gold to the teammate you support, grow when teammates level up, skill haste for your supported teammate
 - 9 teammate augments inspired by Arena (only offered when you have teammates; they use the game's own heal, shield and buff, so teammates don't need mods)
