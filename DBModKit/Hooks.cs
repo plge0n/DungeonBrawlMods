@@ -90,6 +90,15 @@ namespace DBModKit
                 }),
                 prefix: nameof(LethalHooks.SettlePrefix));
 
+            // 撕咬击杀加生命上限：服务器上的 bbe.kjv（只在主机执行）
+            SkillForms.BiteAvailable = TryPatch(harmony, typeof(SkillFormHooks), "撕咬成长",
+                AccessTools.Method(typeof(bbe), "kjv", new[] { typeof(xo) }),
+                prefix: nameof(SkillFormHooks.BitePrefix), postfix: nameof(SkillFormHooks.BitePostfix));
+            // 炸弹的十字范围：bhk.msj 初始化时算 bhlh（bws、eiz 是诱饵副本）
+            SkillForms.BombAvailable = TryPatch(harmony, typeof(SkillFormHooks), "炸弹范围",
+                AccessTools.Method(typeof(bhk), "msj", new[] { typeof(ActiveSkillEnum), typeof(yb), typeof(Vector3), typeof(ActiveSkillData), typeof(int), typeof(float), typeof(float) }),
+                postfix: nameof(SkillFormHooks.BombPostfix));
+
             SoulDevourer.Available = TryPatch(harmony, typeof(SoulDevourerHooks), "噬魂一击溅射",
                 AccessTools.Method(typeof(PlayerKoboldMode), "lkt", Type.EmptyTypes),
                 prefix: nameof(SoulDevourerHooks.StrikeEndPrefix));
@@ -834,6 +843,35 @@ namespace DBModKit
         internal static void CardPostfix(bpw __instance, RoguelikeUIData __0)
         {
             if (ModAssets.IsOurs(__0.icon) && __instance.iconImg != null) __instance.iconImg.color = Color.white;
+        }
+    }
+
+    internal static class SkillFormHooks
+    {
+        // kjv：哥布林之王击杀时 bpmz（累计成长，背后是 bfpe）+= 成长量，再 iww(成长量) 加生命上限。前缀记下之前的值，后缀按差额补上多出来的部分
+        internal static void BitePrefix(bbe __instance, out long __state) => __state = __instance.bpmz;
+
+        internal static void BitePostfix(bbe __instance, long __state)
+        {
+            float m = SkillForms.BiteMultiplier;
+            if (m <= 1f || (object)__instance != nn.bpbu) return;
+            long gained = __instance.bpmz - __state;
+            if (gained <= 0) return;
+            long extra = (long)Math.Min(long.MaxValue / 4, gained * (double)(m - 1f));
+            if (extra <= 0) return;
+            __instance.bpmz = __instance.bpmz + Math.Min(extra, long.MaxValue - __instance.bpmz);
+            __instance.iww(extra);
+            (__instance.bpia as PlayerBiteMode)?.kcr();
+        }
+
+        // msj(技能, 施法者, 位置, 表, 敏捷, 时长, 范围倍率)：十字长度 bhlh，宽度是 bhlh / 6，爆炸特效按 bhlh / 40 缩放，都跟着变。
+        // 每个客户端都会生成炸弹实例；伤害只在施法者本机算，所以只改本地玩家放的
+        internal static void BombPostfix(yb __1, ref float ___bhlh, GameObject ___bhli)
+        {
+            float m = SkillForms.BombMultiplier;
+            if (m <= 1f || (object)__1 != nn.bpbu) return;
+            ___bhlh *= m;
+            if (___bhli != null) ___bhli.transform.localScale *= 1f + (m - 1f) * 0.5f;
         }
     }
 

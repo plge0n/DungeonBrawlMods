@@ -419,7 +419,35 @@ namespace DBModKit
             Shotgun.Set(Metadata.Name, max, dashLoad);
         }
 
-        private bool soulSplash;
+        private bool soulSplash, skillForms;
+
+        private void SkillFormsCleanup()
+        {
+            if (skillForms) return;
+            skillForms = true;
+            AddCleanup(() => SkillForms.ClearOwner(Metadata.Name));
+        }
+
+        /// <summary>哥布林之王撕咬击杀加的生命上限乘 multiplier（1 = 原版）。只在单人或自己是房主时生效，见 <see cref="SkillForms"/>。</summary>
+        public void SetBiteGrowth(float multiplier)
+        {
+            SkillFormsCleanup();
+            SkillForms.SetBite(Metadata.Name, multiplier);
+        }
+
+        /// <summary>炸弹客的炸弹十字范围乘 multiplier（1 = 原版），见 <see cref="SkillForms"/>。</summary>
+        public void SetBombRange(float multiplier)
+        {
+            SkillFormsCleanup();
+            SkillForms.SetBomb(Metadata.Name, multiplier);
+        }
+
+        /// <summary>雷电雷之一闪的雷球上限 +extra（0 = 原版），见 <see cref="SkillForms"/>。</summary>
+        public void SetThunderOrbs(int extra)
+        {
+            SkillFormsCleanup();
+            SkillForms.SetThunder(Metadata.Name, extra);
+        }
 
         /// <summary>设置沙漠死神噬魂一击的溅射（见 <see cref="SoulDevourer"/>），传 null 取消；卸载时自动取消。</summary>
         public void SetSoulSplash(SoulSplash splash)

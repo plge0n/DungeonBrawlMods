@@ -79,7 +79,7 @@ namespace Hextech
         private static float openAt, battleStart, forgeAt;
         private static bool sawGameChoice, waveStarted, inWave;
         private static float[] appliedPassive;
-        private static bool splashSet, ammoSet;
+        private static bool splashSet, ammoSet, formsSet;
         // 兴奋：限时攻速是否加着、到什么时候
         private static bool excitedOn;
         private static float excitedUntil, tankAt;
@@ -153,7 +153,13 @@ namespace Hextech
         {
             if (splashSet) mod.SetSoulSplash(null);
             if (ammoSet) mod.SetShotgunAmmo(null);
-            splashSet = ammoSet = false;
+            if (formsSet)
+            {
+                mod.SetBiteGrowth(1f);
+                mod.SetBombRange(1f);
+                mod.SetThunderOrbs(0);
+            }
+            splashSet = ammoSet = formsSet = false;
             mod.SetEnemyBoost(1f, 1f, 1f);
         }
 
@@ -394,7 +400,7 @@ namespace Hextech
             {
                 var ids = SkillIds().ToList();
                 var signature = Augments.All.Where(a => a.Pool == AugmentPool.Signature && a.Tier == tier && ids.Contains(a.SkillId)
-                    && !Picked(a.Id) && (a.Series == null || a.Rank > SeriesRank(a.Series)) && !run.Shown.Contains("a:" + a.Id)).ToList();
+                    && !Picked(a.Id) && (a.Series == null || a.Rank > SeriesRank(a.Series)) && !run.Shown.Contains("a:" + a.Id) && (a.Available == null || a.Available())).ToList();
                 if (signature.Count > 0 && rng.NextDouble() < 0.7) cards.Add(signature[rng.Next(signature.Count)].ToCard());
                 // 积木少的技能刷新几次后会凑出同名的卡（数值不同），同名的只留一张，空位给通用卡
                 foreach (var c in Generator.Offer(profile, tier, 2 - cards.Count, rng, run.Shown))
@@ -815,6 +821,16 @@ namespace Hextech
                 if (ammo == null) mod.SetShotgunAmmo(null);
                 else mod.SetShotgunAmmo(() => Game.LocalPlayer is Player p ? ammo.MaxFor(p) : Shotgun.BaseMax, ammo.Dash);
                 ammoSet = ammo != null;
+            }
+            // 第五批招牌：撕咬成长、炸弹范围、雷球上限
+            float bite = Best("bite")?.BiteGrowth ?? 1f, bomb = Best("bomb")?.BombRange ?? 1f;
+            int orbs = Best("thunder")?.ThunderOrbs ?? 0;
+            if (bite > 1f || bomb > 1f || orbs > 0 || formsSet)
+            {
+                mod.SetBiteGrowth(bite);
+                mod.SetBombRange(bomb);
+                mod.SetThunderOrbs(orbs);
+                formsSet = bite > 1f || bomb > 1f || orbs > 0;
             }
             float hp = 1f, attack = 1f;
             foreach (var c in run.EnemyPicks)
