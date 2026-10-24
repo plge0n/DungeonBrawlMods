@@ -1,5 +1,10 @@
 # DBModKit changelog (English)
 
+## 0.33.0
+**Updated for game version 7.02. After updating, quit the game and run install.bat in the runtime item again** (zip users: extract the new "plugins" package), otherwise all mods stay disabled.
+
+- Fix: when the game is installed in a folder with non-ASCII characters (the default Steam folder name is Chinese), every Harmony patch failed and all mods were disabled (a Mono path-encoding bug). ModKit now switches the working directory while patching; the installer turns on BepInEx's `LoadDumpedAssemblies`, and if it is off ModKit turns it on and asks you to restart the game once
+
 ## 0.32.0
 **Updated for game version 7.01. After updating, quit the game and run install.bat in the runtime item again** (zip users: extract the new "plugins" package), otherwise all mods stay disabled.
 

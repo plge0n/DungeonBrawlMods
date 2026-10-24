@@ -13,23 +13,23 @@ namespace DBModKit
     // 只在 ModKit.Compatible 时调用；每个方法单独 JIT，类型缺失时不会提前崩溃。
     internal static class GameRaw
     {
-        // 本地玩家 nr.bpwv（bbe : yb）
-        public static Component LocalPlayer() => nr.bpwv;
+        // 本地玩家 nr.bpwy（bbe : yb）
+        public static Component LocalPlayer() => nr.bpwy;
 
-        // cj.bpte.dff：找不到 key 时返回默认值，不打警告
-        public static string Localize(string key, string fallback) => cj.bpte.dfw(key, fallback);
-        // cl.bptq：游戏设置里的语言（LanguageType）。不在兼容检查清单里：读不到时 Localization 退回中文，不必停用整个 ModKit
-        public static int LanguageIndex() => (int)cj.bpte.bptq;
+        // cj.bpth.dff：找不到 key 时返回默认值，不打警告
+        public static string Localize(string key, string fallback) => cj.bpth.dfw(key, fallback);
+        // cl.bptt：游戏设置里的语言（LanguageType）。不在兼容检查清单里：读不到时 Localization 退回中文，不必停用整个 ModKit
+        public static int LanguageIndex() => (int)cj.bpth.bptt;
 
         // ---- 角色 yb ----
         public static long Hp(Component r) => ((yh)r).hp;
         public static long MaxHp(Component r) => ((yh)r).maxHp;
-        public static bool IsAlive(Component r) => r != null && ((yh)r).bqdo != null && ((yh)r).jdi();
-        public static Vector3 Position(Component r) => ((yh)r).bqdo.position;
+        public static bool IsAlive(Component r) => r != null && ((yh)r).bqdr != null && ((yh)r).jdi();
+        public static Vector3 Position(Component r) => ((yh)r).bqdr.position;
         // 水平距离
         public static float Distance(Component from, Vector3 to) => ((yh)from).jae(to);
         // 体型补偿：大体型敌人判定距离更远
-        public static float HitRadius(Component r) => ((yh)r).bqdr != null ? ((yh)r).bqdr.addRange : 0f;
+        public static float HitRadius(Component r) => ((yh)r).bqdu != null ? ((yh)r).bqdu.addRange : 0f;
         public static bool IsBoss(Component r) => r is xu e && e.isBoss;
         public static bool IsElite(Component r) => r is xu e && e.isElite;
         // 召唤物 roleType = Summon，authorityId = 召唤者的 netId（xu.hof）
@@ -37,12 +37,12 @@ namespace DBModKit
         public static uint AuthorityId(Component r) => ((yh)r).authorityId;
         public static List<yh> Enemies(Component r) => ((yh)r).jeg();
         // 护盾 bpgz；无敌 beqd（受到的伤害记为 0）
-        public static long Shield(Component r) => ((yh)r).bqcq;
-        public static bool IsInvulnerable(Component r) => ((yh)r).bffk;
+        public static long Shield(Component r) => ((yh)r).bqct;
+        public static bool IsInvulnerable(Component r) => ((yh)r).bffm;
         // 普攻距离 roleModeBase.ico()（判定时还要加上对方体型半径）
-        public static float AttackRange(Component r) => ((yh)r).bqdr != null ? ((yh)r).bqdr.igm() : 0f;
+        public static float AttackRange(Component r) => ((yh)r).bqdu != null ? ((yh)r).bqdu.igm() : 0f;
         public static float MoveSpeed(Component r) => ((yh)r).jaf();
-        public static string State(Component r) => ((yh)r).bqdp.ToString();
+        public static string State(Component r) => ((yh)r).bqds.ToString();
         // 变身中 henShinSkillId > 0（默认 -1）
         public static bool IsTransformed(Component r) => ((yh)r).henShinSkillId > 0;
 
@@ -50,7 +50,7 @@ namespace DBModKit
         // isCheckAttack 由近战/弹道模式在出手时置位；远程模式不置位，按动作进度 0.41 出手，这里用 0.5 兜底 ----
         public static float AttackTimer(Component r) => ((yh)r).timer;
         public static float AttackInterval(Component r) => ((yh)r).jdd();
-        public static bool IsAttacking(Component r) => ((yh)r).bqdp == RoleState.Attack;
+        public static bool IsAttacking(Component r) => ((yh)r).bqds == RoleState.Attack;
         public static bool AttackHitDone(Component r)
         {
             var role = (yh)r;
@@ -58,22 +58,22 @@ namespace DBModKit
         }
 
         // ---- 属性（yb，bbe 有部分重写）----
-        public static long Attack(Component r) => ((yh)r).bqdq;
-        public static int Strength(Component r) => ((yh)r).bqdh;
-        public static int Agility(Component r) => ((yh)r).bqdg;
-        public static int Stamina(Component r) => ((yh)r).bqdf;
-        public static float AttackSpeed(Component r) => ((yh)r).bqcs;
+        public static long Attack(Component r) => ((yh)r).bqdt;
+        public static int Strength(Component r) => ((yh)r).bqdk;
+        public static int Agility(Component r) => ((yh)r).bqdj;
+        public static int Stamina(Component r) => ((yh)r).bqdi;
+        public static float AttackSpeed(Component r) => ((yh)r).bqcv;
         // 暴击率是 0~1 的概率（Random.value < bphl）
-        public static float CriticalRate(Component r) => ((yh)r).bqdc;
-        public static float CriticalDamage(Component r) => ((yh)r).bqdd;
-        public static int Armor(Component r) => ((yh)r).bqdb;
-        public static int Dodge(Component r) => ((yh)r).bqdi;
-        public static float LifeSteal(Component r) => ((yh)r).bqdm;
+        public static float CriticalRate(Component r) => ((yh)r).bqdf;
+        public static float CriticalDamage(Component r) => ((yh)r).bqdg;
+        public static int Armor(Component r) => ((yh)r).bqde;
+        public static int Dodge(Component r) => ((yh)r).bqdl;
+        public static float LifeSteal(Component r) => ((yh)r).bqdp;
 
         // ---- 玩家 bbe ----
-        public static int Mana(Component p) => ((bbr)p).bgko;
-        public static int MaxMana(Component p) => ((bbr)p).bgkp;
-        public static int Gold(Component p) => ((bbr)p).kce6d0aea2c124d1fb21977b6443b14bc;
+        public static int Mana(Component p) => ((bbr)p).bgkq;
+        public static int MaxMana(Component p) => ((bbr)p).bgkr;
+        public static int Gold(Component p) => ((bbr)p).kc3544e0533d74eb099526ef9f18e96ac;
 
         // 以下都是游戏自己加数值的方法：金币、力敏体等有影子副本校验（nr.fvb），不能直接写字段
         // yh.jbu(量, 来源)：回血，内部走 CmdUpdateHp 同步
@@ -82,14 +82,14 @@ namespace DBModKit
         public static void AddMana(Component p, int amount) => ((bbr)p).lac(amount);
         // bbe.kfd63a19…(飘字位置, 数量, 吃金币加成, 吃关卡倍率, 允许负债, 来源)：返回实际到账数量
         public static int AddGold(Component p, int amount)
-            => ((bbr)p).k98b329accfd04307bcf31c49e30a82fe(((bbr)p).jbc(), amount, c: false, d: false, e: false, GoldIncomeSource.Gameplay);
+            => ((bbr)p).ka840cd1e920444e3b6ab4a286d305e16(((bbr)p).jbc(), amount, c: false, d: false, e: false, GoldIncomeSource.Gameplay);
 
         // bbr.ksj(力, 敏, 体, 攻击)：加到加成字段 bfpj/bfpk/bfpl/bfpi（不是被防篡改校验的基础值），负数撤销；
         // 体力变化会自动同步生命上限。游戏的卡牌、装备也用它
         public static void AddStats(Component p, int str, int agi, int sta, long attack) => ((bbr)p).ksj(str, agi, sta, attack);
 
-        // 当前波次，从 0 开始（游戏显示 nr.bcen + 1）
-        public static int Wave() => nr.bcen;
+        // 当前波次，从 0 开始（游戏显示 nr.bcep + 1）
+        public static int Wave() => nr.bcep;
 
         // ---- 本地玩家的战斗回调（多播委托字段，只在拥有者客户端触发）----
         // 只挂没有返回值、不带 ref 的回调：damageEvent 之类的返回值会替换伤害，多挂一个就会改掉游戏结果
@@ -166,46 +166,46 @@ namespace DBModKit
         public static List<RelicInfo> ReadRelics()
         {
             var list = new List<RelicInfo>();
-            foreach (var kv in cj.bpth.bdgc.OrderBy(kv => (int)kv.Key))
+            foreach (var kv in cj.bptk.bdge.OrderBy(kv => (int)kv.Key))
             {
                 int id = (int)kv.Key;
                 string icon = null;
-                if (cx.baji.TryGetValue("remains", out var t) && t is Dictionary<string, object> rows
+                if (cx.bajk.TryGetValue("remains", out var t) && t is Dictionary<string, object> rows
                     && rows.TryGetValue(id.ToString(), out var r) && r is Dictionary<string, object> row)
                     icon = Cell(row, "icon");
-                list.Add(new RelicInfo(id, cj.bpte.dfw("pickitem_" + id, kv.Key.ToString()), kv.Value.grade, IconPath("Remains/", icon)));
+                list.Add(new RelicInfo(id, cj.bpth.dfw("pickitem_" + id, kv.Key.ToString()), kv.Value.grade, IconPath("Remains/", icon)));
             }
             return list;
         }
 
         // bbr.kyj(编号, 等级)：游戏的遗物三选一（ez.ean）就调它；超过本局获取上限、或王者模式禁用时返回 null
-        public static bool GiveRelic(Component p, int id) => cj.bpth.bdgc.ContainsKey((ItemType)id) && ((bbr)p).kyj(id, 0) != null;
+        public static bool GiveRelic(Component p, int id) => cj.bptk.bdge.ContainsKey((ItemType)id) && ((bbr)p).kyj(id, 0) != null;
 
-        // ---- 掉落物：cj.bptm（ot）.bctu，ou 的 bcty = 编号、bctz = 所属玩家 netId（0 = 公共）、bcua = ItemType、bcuc = 位置 ----
+        // ---- 掉落物：cj.bptp（ot）.bctu，ou 的 bcty = 编号、bctz = 所属玩家 netId（0 = 公共）、bcua = ItemType、bcuc = 位置 ----
         public static void ReadLoot(List<LootItem> output)
         {
             output.Clear();
-            var items = cj.bptm?.bdie;
+            var items = cj.bptp?.bdig;
             if (items == null) return;
             foreach (var kv in items)
             {
                 var o = kv.Value;
                 if (o == null) continue;
                 // oz.ggk：公共物品、自己的物品，或物主允许共享时能捡（服务器 bbr.lju 用同样的判断）
-                output.Add(new LootItem(o.bdii, (int)o.bdik, o.bdim, oz.ggk(o), ez.ebt(o.bdik), ez.ebw(o.bdik)));
+                output.Add(new LootItem(o.bdik, (int)o.bdim, o.bdio, oz.ggk(o), ez.ebt(o.bdim), ez.ebw(o.bdim)));
             }
         }
 
-        public static string ItemName(int itemType) => cj.bpte.dfw("pickitem_" + itemType, ((ItemType)itemType).ToString());
+        public static string ItemName(int itemType) => cj.bpth.dfw("pickitem_" + itemType, ((ItemType)itemType).ToString());
 
-        // bjc.Pick（点击单个物品）的判断：死了不能捡（nr.bcfd 时除外）
-        public static bool CanPickNow(Component p) => nr.bcfd || (((yh)p).hp > 0 && ((yh)p).bqdp != RoleState.Dead);
+        // bjc.Pick（点击单个物品）的判断：死了不能捡（nr.bcff 时除外）
+        public static bool CanPickNow(Component p) => nr.bcff || (((yh)p).hp > 0 && ((yh)p).bqds != RoleState.Dead);
 
-        // 背包 bbl.bgfm，上限 6 格；金币、宝石、阳光、力量/敏捷/耐力之书、护符不占格子（ez.ebt；全属性之书、金币袋占格子）
+        // 背包 bbl.bgfo，上限 6 格；金币、宝石、阳光、力量/敏捷/耐力之书、护符不占格子（ez.ebt；全属性之书、金币袋占格子）
         public static int BagCount(Component p) => ((bbr)p).playerAttribute.koq();
 
         // 护符需按键拾取（设置项 IsKeyPickTalisman）；关掉时护符靠碰到自动拾取，按 C 也不捡
-        public static bool KeyPickTalisman() => nr.bcfv;
+        public static bool KeyPickTalisman() => nr.bcfx;
 
         // CmdPickItem 由服务器 bbr.lju 处理：只检查物主，不检查距离，距离要自己限制
         public static void PickItem(Component p, uint id) => ((bbr)p).CmdPickItem(id);
@@ -213,17 +213,17 @@ namespace DBModKit
         public static void PlayPickSound() => bz.dej<AudioManager>()?.dbn("Audio/Battle_Audio/UI/拾取物品", 0.9f);
 
         // ---- 三选一界面 bqa（ui_roguelike）----
-        // 和游戏自己弹遗物前的判断一致（MyServerNetworkManager.qsn）：三选一界面开着，或技能栏的子面板（bps.bqnt）开着；
+        // 和游戏自己弹遗物前的判断一致（MyServerNetworkManager.qso）：三选一界面开着，或技能栏的子面板（bps.bqnw）开着；
         // 另外开场界面开着时也算忙（它一关游戏就弹开局遗物，抢在前面打开会被游戏随机选掉）
         public static bool ChoiceBusy()
         {
-            var ui = cj.bpsx?.dri<bqq>();
-            if (ui != null && ui.banm) return true;
-            var bar = cj.bpsx?.dri<bps>();
-            return (bar != null && bar.bqnt) || OpeningPending();
+            var ui = cj.bpta?.dri<bqq>();
+            if (ui != null && ui.bano) return true;
+            var bar = cj.bpta?.dri<bps>();
+            return (bar != null && bar.bqnw) || OpeningPending();
         }
 
-        // bqq.pca(选项, 选中回调, 标题, 刷新(null = 不能刷新), 关闭回调, 延迟, 队伍数据, 来源)：ez.eam 用的真方法。
+        // bqq.pcb(选项, 选中回调, 标题, 刷新(null = 不能刷新), 关闭回调, 延迟, 队伍数据, 来源)：ez.eam 用的真方法。
         // 来源传 null：非空时 cs.dgo 会把选项计入游戏的统计
         public static void ShowChoice(string title, IList<ChoiceOption> options, Action<int> onPick)
         {
@@ -240,21 +240,21 @@ namespace DBModKit
                     data = i.ToString(),
                 };
             }
-            var ui = (bqq)cj.bpsx.drb<bqq>();
-            ui.pca(data, d => onPick(int.TryParse(d.data, out int i) ? i : 0), title, null, null, 0f, null, null);
+            var ui = (bqq)cj.bpta.drb<bqq>();
+            ui.pcb(data, d => onPick(int.TryParse(d.data, out int i) ? i : 0), title, null, null, 0f, null, null);
         }
 
         // ---- 联机（Mirror：ciy = NetworkServer，cik = NetworkClient）----
-        public static bool ServerActive() => cjp.bntf;
-        public static bool ClientActive() => cjb.bqyg;
+        public static bool ServerActive() => cjp.bnti;
+        public static bool ClientActive() => cjb.bqyj;
         // 主机上的连接数，包含主机自己
-        public static int ServerConnections() => cjp.bnsy.Count;
+        public static int ServerConnections() => cjp.bntb.Count;
 
         // ---- 输入、UI ----
         // oy.gei()：持有期间屏蔽移动、技能、Tab 商店、ESC 菜单（oy.dbp 在计数非 0 时提前返回）
         public static IDisposable BlockInput() => oy.gei();
         // 游戏 UI 的 Canvas（UIRoot 第 0 个子节点）；主菜单之前可能还没创建
-        public static Canvas UiCanvas() => cj.bpsx?.banz != null ? cj.bpsx.banz.GetComponent<Canvas>() : null;
+        public static Canvas UiCanvas() => cj.bpta?.baob != null ? cj.bpta.baob.GetComponent<Canvas>() : null;
         // 主菜单（ui_startGame/trans_bg/trans_main，竖排布局）里的"创意工坊"按钮；主菜单没显示时为 null。
         // 只用预制体里的对象名、不碰混淆代码，ModKit 不兼容时也能用
         public static GameObject MainMenuWorkshopButton()
@@ -274,14 +274,14 @@ namespace DBModKit
         }
 
         // ---- 全局开关 ----
-        public static bool AutoBattleOn() => nr.bcfr;
-        // nr.bcfi：角色被锁定（过场等），kqi 里直接站着不动
-        public static bool ControlLocked() => nr.bcfi;
+        public static bool AutoBattleOn() => nr.bcft;
+        // nr.bcfk：角色被锁定（过场等），kqi 里直接站着不动
+        public static bool ControlLocked() => nr.bcfk;
         public static bool IsKing(Component p) => ((yh)p).roleType == RoleType.King;
         // 场地边界（圆形/多边形/矩形）内且离边缘至少 margin
         public static bool InsideArena(Vector3 pos, float margin) => nr.fsw(pos, margin);
-        // 玩家的 CharacterController（bbr.bgkf，公开访问器 bpmb），移动时被场景碰撞体挡住
-        public static CharacterController Controller(Component p) => ((bbr)p).bqid;
+        // 玩家的 CharacterController（bbr.bgkh，公开访问器 bpmb），移动时被场景碰撞体挡住
+        public static CharacterController Controller(Component p) => ((bbr)p).bqig;
         // 碰撞体属于某个角色（玩家、敌人、召唤物），不算障碍物
         public static bool IsRoleCollider(Collider c) => c.GetComponentInParent<yh>() != null;
 
@@ -289,7 +289,7 @@ namespace DBModKit
         public static long? BaseSkillDamage(int id, Component p, Component target)
         {
             var skill = (ActiveSkillEnum)id;
-            if (!cj.bpth.bdga.TryGetValue(skill, out var d)) return null;
+            if (!cj.bptk.bdgc.TryGetValue(skill, out var d)) return null;
             var player = (bbr)p;
             switch (skill)
             {
@@ -308,43 +308,43 @@ namespace DBModKit
                     return ez.dzc(d, player);
                 case ActiveSkillEnum.Bite:
                     // bfz.mwh：自身最大血量 × exV[0]% + bphq × damageValue + damageBase
-                    return (long)bfz.mwh(player.maxHp, player.bqdh, d);
+                    return (long)bfz.mwh(player.maxHp, player.bqdk, d);
                 default:
                     return null;
             }
         }
 
-        // ---- 正在生效的技能实例 cj.bptj.bcxi（bfe：bgwf 施法者、bgwi 技能、bgwg 剩余时间） ----
+        // ---- 正在生效的技能实例 cj.bptm.bcxi（bfe：bgwf 施法者、bgwi 技能、bgwg 剩余时间） ----
         public static float SkillEffectRemaining(Component p, int id)
         {
-            var effects = cj.bptj?.bdls;
+            var effects = cj.bptm?.bdlu;
             if (effects == null) return 0f;
             float best = 0f;
             foreach (var e in effects.Values)
-                if (e != null && e.bhph == (yh)p && (int)e.bhpk == id && e.bhpi > best)
-                    best = e.bhpi;
+                if (e != null && e.bhpj == (yh)p && (int)e.bhpm == id && e.bhpk > best)
+                    best = e.bhpk;
             return best;
         }
 
-        // ---- 地面预警 cj.bptf.bcqp（ok）：bcqt 变换、bcqw 已过时间、bcqx 总时长、bcqy 0=圆/扇形 1/2=矩形 ----
-        private static readonly AccessTools.FieldRef<op, List<oq>> warnings = AccessTools.FieldRefAccess<op, List<oq>>("bdet");
+        // ---- 地面预警 cj.bpti.bcqp（ok）：bcqt 变换、bcqw 已过时间、bcqx 总时长、bcqy 0=圆/扇形 1/2=矩形 ----
+        private static readonly AccessTools.FieldRef<op, List<oq>> warnings = AccessTools.FieldRefAccess<op, List<oq>>("bdev");
 
         public static void ReadTelegraphs(List<Telegraph> output)
         {
             output.Clear();
-            var mgr = cj.bptf;
+            var mgr = cj.bpti;
             if (mgr == null) return;
             foreach (var w in warnings(mgr))
             {
-                if (w?.bdex == null || w.bdew == null || !w.bdew.activeInHierarchy) continue;
-                var t = w.bdex;
-                float left = w.bdfb - w.bdfa;
-                if (w.bdfc == 0)
+                if (w?.bdez == null || w.bdey == null || !w.bdey.activeInHierarchy) continue;
+                var t = w.bdez;
+                float left = w.bdfd - w.bdfc;
+                if (w.bdfe == 0)
                 {
                     // fvj：缩放 = 直径，_Range = 扇形全角，旋转 (90, 朝向+180, 0)，所以 -up 指向扇形朝向
                     Vector3 dir = -t.up;
                     dir.y = 0f;
-                    float angle = w.bdez != null ? w.bdez.GetFloat(oa.bcyb) : 360f;
+                    float angle = w.bdfb != null ? w.bdfb.GetFloat(oa.bcyd) : 360f;
                     output.Add(Telegraph.Sector(t.position, t.localScale.x / 2f, dir, angle, left));
                 }
                 else
@@ -355,12 +355,12 @@ namespace DBModKit
             }
         }
 
-        // ---- 命中事件 bdq.bgyw：攻击方客户端上每次造成伤害时触发 ----
+        // ---- 命中事件 bdq.bgyy：攻击方客户端上每次造成伤害时触发 ----
         // 伤害类型、来源、技能实例取自外层的 yh.jbf / yh.jbm（DamageContextHooks）：bgfu 在 iwk → iwl → bdq.mfh 里触发，
         // fact 只有来源标成 ActiveSkill 时才带技能，很多技能结算伤害时没标
         public static void SubscribeHits(System.Action<RawHit> handler)
         {
-            bdq.bgyw += hit =>
+            bdq.bgyy += hit =>
             {
                 var raw = new RawHit
                 {
@@ -382,7 +382,7 @@ namespace DBModKit
                 {
                     raw.Type = MapEnum(ctx.Type, HitType.Unknown);
                     raw.Origin = MapEnum(ctx.Source, HitOrigin.Unknown);
-                    if (ctx.Skill != null && ctx.Skill.bhpk != ActiveSkillEnum.None) raw.SourceSkillId = (int)ctx.Skill.bhpk;
+                    if (ctx.Skill != null && ctx.Skill.bhpm != ActiveSkillEnum.None) raw.SourceSkillId = (int)ctx.Skill.bhpm;
                     else if (ctx.Caller != null) ResolveEffect(ctx.Caller, ctx.Target, ref raw);
                 }
                 handler(raw);
@@ -409,12 +409,12 @@ namespace DBModKit
                 foreach (var b in target.localRoleBuffDic.Values)
                     if (b != null && b.GetType() == t)
                     {
-                        raw.EffectName = cj.bpte.dfw("Buff_" + b.bbct, b.bbct.ToString());
+                        raw.EffectName = cj.bpth.dfw("Buff_" + b.bbcv, b.bbcv.ToString());
                         return;
                     }
                 return;
             }
-            var me = nr.bpwv;
+            var me = nr.bpwy;
             if (me != effectNamesFor)
             {
                 effectNames.Clear();
@@ -433,11 +433,11 @@ namespace DBModKit
         private static (HitEffectKind, string) FindEffect(bbr me, Type t)
         {
             if (me == null) return (HitEffectKind.None, null);
-            // 被动：bii.bigw 是本地化后的名字（"p_" + 编号）
+            // 被动：bii.bigy 是本地化后的名字（"p_" + 编号）
             if (typeof(qv).IsAssignableFrom(t))
             {
                 foreach (var s in me.roleSkillList)
-                    if (s != null && s.GetType() == t) return (HitEffectKind.Passive, s.bigw);
+                    if (s != null && s.GetType() == t) return (HitEffectKind.Passive, s.bigy);
                 return (HitEffectKind.Passive, null);
             }
             var attr = me.playerAttribute;
@@ -445,27 +445,27 @@ namespace DBModKit
             // 装备技能 lm：同类型全身共享一个，用技能名（"equipSkill_" + EquipSkillType）
             if (typeof(lq).IsAssignableFrom(t))
             {
-                foreach (var kv in attr.bgfn)
+                foreach (var kv in attr.bgfp)
                     if (kv.Value != null && kv.Value.GetType() == t)
-                        return (HitEffectKind.Equipment, cj.bpte.dfw("equipSkill_" + kv.Key, kv.Key.ToString()));
+                        return (HitEffectKind.Equipment, cj.bpth.dfw("equipSkill_" + kv.Key, kv.Key.ToString()));
                 return (HitEffectKind.Equipment, null);
             }
-            // 装备特效 ke：属于某件装备（bbcl），用装备名 kb.bbjr
+            // 装备特效 ke：属于某件装备（bbcl），用装备名 kb.bbjt
             if (typeof(kh).IsAssignableFrom(t))
             {
-                foreach (var equip in attr.bgfk)
+                foreach (var equip in attr.bgfm)
                 {
                     if (equip == null) continue;
                     foreach (var k in equip.evb())
-                        if (k != null && k.GetType() == t) return (HitEffectKind.Equipment, equip.bbjr);
+                        if (k != null && k.GetType() == t) return (HitEffectKind.Equipment, equip.bbjt);
                 }
                 return (HitEffectKind.Equipment, null);
             }
             // 遗物：名字是 "pickitem_" + 编号
             if (typeof(rt).IsAssignableFrom(t))
             {
-                foreach (var r in attr.bgfl)
-                    if (r != null && r.GetType() == t) return (HitEffectKind.Relic, cj.bpte.dfw("pickitem_" + r.bduz, r.bduz));
+                foreach (var r in attr.bgfn)
+                    if (r != null && r.GetType() == t) return (HitEffectKind.Relic, cj.bpth.dfw("pickitem_" + r.bdvb, r.bdvb));
                 return (HitEffectKind.Relic, null);
             }
             return (HitEffectKind.None, null);
@@ -475,11 +475,11 @@ namespace DBModKit
         private static TOut MapEnum<TIn, TOut>(TIn value, TOut fallback) where TOut : struct
             => Enum.TryParse(value.ToString(), out TOut result) ? result : fallback;
 
-        // ---- 技能数据 ActiveSkillData，表在 cj.bpth.bcrw ----
+        // ---- 技能数据 ActiveSkillData，表在 cj.bptk.bcrw ----
         public static SkillInfo ReadSkillInfo(int id)
         {
             var skill = (ActiveSkillEnum)id;
-            if (!cj.bpth.bdga.TryGetValue(skill, out var d)) return null;
+            if (!cj.bptk.bdgc.TryGetValue(skill, out var d)) return null;
             var tags = new List<string>();
             if (d.tags != null)
                 foreach (var t in d.tags) tags.Add(t.ToString());
@@ -492,7 +492,7 @@ namespace DBModKit
         private static readonly Dictionary<(DataTable, string), FieldInfo> fieldInfos = new Dictionary<(DataTable, string), FieldInfo>();
 
         // 配置表在 cj.Init 里创建（bz.dej 不会懒创建，之前是 null）
-        public static bool TablesReady() => cj.bpth != null && cx.baji.Count > 0;
+        public static bool TablesReady() => cj.bptk != null && cx.bajk.Count > 0;
 
         public static List<DataEntry> ReadEntries(DataTable table)
         {
@@ -500,10 +500,10 @@ namespace DBModKit
             switch (table)
             {
                 case DataTable.Skill:
-                    foreach (var kv in cj.bpth.bdga.OrderBy(kv => (int)kv.Key))
+                    foreach (var kv in cj.bptk.bdgc.OrderBy(kv => (int)kv.Key))
                     {
                         if (kv.Key == ActiveSkillEnum.None) continue;
-                        string name = cj.bpte.dfw("a_" + (int)kv.Key, kv.Key.ToString());
+                        string name = cj.bpth.dfw("a_" + (int)kv.Key, kv.Key.ToString());
                         list.Add(new DataEntry(table, kv.Key.ToString(), name, IconPath("Skill/", kv.Value.icon)));
                     }
                     break;
@@ -512,10 +512,10 @@ namespace DBModKit
                     foreach (var row in RawRows("hero"))
                     {
                         string id = Cell(row, "id");
-                        if (id == null || !cj.bpth.bdfy.ContainsKey(id) || !int.TryParse(id, out int n)) continue;
+                        if (id == null || !cj.bptk.bdga.ContainsKey(id) || !int.TryParse(id, out int n)) continue;
                         string head = ((HeroType)n).ToString().Split('_').Last();
                         // 英雄名的本地化 key 是 "hero_" + 编号（见 ez.dwe；不直接调 dvm，它会返回工坊模型的名字）
-                        list.Add(new DataEntry(table, id, cj.bpte.dfw("hero_" + id, id), IconPath("HeadIcon/Player_", head)));
+                        list.Add(new DataEntry(table, id, cj.bpth.dfw("hero_" + id, id), IconPath("HeadIcon/Player_", head)));
                     }
                     break;
                 case DataTable.Enemy:
@@ -525,7 +525,7 @@ namespace DBModKit
                         string id = Cell(row, "id");
                         if (id == null) continue;
                         // 怪物名的本地化 key 就是 id（EnemyType 名字，见 EnemyDragonBoss 的 Boss 提示）；没有翻译的（多半是没用到的怪）显示 id
-                        list.Add(new DataEntry(table, id, cj.bpte.dfw(id, id), IconPath("HeadIcon/Enemy_", Cell(row, "model"))));
+                        list.Add(new DataEntry(table, id, cj.bpth.dfw(id, id), IconPath("HeadIcon/Enemy_", Cell(row, "model"))));
                     }
                     break;
             }
@@ -560,8 +560,8 @@ namespace DBModKit
                     fi.SetValue(row, ToFieldType(v, fi.FieldType));
                 }
             }
-            if (table == DataTable.Skill) cj.bpth.bdga[(ActiveSkillEnum)Enum.Parse(typeof(ActiveSkillEnum), key)] = (ActiveSkillData)row;
-            else cj.bpth.bdfy[key] = (RoleAttribute)row;
+            if (table == DataTable.Skill) cj.bptk.bdgc[(ActiveSkillEnum)Enum.Parse(typeof(ActiveSkillEnum), key)] = (ActiveSkillData)row;
+            else cj.bptk.bdga[key] = (RoleAttribute)row;
             if (restore) originals.Remove((table, key));
         }
 
@@ -570,11 +570,11 @@ namespace DBModKit
             row = null;
             if (table == DataTable.Skill)
             {
-                if (!Enum.TryParse(key, out ActiveSkillEnum skill) || !cj.bpth.bdga.TryGetValue(skill, out var d)) return false;
+                if (!Enum.TryParse(key, out ActiveSkillEnum skill) || !cj.bptk.bdgc.TryGetValue(skill, out var d)) return false;
                 row = d;
                 return true;
             }
-            if (!cj.bpth.bdfy.TryGetValue(key, out var r)) return false;
+            if (!cj.bptk.bdga.TryGetValue(key, out var r)) return false;
             row = r;
             return true;
         }
@@ -603,10 +603,10 @@ namespace DBModKit
             return Convert.ChangeType(v, type);
         }
 
-        // 原始表 cx.baji[表名]：id → 行（列名 → 值）
+        // 原始表 cx.bajk[表名]：id → 行（列名 → 值）
         private static IEnumerable<Dictionary<string, object>> RawRows(string table)
         {
-            if (!cx.baji.TryGetValue(table, out var t) || !(t is Dictionary<string, object> rows)) yield break;
+            if (!cx.bajk.TryGetValue(table, out var t) || !(t is Dictionary<string, object> rows)) yield break;
             foreach (var row in rows.Values)
                 if (row is Dictionary<string, object> r) yield return r;
         }
@@ -618,17 +618,17 @@ namespace DBModKit
 
         // ---- 创意工坊英雄模型（buj 换模型，bup 读 manifest.json，buu 工坊服务）----
         // 启动参数 -disable-mods 时为 true，游戏不加载任何工坊内容
-        public static bool ModsDisabled() => bve.blew;
+        public static bool ModsDisabled() => bve.bley;
 
-        // 同 buz.qhg：manifest 的英雄编号对得上，模型包文件存在；另外排除召唤物模型（bvc.qit，它的 manifest 也可能带 heroId）
+        // 同 buz.qhh：manifest 的英雄编号对得上，模型包文件存在；另外排除召唤物模型（bvc.qiu，它的 manifest 也可能带 heroId）
         public static bool IsValidSkinFolder(string dir, int heroId)
-            => ReadSkinManifest(dir, out var m) && m.heroId == heroId && !bvc.qit(m.contentType);
+            => ReadSkinManifest(dir, out var m) && m.heroId == heroId && !bvc.qiu(m.contentType);
 
         private static bool ReadSkinManifest(string dir, out LocalWorkshopManifest m)
         {
             m = null;
             if (string.IsNullOrEmpty(dir) || !Directory.Exists(dir)) return false;
-            if (!bvf.qji(dir, out m) || m == null || m.heroId <= 0) return false;
+            if (!bvf.qjj(dir, out m) || m == null || m.heroId <= 0) return false;
             if (string.IsNullOrEmpty(m.bundleRelativePath) || string.IsNullOrEmpty(m.bundleAssetName)) return false;
             try
             {
@@ -640,23 +640,23 @@ namespace DBModKit
             }
         }
 
-        // 召唤物模型（bvc.qit）也带 manifest，但不是英雄模型
+        // 召唤物模型（bvc.qiu）也带 manifest，但不是英雄模型
         public static HeroSkin ReadSkin(string id, string dir)
         {
-            if (!ReadSkinManifest(dir, out var m) || bvc.qit(m.contentType)) return null;
+            if (!ReadSkinManifest(dir, out var m) || bvc.qiu(m.contentType)) return null;
             string title = !string.IsNullOrWhiteSpace(m.title) ? m.title.Trim()
                 : !string.IsNullOrWhiteSpace(m.heroName) ? m.heroName.Trim()
                 : Path.GetFileName(dir);
             return new HeroSkin(id, m.heroId, title, m.author?.Trim() ?? "", dir);
         }
 
-        // bvk.qlb()：已订阅的物品和状态（游戏自己每秒也调用一次）；bptc：Steam 可用
+        // bvk.qlc()：已订阅的物品和状态（游戏自己每秒也调用一次）；bptc：Steam 可用
         public static List<HeroSkin> ReadWorkshopSkins()
         {
             var list = new List<HeroSkin>();
-            var service = cj.bptp;
-            if (service == null || !service.bqph) return list;
-            foreach (var item in service.qlb())
+            var service = cj.bpts;
+            if (service == null || !service.bqpk) return list;
+            foreach (var item in service.qlc())
             {
                 if (item == null || !item.installed || item.heroId <= 0) continue;
                 var skin = ReadSkin(HeroSkins.WorkshopId(item.publishedFileId), item.installFolder);
@@ -665,87 +665,87 @@ namespace DBModKit
             return list;
         }
 
-        // bvk.qlc：已安装物品的文件夹
+        // bvk.qld：已安装物品的文件夹
         public static string WorkshopFolder(ulong id)
-            => cj.bptp != null && cj.bptp.qlc(id, out var item) && item != null ? item.installFolder : null;
+            => cj.bpts != null && cj.bpts.qld(id, out var item) && item != null ? item.installFolder : null;
 
-        // buz.qgq(文件夹, manifest, out 图)：manifest.previewImage，游戏的工坊列表也用它。
-        // 很多工坊物品没填 previewImage，但文件夹里有 preview.png / hero_icon.png（buz.qim 按相对路径读图）
+        // buz.qgr(文件夹, manifest, out 图)：manifest.previewImage，游戏的工坊列表也用它。
+        // 很多工坊物品没填 previewImage，但文件夹里有 preview.png / hero_icon.png（buz.qin 按相对路径读图）
         public static Sprite SkinPreview(string dir)
         {
-            if (!bvf.qji(dir, out var m)) return null;
-            if (buz.qgq(dir, m, out var sprite)) return sprite;
+            if (!bvf.qjj(dir, out var m)) return null;
+            if (buz.qgr(dir, m, out var sprite)) return sprite;
             foreach (var name in new[] { "preview.png", m.heroIcon, "hero_icon.png" })
-                if (!string.IsNullOrWhiteSpace(name) && File.Exists(Path.Combine(dir, name)) && buz.qim(dir, name, out sprite))
+                if (!string.IsNullOrWhiteSpace(name) && File.Exists(Path.Combine(dir, name)) && buz.qin(dir, name, out sprite))
                     return sprite;
             return null;
         }
 
-        public static int LocalHeroId() => nr.bpwv is bbr p ? (int)p.heroType : 0;
+        public static int LocalHeroId() => nr.bpwy is bbr p ? (int)p.heroType : 0;
 
-        // buz.qgx：本地玩家正在用这个英雄时，撤掉当前模型（buz.qgy）再按 buz.qhf 的结果重新换（buz.qgs）
+        // buz.qgy：本地玩家正在用这个英雄时，撤掉当前模型（buz.qgz）再按 buz.qhg 的结果重新换（buz.qgt）
         // 血条上的英雄名 roleName 只在出生时按模型的 heroName 算一次（yh.izc → ez.dwe），换完重新算；
         // 王者模式的 roleName 是 kingName，不动
         public static void ReapplyLocalHeroModel(int heroId)
         {
-            buz.qgx(heroId);
-            if (nr.bpwv is bbr p && (int)p.heroType == heroId && p.roleType == RoleType.Player)
+            buz.qgy(heroId);
+            if (nr.bpwy is bbr p && (int)p.heroType == heroId && p.roleType == RoleType.Player)
                 p.roleName = HeroVariants.LocalName(heroId) ?? ez.dwe(p.heroType);
         }
 
-        // 在 HeroSkinHooks 的角色上下文里撤掉模型（buz.qgy）再换（buz.qgs），名字（roleName）也按这个角色重新算
+        // 在 HeroSkinHooks 的角色上下文里撤掉模型（buz.qgz）再换（buz.qgt），名字（roleName）也按这个角色重新算
         public static void ReapplyHeroModel(Component p)
         {
             var player = (bbr)p;
-            if (player.bqdr == null) return;
+            if (player.bqdu == null) return;
             HeroSkinHooks.WithOwner(player, () =>
             {
-                buz.qgy(player.bqdr);
-                buz.qgs(player);
+                buz.qgz(player.bqdu);
+                buz.qgt(player);
                 if (player.roleType == RoleType.Player)
-                    player.roleName = (player.bqct ? HeroVariants.LocalName((int)player.heroType) : null) ?? ez.dwe(player.heroType);
+                    player.roleName = (player.bqcw ? HeroVariants.LocalName((int)player.heroType) : null) ?? ez.dwe(player.heroType);
             });
         }
 
         // 游戏自己的工坊绑定（主菜单"工坊 Mod"里启用的物品），没有时为 0
-        public static ulong GameSkinBinding(int heroId) => cj.bpto != null && cj.bpto.qjv(heroId, out ulong id) ? id : 0UL;
+        public static ulong GameSkinBinding(int heroId) => cj.bptr != null && cj.bptr.qjw(heroId, out ulong id) ? id : 0UL;
 
-        // bvk.qkw：打开物品的创意工坊页面（游戏的工坊界面也用它）
-        public static void OpenWorkshopPage(ulong id) => cj.bptp?.qkw(id);
+        // bvk.qkx：打开物品的创意工坊页面（游戏的工坊界面也用它）
+        public static void OpenWorkshopPage(ulong id) => cj.bpts?.qkx(id);
 
         // ---- 玩家 ----
-        // yh.bqct：Mirror 的 isLocalPlayer
-        public static bool IsLocalPlayer(Component r) => r is yh role && role.bqct;
+        // yh.bqcw：Mirror 的 isLocalPlayer
+        public static bool IsLocalPlayer(Component r) => r is yh role && role.bqcw;
         // Mirror 的 netId（NetworkBehaviour.bqbx），同一局里每个客户端看到的都一样
-        public static uint NetId(Component r) => ((yh)r).bqyc;
+        public static uint NetId(Component r) => ((yh)r).bqyf;
         public static int HeroIdOf(Component p) => (int)((bbr)p).heroType;
-        // bbr.bqje：Steam 昵称（服务器生成角色时写入的 SyncVar）
-        public static string PlayerName(Component p) => ((bbr)p).bqje;
+        // bbr.bqjh：Steam 昵称（服务器生成角色时写入的 SyncVar）
+        public static string PlayerName(Component p) => ((bbr)p).bqjh;
         public static bbr[] AllPlayers() => UnityEngine.Object.FindObjectsOfType<bbr>();
 
         // ---- Steam 大厅（cft = SteamMatchmaking，cgi = SteamUser）----
-        // px.bpxu：当前大厅，房主是 nr.bchw、客户端是 nr.bchx；进地牢后不离开大厅。本地（KCP）模式没有大厅，返回 0
+        // px.bpxx：当前大厅，房主是 nr.bchy、客户端是 nr.bchz；进地牢后不离开大厅。本地（KCP）模式没有大厅，返回 0
         public static ulong LobbyId()
         {
             var lobby = bz.dej<px>();
-            return lobby != null ? lobby.bpxu.m_SteamID : 0UL;
+            return lobby != null ? lobby.bpxx.m_SteamID : 0UL;
         }
 
-        public static ulong MySteamId() => cgz.upt().m_SteamID;
+        public static ulong MySteamId() => cgz.upv().m_SteamID;
 
-        // cgk.ubw = GetLobbyOwner（游戏在 px 里用它；同类里还有没人调用的副本）
-        public static ulong LobbyOwner(ulong lobby) => cgk.ubw(new Steamworks.CSteamID(lobby)).m_SteamID;
+        // cgk.uby = GetLobbyOwner（游戏在 px 里用它；同类里还有没人调用的副本）
+        public static ulong LobbyOwner(ulong lobby) => cgk.uby(new Steamworks.CSteamID(lobby)).m_SteamID;
 
         // 成员数据：每个成员只能写自己的，所有成员都能读。游戏不用它，px.gpj 收到成员数据的更新时直接返回
         public static void SetLobbyMemberData(ulong lobby, string key, string value)
-            => cgk.ubm(new Steamworks.CSteamID(lobby), key, value);
+            => cgk.ubo(new Steamworks.CSteamID(lobby), key, value);
 
         // 离开房间时游戏会先关掉 Steam 联机（Player.log 里的"steam结束"），之后写成员数据会抛异常；那时已经离开大厅，不用清
         public static void TryClearLobbyMemberData(ulong lobby, string key)
         {
             try
             {
-                cgk.ubm(new Steamworks.CSteamID(lobby), key, "");
+                cgk.ubo(new Steamworks.CSteamID(lobby), key, "");
             }
             catch (InvalidOperationException)
             {
@@ -753,29 +753,29 @@ namespace DBModKit
         }
 
         public static string LobbyMemberData(ulong lobby, ulong member, string key)
-            => cgk.ubl(new Steamworks.CSteamID(lobby), new Steamworks.CSteamID(member), key);
+            => cgk.ubn(new Steamworks.CSteamID(lobby), new Steamworks.CSteamID(member), key);
 
         public static List<ulong> LobbyMembers(ulong lobby)
         {
             var id = new Steamworks.CSteamID(lobby);
             var list = new List<ulong>();
-            int count = cgk.ube(id);
-            for (int i = 0; i < count; i++) list.Add(cgk.ubf(id, i).m_SteamID);
+            int count = cgk.ubg(id);
+            for (int i = 0; i < count; i++) list.Add(cgk.ubh(id, i).m_SteamID);
             return list;
         }
 
         // ---- 自定义被动（PassiveSkills）----
-        // 被动表 cx.baji["passsiveSkill"]：编号 → 行（列名 → 值）。学习时 yh.izw / iuz 读 class 列 → ez.ebr(类名) 创建 qp 实例，
+        // 被动表 cx.bajk["passsiveSkill"]：编号 → 行（列名 → 值）。学习时 yh.izw / iuz 读 class 列 → ez.ebr(类名) 创建 qp 实例，
         // 再 msz(行) 解析数值、gou() 生效、ez.eai 放进技能栏（roleSkillList，最多 nr.MaxSkillNum 格，被动也占格）。
-        // 技能书候选池是 pj（cj.bptj）的私有字段 bcxj：品级 → 行，在 pj 构造时（gjs）从被动表建好，之后加的行要自己放进去
+        // 技能书候选池是 pj（cj.bptm）的私有字段 bcxj：品级 → 行，在 pj 构造时（gjs）从被动表建好，之后加的行要自己放进去
         private static readonly AccessTools.FieldRef<pr, Dictionary<string, List<object>>> passivePool =
-            AccessTools.FieldRefAccess<pr, Dictionary<string, List<object>>>("bdlt");
+            AccessTools.FieldRefAccess<pr, Dictionary<string, List<object>>>("bdlv");
         private static readonly Dictionary<int, Dictionary<string, object>> injectedPassives = new Dictionary<int, Dictionary<string, object>>();
 
         public const string ModPassiveClassPrefix = "DBModKit.Passive:";
 
         private static Dictionary<string, object> PassiveTable()
-            => cx.baji.TryGetValue("passsiveSkill", out var t) ? t as Dictionary<string, object> : null;
+            => cx.bajk.TryGetValue("passsiveSkill", out var t) ? t as Dictionary<string, object> : null;
 
         public static void InjectPassive(PassiveSkillInfo info)
         {
@@ -825,9 +825,9 @@ namespace DBModKit
             EjectPassive(info.Id);
             table[info.Id.ToString()] = row;
             injectedPassives[info.Id] = row;
-            if (info.InSkillBook && cj.bptj != null)
+            if (info.InSkillBook && cj.bptm != null)
             {
-                var pool = passivePool(cj.bptj);
+                var pool = passivePool(cj.bptm);
                 string quality = def.Quality.ToString();
                 if (!pool.TryGetValue(quality, out var list)) pool[quality] = list = new List<object>();
                 list.Add(row);
@@ -841,7 +841,7 @@ namespace DBModKit
             if (table == null || !table.TryGetValue(id.ToString(), out var current) || current != row) return false;
             // pj 重建时会从被动表重新建池（gjs），我们的行还在表里就也在池里
             bool wantPool = !(row.TryGetValue("lock", out var l) && Convert.ToBoolean(l));
-            return !wantPool || cj.bptj == null || passivePool(cj.bptj).Values.Any(list => list.Contains(row));
+            return !wantPool || cj.bptm == null || passivePool(cj.bptm).Values.Any(list => list.Contains(row));
         }
 
         public static void EjectPassive(int id)
@@ -850,8 +850,8 @@ namespace DBModKit
             string key = id.ToString();
             if (table != null && table.TryGetValue(key, out var row) && IsModPassiveRow(row))
                 table.Remove(key);
-            if (cj.bptj != null)
-                foreach (var list in passivePool(cj.bptj).Values)
+            if (cj.bptm != null)
+                foreach (var list in passivePool(cj.bptm).Values)
                     list.RemoveAll(r => r is Dictionary<string, object> d && d.TryGetValue("id", out var v) && v?.ToString() == key && IsModPassiveRow(d));
             injectedPassives.Remove(id);
         }
@@ -870,7 +870,7 @@ namespace DBModKit
         // yh.izw(被动, 要替换的格子)：技能书学被动走它（真方法）。技能栏满、又不指定格子时，ez.eai 会替换第 2 格，所以这里先判断
         public static bool GivePassive(int id, int replaceSlot)
         {
-            var p = nr.bpwv;
+            var p = nr.bpwy;
             if (p == null) return false;
             bii replace = null;
             if (p.roleSkillList.Count >= nr.MaxSkillNum)
@@ -885,7 +885,7 @@ namespace DBModKit
         // ez.eag：游戏的移除（dzp 里调 qv.gsj，再刷新技能栏）
         public static void RemoveLocalPassives(int id)
         {
-            var p = nr.bpwv;
+            var p = nr.bpwy;
             if (p == null) return;
             foreach (var s in p.roleSkillList.OfType<ModPassive>().Where(s => s.DefId == id).ToList())
                 ez.eag(s);
@@ -894,25 +894,25 @@ namespace DBModKit
         public static void LocalModPassives(List<object> output)
         {
             output.Clear();
-            var p = nr.bpwv;
+            var p = nr.bpwy;
             if (p == null) return;
             foreach (var s in p.roleSkillList)
                 if (s is ModPassive m) output.Add(m);
         }
 
         public static int ModPassiveInstance(object native) => ((ModPassive)native).Instance;
-        public static Component PassiveOwner(object native) => ((bii)native).bigf;
+        public static Component PassiveOwner(object native) => ((bii)native).bigh;
         // 等级 bht.kb03f1…；数值 bhnp = value + levelup × 等级（msz → mtm 算好）
-        public static int PassiveLevel(object native) => ((bii)native).k5062536e79224451ae57d334924d2f81;
+        public static int PassiveLevel(object native) => ((bii)native).k9f648b740d1345f6b38d3f2d2842fe87;
 
         public static float PassiveValue(object native, int i)
         {
-            var values = ((bii)native).bigr;
+            var values = ((bii)native).bigt;
             return values != null && i >= 0 && i < values.Length ? values[i] : 0f;
         }
 
         // ---- 自定义遗物（CustomRelics）----
-        // 原始表 cx.baji["remains"]：编号 → 行（skill 列是效果名，bbr.kyk 按它创建 rn 子类，未知名字返回什么都不做的 new rn()）。
+        // 原始表 cx.bajk["remains"]：编号 → 行（skill 列是效果名，bbr.kyk 按它创建 rn 子类，未知名字返回什么都不做的 new rn()）。
         // oo 构造时转换成 bcry（ItemType → RemainsData，三选一的候选池 ez.eaw 从这里按品级筛）和 bcrx（物品表）。
         // 发放 bbr.kyj(编号, 等级)：读行 → kql → 填 values/levelup/valueTypes → kqm 放进 playerAttribute.bfna 并调 gtb()。
         // runAcquireLimit 为 0 时 kto 不发 CmdClaimRelicRunAcquisition；isTeam 为假时 ez.ean 不发 CmdAddAllPlayerItem，所以选遗物不会发消息
@@ -921,14 +921,14 @@ namespace DBModKit
         public const string ModRelicSkillPrefix = "DBModKit.Relic:";
 
         private static Dictionary<string, object> RelicTable()
-            => cx.baji.TryGetValue("remains", out var t) ? t as Dictionary<string, object> : null;
+            => cx.bajk.TryGetValue("remains", out var t) ? t as Dictionary<string, object> : null;
 
         public static bool IsRelicValueType(string name) => Enum.TryParse(name, false, out RelicValueType _);
 
         public static void InjectRelic(CustomRelicInfo info)
         {
             var table = RelicTable();
-            if (table == null || cj.bpth == null) return;
+            if (table == null || cj.bptk == null) return;
             var def = info.Def;
             var template = table.Values.OfType<Dictionary<string, object>>().FirstOrDefault();
             var row = template != null ? new Dictionary<string, object>(template) : new Dictionary<string, object>();
@@ -957,9 +957,9 @@ namespace DBModKit
 
             EjectRelic(info.Id);
             table[info.Id.ToString()] = row;
-            // 和 oo 的转换一致：grade 是 oc.bcyk（D C B A S）里的下标
-            int gradeIndex = oc.bcyk.IndexOf(grade);
-            cj.bpth.bdgc[(ItemType)info.Id] = new RemainsData
+            // 和 oo 的转换一致：grade 是 oc.bcym（D C B A S）里的下标
+            int gradeIndex = oc.bcym.IndexOf(grade);
+            cj.bptk.bdge[(ItemType)info.Id] = new RemainsData
             {
                 grade = gradeIndex,
                 conditions = EntryConditions.None,
@@ -968,7 +968,7 @@ namespace DBModKit
                 runAcquireLimit = 0,
                 mapTypes = "",
             };
-            cj.bpth.bdgb[(ItemType)info.Id] = new ItemData { name = "pickitem_" + info.Id, quality = gradeIndex, model = "Remains" };
+            cj.bptk.bdgd[(ItemType)info.Id] = new ItemData { name = "pickitem_" + info.Id, quality = gradeIndex, model = "Remains" };
             injectedRelics[info.Id] = row;
         }
 
@@ -977,7 +977,7 @@ namespace DBModKit
             if (!injectedRelics.TryGetValue(id, out var row)) return false;
             var table = RelicTable();
             return table != null && table.TryGetValue(id.ToString(), out var current) && current == row
-                   && cj.bpth != null && cj.bpth.bdgc.ContainsKey((ItemType)id);
+                   && cj.bptk != null && cj.bptk.bdge.ContainsKey((ItemType)id);
         }
 
         public static void EjectRelic(int id)
@@ -986,10 +986,10 @@ namespace DBModKit
             if (table != null && injectedRelics.TryGetValue(id, out var ours) && table.TryGetValue(id.ToString(), out var row) && row == ours)
                 table.Remove(id.ToString());
             // 只删我们自己的编号段（3000000 起），不会碰到游戏的遗物
-            if (id >= CustomRelics.FirstId && cj.bpth != null)
+            if (id >= CustomRelics.FirstId && cj.bptk != null)
             {
-                cj.bpth.bdgc.Remove((ItemType)id);
-                cj.bpth.bdgb.Remove((ItemType)id);
+                cj.bptk.bdge.Remove((ItemType)id);
+                cj.bptk.bdgd.Remove((ItemType)id);
             }
             injectedRelics.Remove(id);
         }
@@ -1010,37 +1010,37 @@ namespace DBModKit
                 list.RemoveAll(t => (int)t >= CustomRelics.FirstId && CustomRelics.IsCustom((int)t) && !CustomRelics.InPool((int)t));
         }
 
-        public static bool GiveRelic(Component p, int id, int level) => cj.bpth.bdgc.ContainsKey((ItemType)id) && ((bbr)p).kyj(id, level) != null;
+        public static bool GiveRelic(Component p, int id, int level) => cj.bptk.bdge.ContainsKey((ItemType)id) && ((bbr)p).kyj(id, level) != null;
 
         // bbr.kym：游戏的移除（调 gtc，再刷新遗物栏）
         public static void RemoveLocalRelics(int id)
         {
-            var p = nr.bpwv;
+            var p = nr.bpwy;
             if (p == null) return;
-            foreach (var r in p.playerAttribute.bgfl.OfType<ModRelic>().Where(r => r.DefId == id).ToList())
+            foreach (var r in p.playerAttribute.bgfn.OfType<ModRelic>().Where(r => r.DefId == id).ToList())
                 p.kym(r);
         }
 
         public static void LocalModRelics(List<object> output)
         {
             output.Clear();
-            var p = nr.bpwv;
+            var p = nr.bpwy;
             if (p == null || p.playerAttribute == null) return;
-            foreach (var r in p.playerAttribute.bgfl)
+            foreach (var r in p.playerAttribute.bgfn)
                 if (r is ModRelic m) output.Add(m);
         }
 
         public static int ModRelicInstance(object native) => ((ModRelic)native).Instance;
-        public static Component RelicOwner(object native) => ((rt)native).bdvb;
-        public static int RelicLevel(object native) => ((rt)native).bdvf;
+        public static Component RelicOwner(object native) => ((rt)native).bdvd;
+        public static int RelicLevel(object native) => ((rt)native).bdvh;
 
         // 同 rt.gww：values[i] + levelup[i] × 等级
         public static float RelicValue(object native, int i, int level)
         {
             var r = (rt)native;
-            if (r.bdvg == null || i < 0 || i >= r.bdvg.Length) return 0f;
-            float up = r.bdvi != null && i < r.bdvi.Length ? r.bdvi[i] : 0f;
-            return r.bdvg[i] + up * level;
+            if (r.bdvi == null || i < 0 || i >= r.bdvi.Length) return 0f;
+            float up = r.bdvk != null && i < r.bdvk.Length ? r.bdvk[i] : 0f;
+            return r.bdvi[i] + up * level;
         }
 
         // ez.ecd 的后缀：构筑数据（同步给队友、上传国王对决、信息面板、结算）去掉自定义遗物
@@ -1111,22 +1111,22 @@ namespace DBModKit
         }
 
         // ---- 自定义装备（CustomEquipEffects、CustomEquipment）----
-        // 装备表 cx.baji["equipment"]：编号 → 行。kb.Init(RoleType) 读行：skill 列 Enum.Parse 成 EquipSkillType（数字字符串也行，所以枚举外的编号可用）、
-        // skillValue / skillValueUp 是 "|" 分隔的数值；不是 King 时 etc() 读图标、说明（"equip_"+编号+"_m"）、强化配置，属性优先读 ou.bdgp（kb.etc(行)）。
-        // 特效配置表 cx.baji["equipmentSkill"]：特效名 → 行（onlySkill、kingLock）。穿上 bba.k08fba…(jy)：对 kb.eue() 的每个特效 kdc → khf 按类型创建
+        // 装备表 cx.bajk["equipment"]：编号 → 行。kb.Init(RoleType) 读行：skill 列 Enum.Parse 成 EquipSkillType（数字字符串也行，所以枚举外的编号可用）、
+        // skillValue / skillValueUp 是 "|" 分隔的数值；不是 King 时 etc() 读图标、说明（"equip_"+编号+"_m"）、强化配置，属性优先读 ou.bdgr（kb.etc(行)）。
+        // 特效配置表 cx.bajk["equipmentSkill"]：特效名 → 行（onlySkill、kingLock）。穿上 bba.k08fba…(jy)：对 kb.eue() 的每个特效 kdc → khf 按类型创建
         // lm（全身共享）或 ke（每件装备一个，khh 设拥有者、等级、数值后 Init），卸下 bba.kb163…(jy) 对每个 ke 调 Clear。
-        // 特效说明 kb.evz 先查本地化表 cl.bafp 里有没有 "equipSkill_"+编号+"_m"（没有就不显示），再按 dfe 取文字，所以两边都要有
+        // 特效说明 kb.evz 先查本地化表 cl.bafr 里有没有 "equipSkill_"+编号+"_m"（没有就不显示），再按 dfe 取文字，所以两边都要有
         private static readonly Dictionary<int, Dictionary<string, object>> injectedEquipEffects = new Dictionary<int, Dictionary<string, object>>();
         private static readonly Dictionary<int, Dictionary<string, object>> injectedEquipment = new Dictionary<int, Dictionary<string, object>>();
         private static readonly Dictionary<int, List<kb.EquipAttributeData>> injectedEquipAttributes = new Dictionary<int, List<kb.EquipAttributeData>>();
 
         private static Dictionary<string, object> EquipTable()
-            => cx.baji.TryGetValue("equipment", out var t) ? t as Dictionary<string, object> : null;
+            => cx.bajk.TryGetValue("equipment", out var t) ? t as Dictionary<string, object> : null;
 
         private static Dictionary<string, object> EquipEffectTable()
-            => cx.baji.TryGetValue("equipmentSkill", out var t) ? t as Dictionary<string, object> : null;
+            => cx.bajk.TryGetValue("equipmentSkill", out var t) ? t as Dictionary<string, object> : null;
 
-        public static IReadOnlyList<string> EquipAttributeNames() => kb.bbkc;
+        public static IReadOnlyList<string> EquipAttributeNames() => kb.bbke;
 
         // 属性名的别名（例如 physicalDamage → normalAttackAddDamage），和游戏读表时一样
         public static string NormalizeEquipAttribute(string name) => kb.etk(name);
@@ -1164,14 +1164,14 @@ namespace DBModKit
 
         private static void LocalizationKey(string key, string text)
         {
-            var zuj = cj.bpte?.bafp;
+            var zuj = cj.bpth?.bafr;
             // 只是让 kb.etq 认这个键；文字由 cl.dfx 的前缀（SkillText）给，这里写中文原文兜底
             if (zuj != null) zuj[key] = new Dictionary<string, object> { ["Chinese"] = text ?? "" };
         }
 
         private static void RemoveLocalizationKey(string key)
         {
-            var zuj = cj.bpte?.bafp;
+            var zuj = cj.bpth?.bafr;
             if (zuj != null && zuj.TryGetValue(key, out var v) && v is Dictionary<string, object> d && d.Count == 1 && d.ContainsKey("Chinese"))
                 zuj.Remove(key);
         }
@@ -1179,7 +1179,7 @@ namespace DBModKit
         public static void InjectEquipEffect(CustomEquipEffectInfo info)
         {
             var table = EquipEffectTable();
-            if (table == null || cj.bpte == null) return;
+            if (table == null || cj.bpth == null) return;
             string key = info.Id.ToString();
             var template = table.Values.OfType<Dictionary<string, object>>().FirstOrDefault();
             // 国王对决里的拟人玩家不创建（kdc 里 King 且 kingLock 时跳过）
@@ -1197,7 +1197,7 @@ namespace DBModKit
             var table = EquipEffectTable();
             string key = id.ToString();
             return table != null && table.TryGetValue(key, out var current) && current == row
-                   && cj.bpte != null && cj.bpte.bafp.ContainsKey("equipSkill_" + key + "_m");
+                   && cj.bpth != null && cj.bpth.bafr.ContainsKey("equipSkill_" + key + "_m");
         }
 
         public static void EjectEquipEffect(int id)
@@ -1249,7 +1249,7 @@ namespace DBModKit
         public static void InjectEquipment(CustomEquipmentInfo info)
         {
             var table = EquipTable();
-            if (table == null || cj.bpth == null) return;
+            if (table == null || cj.bptk == null) return;
             var def = info.Def;
             string key = info.Id.ToString();
             var template = (table.TryGetValue("1", out var first) ? first as Dictionary<string, object> : null)
@@ -1290,7 +1290,7 @@ namespace DBModKit
             table[key] = row;
             // 和 oo 构造时一样，属性从原始行转换
             var parsed = kb.etc(row);
-            cj.bpth.bdgp[key] = parsed;
+            cj.bptk.bdgr[key] = parsed;
             injectedEquipment[info.Id] = row;
             injectedEquipAttributes[info.Id] = parsed;
         }
@@ -1301,7 +1301,7 @@ namespace DBModKit
             var table = EquipTable();
             string key = id.ToString();
             return table != null && table.TryGetValue(key, out var current) && current == row
-                   && cj.bpth != null && cj.bpth.bdgp.TryGetValue(key, out var attrs) && injectedEquipAttributes.TryGetValue(id, out var ours) && attrs == ours;
+                   && cj.bptk != null && cj.bptk.bdgr.TryGetValue(key, out var attrs) && injectedEquipAttributes.TryGetValue(id, out var ours) && attrs == ours;
         }
 
         public static void EjectEquipment(int id)
@@ -1311,7 +1311,7 @@ namespace DBModKit
             if (table != null && injectedEquipment.TryGetValue(id, out var ours) && table.TryGetValue(key, out var row) && row == ours)
                 table.Remove(key);
             // 只删我们自己的编号段（5000000 起），不会碰到游戏的装备
-            if (id >= CustomEquipment.FirstId && cj.bpth != null) cj.bpth.bdgp.Remove(key);
+            if (id >= CustomEquipment.FirstId && cj.bptk != null) cj.bptk.bdgr.Remove(key);
             injectedEquipment.Remove(id);
             injectedEquipAttributes.Remove(id);
         }
@@ -1327,7 +1327,7 @@ namespace DBModKit
         // kb.Init(RoleType) 的后缀：自定义装备追加第二个起的特效；游戏装备追加 AttachTo 里写了它的自定义特效（联机握手允许时）
         public static void AttachEquipEffects(kb item, RoleType role)
         {
-            if (item == null || role == RoleType.King || !int.TryParse(item.bbjo, out int id)) return;
+            if (item == null || role == RoleType.King || !int.TryParse(item.bbjq, out int id)) return;
             if (id >= CustomEquipment.FirstId)
             {
                 var info = CustomEquipment.Get(id);
@@ -1335,13 +1335,13 @@ namespace DBModKit
                 if (info == null || table == null) return;
                 var effects = EquipmentEffects(info, table);
                 for (int i = 1; i < effects.Count; i++)
-                    item.k58cbd18331e34716863f13584ff59167((EquipSkillType)effects[i].type, effects[i].values, effects[i].up);
+                    item.keb1c74cb4d1e42a6ad62f334036b5380((EquipSkillType)effects[i].type, effects[i].values, effects[i].up);
                 return;
             }
             if (!Multiplayer.GameplayAllowed) return;
             foreach (var e in CustomEquipEffects.AttachedTo(id))
                 // 一定要传数组（可以是空的）：esg 查不到时会退回主特效的数值
-                item.k58cbd18331e34716863f13584ff59167((EquipSkillType)e.Id, (e.Def.Values ?? new float[0]).ToArray(), (e.Def.LevelUp ?? new float[0]).ToArray());
+                item.keb1c74cb4d1e42a6ad62f334036b5380((EquipSkillType)e.Id, (e.Def.Values ?? new float[0]).ToArray(), (e.Def.LevelUp ?? new float[0]).ToArray());
         }
 
         // pq.gkw(编号, 行) 的后缀：神器三选一的候选条件，联机握手不允许时去掉自定义装备
@@ -1368,36 +1368,36 @@ namespace DBModKit
         // pq.gks("equip_"+编号)：new jy → Init → 穿上 → 刷新装备栏。它不检查装备栏满没满（上限 nr.MaxEquipNum）
         public static bool GiveEquipment(int id)
         {
-            var p = nr.bpwv;
-            if (p == null || p.playerAttribute == null || p.playerAttribute.bgfk.Count >= nr.MaxEquipNum) return false;
+            var p = nr.bpwy;
+            if (p == null || p.playerAttribute == null || p.playerAttribute.bgfm.Count >= nr.MaxEquipNum) return false;
             return pq.gks("equip_" + id) != null;
         }
 
         public static int LocalEquipmentCount(int id)
         {
-            var p = nr.bpwv;
+            var p = nr.bpwy;
             if (p == null || p.playerAttribute == null) return 0;
             string key = id.ToString();
-            return p.playerAttribute.bgfk.Count(e => e != null && e.bbjo == key);
+            return p.playerAttribute.bgfm.Count(e => e != null && e.bbjq == key);
         }
 
         // bba.kb163…：游戏的卸下（对每个 ke 调 Clear，再同步），然后刷新装备栏
         public static void RemoveLocalEquipment(int id)
         {
-            var p = nr.bpwv;
+            var p = nr.bpwy;
             if (p == null || p.playerAttribute == null) return;
             string key = id.ToString();
-            var list = p.playerAttribute.bgfk.Where(e => e != null && e.bbjo == key).ToList();
-            foreach (var e in list) p.playerAttribute.ka54fd8703e094fc095f862c08dbcd563(e);
-            if (list.Count > 0) cj.bpsx?.dri<bps>()?.owb();
+            var list = p.playerAttribute.bgfm.Where(e => e != null && e.bbjq == key).ToList();
+            foreach (var e in list) p.playerAttribute.k29787416a8ee4df1803796f14d43d212(e);
+            if (list.Count > 0) cj.bpta?.dri<bps>()?.owc();
         }
 
         public static void LocalModEquipEffects(List<object> output)
         {
             output.Clear();
-            var p = nr.bpwv;
+            var p = nr.bpwy;
             if (p == null || p.playerAttribute == null) return;
-            foreach (var equip in p.playerAttribute.bgfk)
+            foreach (var equip in p.playerAttribute.bgfm)
             {
                 if (equip == null) continue;
                 foreach (var k in equip.evb())
@@ -1406,43 +1406,43 @@ namespace DBModKit
         }
 
         public static int ModEquipEffectInstance(object native) => ((ModEquipEffect)native).Instance;
-        public static Component EquipEffectOwner(object native) => ((kh)native).bboh;
-        public static int EquipEffectLevel(object native) => ((kh)native).bboi;
+        public static Component EquipEffectOwner(object native) => ((kh)native).bboj;
+        public static int EquipEffectLevel(object native) => ((kh)native).bbok;
 
         public static int EquipEffectEquipment(object native)
         {
-            var equip = ((kh)native).bbog;
-            return equip != null && int.TryParse(equip.bbjo, out int id) ? id : 0;
+            var equip = ((kh)native).bboi;
+            return equip != null && int.TryParse(equip.bbjq, out int id) ? id : 0;
         }
 
         // 同 kb.ewh：数值 bbco[i] + 成长 bbcp[i] × 等级（khh 从 esg / esh 填）
         public static float EquipEffectValue(object native, int i, int level)
         {
             var k = (kh)native;
-            if (k.bboj == null || i < 0 || i >= k.bboj.Length) return 0f;
-            float up = k.bbok != null && i < k.bbok.Length ? k.bbok[i] : 0f;
-            return k.bboj[i] + up * level;
+            if (k.bbol == null || i < 0 || i >= k.bbol.Length) return 0f;
+            float up = k.bbom != null && i < k.bbom.Length ? k.bbom[i] : 0f;
+            return k.bbol[i] + up * level;
         }
 
         // ---- 自定义主动技能（ActiveSkills）----
-        // 技能表两份：原始表 cx.baji["activeSkill"]（技能书候选池、图鉴读它）和 ou.bdga（ActiveSkillEnum → ActiveSkillData，施法、冷却、描述读它，
+        // 技能表两份：原始表 cx.bajk["activeSkill"]（技能书候选池、图鉴读它）和 ou.bdgc（ActiveSkillEnum → ActiveSkillData，施法、冷却、描述读它，
         // 由 oo 构造时从原始表转换，见 oo.cs 读 activeSkill 的循环）。学技能 yh.izv → new bht → ez.eai 进技能栏。
         // 释放：ez.dyw → dyf（默认分支：切 RoleState.Skill、CmdCreateSkill）→ 服务器不校验直接 RpcCreateSkill → 每个客户端 ez.dzu
-        // 按编号的大 switch 创建 bfe 实例放进 cj.bptj.bcxi，pr.dbp 每帧推进（bgwg 剩余时间 < 0 时移除并 Clear）。
+        // 按编号的大 switch 创建 bfe 实例放进 cj.bptm.bcxi，pr.dbp 每帧推进（bgwg 剩余时间 < 0 时移除并 Clear）。
         // 技能书主动候选池是 pj 的私有字段 bcxk（品级 → 原始表的行）
         private static readonly AccessTools.FieldRef<pr, Dictionary<string, List<object>>> skillPool =
-            AccessTools.FieldRefAccess<pr, Dictionary<string, List<object>>>("bdlu");
+            AccessTools.FieldRefAccess<pr, Dictionary<string, List<object>>>("bdlw");
         private static readonly Dictionary<int, Dictionary<string, object>> injectedSkills = new Dictionary<int, Dictionary<string, object>>();
 
         private static Dictionary<string, object> SkillTable()
-            => cx.baji.TryGetValue("activeSkill", out var t) ? t as Dictionary<string, object> : null;
+            => cx.bajk.TryGetValue("activeSkill", out var t) ? t as Dictionary<string, object> : null;
 
         private static readonly string[] IndicatorNames = { "None", "Range", "Vector", "Target" };
 
         public static void InjectSkill(ActiveSkillInfo info)
         {
             var table = SkillTable();
-            if (table == null || cj.bpth == null) return;
+            if (table == null || cj.bptk == null) return;
             var def = info.Def;
             var inv = System.Globalization.CultureInfo.InvariantCulture;
             string Num(float v) => v.ToString(inv);
@@ -1511,11 +1511,11 @@ namespace DBModKit
 
             EjectSkill(info.Id);
             table[info.Id.ToString()] = row;
-            cj.bpth.bdga[(ActiveSkillEnum)info.Id] = data;
+            cj.bptk.bdgc[(ActiveSkillEnum)info.Id] = data;
             injectedSkills[info.Id] = row;
-            if (info.InSkillBook && cj.bptj != null)
+            if (info.InSkillBook && cj.bptm != null)
             {
-                var pool = skillPool(cj.bptj);
+                var pool = skillPool(cj.bptm);
                 string quality = def.Quality.ToString();
                 if (!pool.TryGetValue(quality, out var list)) pool[quality] = list = new List<object>();
                 list.Add(row);
@@ -1527,9 +1527,9 @@ namespace DBModKit
             if (!injectedSkills.TryGetValue(id, out var row)) return false;
             var table = SkillTable();
             if (table == null || !table.TryGetValue(id.ToString(), out var current) || current != row) return false;
-            if (cj.bpth == null || !cj.bpth.bdga.ContainsKey((ActiveSkillEnum)id)) return false;
+            if (cj.bptk == null || !cj.bptk.bdgc.ContainsKey((ActiveSkillEnum)id)) return false;
             bool wantPool = !(row.TryGetValue("lock", out var l) && Convert.ToBoolean(l));
-            return !wantPool || cj.bptj == null || skillPool(cj.bptj).Values.Any(list => list.Contains(row));
+            return !wantPool || cj.bptm == null || skillPool(cj.bptm).Values.Any(list => list.Contains(row));
         }
 
         public static void EjectSkill(int id)
@@ -1539,9 +1539,9 @@ namespace DBModKit
             if (table != null && injectedSkills.TryGetValue(id, out var ours) && table.TryGetValue(key, out var row) && row == ours)
                 table.Remove(key);
             // 只删我们自己的编号段（2000000 起），不会碰到游戏的技能
-            if (id >= ActiveSkills.FirstId && cj.bpth != null) cj.bpth.bdga.Remove((ActiveSkillEnum)id);
-            if (cj.bptj != null)
-                foreach (var list in skillPool(cj.bptj).Values)
+            if (id >= ActiveSkills.FirstId && cj.bptk != null) cj.bptk.bdgc.Remove((ActiveSkillEnum)id);
+            if (cj.bptm != null)
+                foreach (var list in skillPool(cj.bptm).Values)
                     list.RemoveAll(r => r is Dictionary<string, object> d && d.TryGetValue("id", out var v) && v?.ToString() == key);
             injectedSkills.Remove(id);
         }
@@ -1549,7 +1549,7 @@ namespace DBModKit
         // yh.izv(技能, 要替换的格子)：技能书学主动技能走它（真方法；yh.njw 是诱饵）
         public static bool GiveSkill(int id, int replaceSlot)
         {
-            var p = nr.bpwv;
+            var p = nr.bpwy;
             if (p == null) return false;
             bii replace = null;
             if (p.roleSkillList.Count >= nr.MaxSkillNum)
@@ -1564,12 +1564,12 @@ namespace DBModKit
         // 被动（qp）也是 bht，bhne 是 None；主动技能格子的 bhne 是技能编号
         public static void RemoveLocalSkills(int id)
         {
-            var p = nr.bpwv;
+            var p = nr.bpwy;
             if (p == null) return;
-            foreach (var s in p.roleSkillList.Where(s => !(s is qv) && (int)s.bigg == id).ToList())
+            foreach (var s in p.roleSkillList.Where(s => !(s is qv) && (int)s.bigi == id).ToList())
                 ez.eag(s);
             // 正在生效的实例也结束掉（Clear 里会调 OnEnd）
-            var effects = cj.bptj?.bdls;
+            var effects = cj.bptm?.bdlu;
             if (effects == null) return;
             foreach (var kv in effects.Where(kv => kv.Value is ModSkill m && m.DefId == id).ToList())
             {
@@ -1579,69 +1579,69 @@ namespace DBModKit
         }
 
         // ez.dzu 的后缀。原方法会先做通用的事（检查表、触发"技能创建"事件），再在大 switch 里按编号创建实例；
-        // switch 没有我们的分支，所以在后缀里创建 ModSkill 放进 bcxi。原方法开头的两个提前返回（pr.bdme、主机 bpue）这里照样判断。
+        // switch 没有我们的分支，所以在后缀里创建 ModSkill 放进 bcxi。原方法开头的两个提前返回（pr.bdmg、主机 bpue）这里照样判断。
         // dzc(实例编号, 技能, 位置, 施法者, _, 朝向, 目标 netId, 技能书编号, 工厂)
         public static void CreateModSkill(uint instanceId, ActiveSkillEnum skill, Vector3 position, yh caster, float rotation, int targetId)
         {
             int id = (int)skill;
             if (id < ActiveSkills.FirstId || !ActiveSkills.IsCustom(id)) return;
-            if (caster == null || cj.bptj == null || cj.bptj.bdme || cj.bpth == null || !cj.bpth.bdga.TryGetValue(skill, out var data)) return;
-            if (Mirror.NetworkManager.bnsi is MyServerNetworkManager server && server.bqqj) return;
-            if (cj.bptj.bdls.ContainsKey(instanceId)) return;
-            // cjb.bnqh：Mirror 客户端的 netId → NetworkIdentity（游戏的处决技能 bgv.mze 也这样找目标）
+            if (caster == null || cj.bptm == null || cj.bptm.bdmg || cj.bptk == null || !cj.bptk.bdgc.TryGetValue(skill, out var data)) return;
+            if (Mirror.NetworkManager.bnsl is MyServerNetworkManager server && server.bqqm) return;
+            if (cj.bptm.bdlu.ContainsKey(instanceId)) return;
+            // cjb.bnqk：Mirror 客户端的 netId → NetworkIdentity（游戏的处决技能 bgv.mze 也这样找目标）
             Component target = null;
-            if (targetId > 0 && cjb.bnqh.TryGetValue((uint)targetId, out var identity) && identity != null)
+            if (targetId > 0 && cjb.bnqk.TryGetValue((uint)targetId, out var identity) && identity != null)
                 target = identity.GetComponent<yh>();
             var s = new ModSkill(id)
             {
-                bhpg = instanceId,
-                bhpk = skill,
-                bhpl = data,
-                bhph = caster,
+                bhpi = instanceId,
+                bhpm = skill,
+                bhpn = data,
+                bhpj = caster,
                 // 没有持续时间的技能也要活过 OnCast 这一帧
-                bhpi = data.duration > 0f ? data.duration : 0.01f,
+                bhpk = data.duration > 0f ? data.duration : 0.01f,
             };
-            cj.bptj.bdls.Add(instanceId, s);
+            cj.bptm.bdlu.Add(instanceId, s);
             // yh.jcu(range)：表里的范围 × 施法者的技能范围加成（dzc 里给所有技能用的就是它）
             s.Instance = ActiveSkills.Cast(id, s, position, rotation, target, caster.jcu(data.range));
         }
 
         // ---- 施法动作：照游戏的 bfh（旋风斩、鸡舞、处决都用它）----
-        // 新建 AnimatorOverrideController，把待机片段 H_Idle2（nw.bcqv）换成要播的片段，重新赋值控制器（动画机回到入口的待机状态，
+        // 新建 AnimatorOverrideController，把待机片段 H_Idle2（nw.bcqx）换成要播的片段，重新赋值控制器（动画机回到入口的待机状态，
         // 于是播的就是新片段），再 yh.jdf() 锁住动画（bepi：ive 不再切别的动作，bbr.kqf 也不会把施法状态切回待机）。
         // 结束时还原控制器、yh.jad() 解锁、切回待机。overrideAnimSkillId 记着是哪个技能实例换的，变身（bgt）会先结束它
         public static bool PlaySkillAnimation(object native, AnimationClip clip, float speed)
         {
             var s = (ModSkill)native;
-            var caster = s.bhph;
-            var anim = caster?.bqdr?.myAnim;
+            var caster = s.bhpj;
+            var anim = caster?.bqdu?.myAnim;
             if (anim == null || clip == null) return false;
             // 别的换动作技能还在生效（游戏的或者另一个 Mod 技能）：先结束它，免得两边互相把对方的控制器当成原版
-            if (caster.overrideAnimSkillId >= 0 && caster.overrideAnimSkillId != (int)s.bhpg && cj.bptj != null)
-                cj.bptj.goa((uint)caster.overrideAnimSkillId);
+            if (caster.overrideAnimSkillId >= 0 && caster.overrideAnimSkillId != (int)s.bhpi && cj.bptm != null)
+                cj.bptm.goa((uint)caster.overrideAnimSkillId);
             if (s.SavedController == null || s.SavedAnimator != anim)
             {
                 s.SavedAnimator = anim;
                 s.SavedController = anim.runtimeAnimatorController;
             }
             var controller = new AnimatorOverrideController(s.SavedController);
-            controller[nw.bcqv] = clip;
+            controller[nw.bcqx] = clip;
             s.OurController = controller;
             caster.jac(speed);
             anim.runtimeAnimatorController = null;
             anim.runtimeAnimatorController = controller;
             caster.jdf();
-            caster.overrideAnimSkillId = (int)s.bhpg;
+            caster.overrideAnimSkillId = (int)s.bhpi;
             return true;
         }
 
         public static void StopSkillAnimation(object native)
         {
             var s = (ModSkill)native;
-            var caster = s.bhph;
+            var caster = s.bhpj;
             if (s.SavedController == null || caster == null) return;
             // 换了模型（皮肤）后 myAnim 是新的动画机，旧的已经不用了，只还原我们改过的那个
-            bool stacked = caster.overrideAnimSkillId != (int)s.bhpg;
+            bool stacked = caster.overrideAnimSkillId != (int)s.bhpi;
             if (s.SavedAnimator != null)
             {
                 if (!stacked) s.SavedAnimator.runtimeAnimatorController = s.SavedController;
@@ -1683,30 +1683,30 @@ namespace DBModKit
         // 游戏自带的动作片段（Resources/Bundles/Animator/ 下），见 ActiveSkill.PlayAnimation
         public static AnimationClip GameAnimation(string name) => Resources.Load<AnimationClip>("Bundles/Animator/" + name);
 
-        public static Component SkillCaster(object native) => ((bfs)native).bhph;
-        // yh.bqct：本机的角色（bfs.mvt 也用它决定是否结算伤害 mmn）
-        public static bool SkillIsMine(object native) => ((bfs)native).bhph != null && ((bfs)native).bhph.bqct;
-        public static float SkillRemaining(object native) => ((bfs)native).bhpi;
-        public static void SetSkillRemaining(object native, float value) => ((bfs)native).bhpi = value;
-        public static long SkillFormulaDamage(object native) => ((bfs)native).bhph == null ? 0 : ez.dzc(((bfs)native).bhpl, ((bfs)native).bhph);
+        public static Component SkillCaster(object native) => ((bfs)native).bhpj;
+        // yh.bqcw：本机的角色（bfs.mvt 也用它决定是否结算伤害 mmn）
+        public static bool SkillIsMine(object native) => ((bfs)native).bhpj != null && ((bfs)native).bhpj.bqcw;
+        public static float SkillRemaining(object native) => ((bfs)native).bhpk;
+        public static void SetSkillRemaining(object native, float value) => ((bfs)native).bhpk = value;
+        public static long SkillFormulaDamage(object native) => ((bfs)native).bhpj == null ? 0 : ez.dzc(((bfs)native).bhpn, ((bfs)native).bhpj);
 
         // 照 bfi（闪电）的结算：施法者的敌人（izk）里活着的、在圆内的（加上对方体型 addRange），ez.dyl 造成技能伤害
         // dxt(攻击者, 目标, 伤害, 方向角, 类型, 是否技能暴击 izi, 暴伤 dyl, 来源, 技能, 实例)
         public static int SkillDamageArea(object native, Vector3 center, float radius, long? damage)
         {
             var s = (bfs)native;
-            var caster = s.bhph;
+            var caster = s.bhpj;
             if (caster == null) return 0;
-            long amount = damage ?? ez.dzc(s.bhpl, caster);
+            long amount = damage ?? ez.dzc(s.bhpn, caster);
             bool crit = caster.jee(AttackType.Skill);
             int hits = 0;
             var list = caster.jeg();
             for (int i = list.Count - 1; i >= 0; i--)
             {
                 var t = list[i];
-                if (t == null || !t.gameObject.activeSelf || t.jdh() || t.bqdr == null) continue;
-                if (!ez.dyi(center, t.bqdo.position, radius + t.bqdr.addRange)) continue;
-                ez.dyl(caster, t, amount, ez.dyn(t.bqdo.position, center), AttackType.Skill, crit, ez.dzd(s.bhpl, caster), DamageSourceKind.ActiveSkill, ActiveSkillEnum.None, s);
+                if (t == null || !t.gameObject.activeSelf || t.jdh() || t.bqdu == null) continue;
+                if (!ez.dyi(center, t.bqdr.position, radius + t.bqdu.addRange)) continue;
+                ez.dyl(caster, t, amount, ez.dyn(t.bqdr.position, center), AttackType.Skill, crit, ez.dzd(s.bhpn, caster), DamageSourceKind.ActiveSkill, ActiveSkillEnum.None, s);
                 hits++;
             }
             return hits;
@@ -1715,23 +1715,23 @@ namespace DBModKit
         public static long SkillDamage(object native, Component target, long? damage)
         {
             var s = (bfs)native;
-            var caster = s.bhph;
+            var caster = s.bhpj;
             if (caster == null || !(target is yh t) || t.jdh()) return 0;
-            long amount = damage ?? ez.dzc(s.bhpl, caster);
-            return ez.dyl(caster, t, amount, ez.dyn(t.bqdo.position, caster.bqdo.position), AttackType.Skill, caster.jee(AttackType.Skill),
-                ez.dzd(s.bhpl, caster), DamageSourceKind.ActiveSkill, ActiveSkillEnum.None, s);
+            long amount = damage ?? ez.dzc(s.bhpn, caster);
+            return ez.dyl(caster, t, amount, ez.dyn(t.bqdr.position, caster.bqdr.position), AttackType.Skill, caster.jee(AttackType.Skill),
+                ez.dzd(s.bhpn, caster), DamageSourceKind.ActiveSkill, ActiveSkillEnum.None, s);
         }
 
         // op.fxz(路径, 时长, 位置, 缩放)：从对象池取 Bundles/路径 的预制体，到时自动回收（游戏的闪电等技能都用它）
-        public static void SpawnEffect(string path, Vector3 position, float duration, float scale) => cj.bptf?.fxz(path, duration, position, scale);
+        public static void SpawnEffect(string path, Vector3 position, float duration, float scale) => cj.bpti?.fxz(path, duration, position, scale);
 
         // ---- Mod 资源（ModAssets）----
         // 游戏的预制体对象池 m：zop 路径 → 模板（第一次用时 m.cze 从 Resources 加载），zoq 路径 → 回收的实例。
         // 只在切场景时整体清空（m.Clear），所以 Mod 注销特效时要自己把这条路径的缓存清掉
         private static readonly AccessTools.FieldRef<Dictionary<string, GameObject>> pooledTemplates =
-            AccessTools.StaticFieldRefAccess<Dictionary<string, GameObject>>(AccessTools.Field(typeof(m), "zzs"));
+            AccessTools.StaticFieldRefAccess<Dictionary<string, GameObject>>(AccessTools.Field(typeof(m), "zzu"));
         private static readonly AccessTools.FieldRef<Dictionary<string, Queue<GameObject>>> pooledInstances =
-            AccessTools.StaticFieldRefAccess<Dictionary<string, Queue<GameObject>>>(AccessTools.Field(typeof(m), "zzt"));
+            AccessTools.StaticFieldRefAccess<Dictionary<string, Queue<GameObject>>>(AccessTools.Field(typeof(m), "zzv"));
 
         public static void ForgetPooledEffect(string path)
         {
@@ -1743,19 +1743,19 @@ namespace DBModKit
                 if (go != null) UnityEngine.Object.Destroy(go);
         }
 
-        // 技能按钮 bpt.oyp(技能, 按键) 里 bjgj.sprite = Resources.Load("Bundles/UI/Icon/Skill/" + bii.bigh)；
+        // 技能按钮 bpt.oyq(技能, 按键) 里 bjgj.sprite = Resources.Load("Bundles/UI/Icon/Skill/" + bii.bigj)；
         // Resources.Load 补丁没装上时，技能栏这里单独补上（最常看到的地方）
         public static void FixSkillButtonIcon(object button, object skill)
         {
             var s = (bii)skill;
-            if (s == null || !ModAssets.IsOurs(s.bigh)) return;
-            var sprite = ModAssets.IconFor(s.bigh);
-            if (sprite != null) ((bpt)button).bjzt.sprite = sprite;
+            if (s == null || !ModAssets.IsOurs(s.bigj)) return;
+            var sprite = ModAssets.IconFor(s.bigj);
+            if (sprite != null) ((bpt)button).bjzv.sprite = sprite;
         }
 
         // ---- 变体英雄（HeroVariants）----
-        // 出生 bbr.lio：属性取 cj.bpth.bcru[英雄编号] 传给 yh.izc（成长值在这里拷进角色字段，之后不再读表），
-        // 本地玩家再读原始表 cx.baji["hero"][编号] 的 skill / zhuDong 列发专属技能（iuz 被动 / iuy 主动）。
+        // 出生 bbr.lio：属性取 cj.bptk.bcru[英雄编号] 传给 yh.izc（成长值在这里拷进角色字段，之后不再读表），
+        // 本地玩家再读原始表 cx.bajk["hero"][编号] 的 skill / zhuDong 列发专属技能（iuz 被动 / iuy 主动）。
         // kzz 期间把这两行临时换成改过的副本，结束后换回原版，所以别的玩家、下一次出生都不受影响。
         // 防篡改的影子副本（nr.fuu）在 iuh 之后才建立，改过的值和影子一致
         private sealed class VariantRestore
@@ -1772,7 +1772,7 @@ namespace DBModKit
             string key = heroId.ToString();
             var r = new VariantRestore { Key = key };
             var d = variant.Def;
-            if (cj.bpth != null && cj.bpth.bdfy.TryGetValue(key, out var attr))
+            if (cj.bptk != null && cj.bptk.bdga.TryGetValue(key, out var attr))
             {
                 r.Attribute = attr;
                 r.HasAttribute = true;
@@ -1790,10 +1790,10 @@ namespace DBModKit
                 if (d.MpRecover.HasValue) attr.mpRecover = d.MpRecover.Value;
                 if (d.MoveSpeed.HasValue) attr.moveSpeed = d.MoveSpeed.Value;
                 if (d.AttackSpeed.HasValue) attr.attackSpeed = d.AttackSpeed.Value;
-                cj.bpth.bdfy[key] = attr;
+                cj.bptk.bdga[key] = attr;
             }
             if (variant.SkillOverride(out int skill, out bool active)
-                && cx.baji.TryGetValue("hero", out var t) && t is Dictionary<string, object> heroes
+                && cx.bajk.TryGetValue("hero", out var t) && t is Dictionary<string, object> heroes
                 && heroes.TryGetValue(key, out var row) && row is Dictionary<string, object> original)
             {
                 // 整行换成副本，原来的行对象不动
@@ -1812,11 +1812,11 @@ namespace DBModKit
         public static void RestoreVariantTables(object restore)
         {
             if (!(restore is VariantRestore r)) return;
-            if (r.HasAttribute && cj.bpth != null) cj.bpth.bdfy[r.Key] = r.Attribute;
+            if (r.HasAttribute && cj.bptk != null) cj.bptk.bdga[r.Key] = r.Attribute;
             if (r.HeroTable != null) r.HeroTable[r.Key] = r.HeroRow;
         }
 
-        public static bool IsLocalSpawn(Component player) => player is bbr p && p.bqct;
+        public static bool IsLocalSpawn(Component player) => player is bbr p && p.bqcw;
 
         // 出生结束后：血条上的名字（yh.izc 里按 ez.dwe 算过一次，之后每帧读 roleName）
         public static void ApplyVariantName(Component player)
@@ -1828,20 +1828,20 @@ namespace DBModKit
 
         // ---- 技能实例 bht ----
         // 被动（qp）的 bhne 是默认值 0，而 0 是 D_SpellThunder，所以被动返回 None（-1）
-        public static int SkillId(object s) => s is qv ? (int)ActiveSkillEnum.None : (int)((bii)s).bigg;
-        public static bool IsAutoCastOn(object s) => ((bii)s).biha;
+        public static int SkillId(object s) => s is qv ? (int)ActiveSkillEnum.None : (int)((bii)s).bigi;
+        public static bool IsAutoCastOn(object s) => ((bii)s).bihc;
 
         // 在技能栏上：按钮 bhng 正显示这个技能
-        public static bool IsOnSkillBar(object s) => ((bii)s).bigi is bpt b && ReferenceEquals(b.bjzu, s);
+        public static bool IsOnSkillBar(object s) => ((bii)s).bigk is bpt b && ReferenceEquals(b.bjzw, s);
 
         // 自动释放开关：右键技能图标时游戏调 bii.ncy()（翻转 bhny 并显示按钮上的自动标记 bhng.bjgl）；不在技能栏上（没有按钮）时只改字段
         public static void SetAutoCast(object s, bool on)
         {
             var b = (bii)s;
-            if (b.biha == on) return;
+            if (b.bihc == on) return;
             // 按钮换绑到别的技能后旧技能的 bhng 不清，这时 mtt 会改错格子的标记：只在按钮正显示这个技能时走 mtt
-            if (b.bigi != null && b.bigi.bjzv != null && ReferenceEquals(b.bigi.bjzu, b)) b.ncy();
-            else b.biha = on;
+            if (b.bigk != null && b.bigk.bjzx != null && ReferenceEquals(b.bigk.bjzw, b)) b.ncy();
+            else b.bihc = on;
         }
 
         // 免费放一个现成技能：yh.CmdCreateSkill(技能, 位置, 朝向角度, 目标, 技能书) → 服务器 → RpcCreateSkill，每个客户端都生成技能实例。
@@ -1852,18 +1852,20 @@ namespace DBModKit
         // 从 from 看向 to 的朝向角度（游戏的 ez.dyn）
         public static float Facing(Vector3 from, Vector3 to) => ez.dyn(to, from);
 
-        // 雷之一闪的雷球上限：PlayerThunderMode.maxOrbCount（序列化字段，默认 10，读的时候限制在 1~32），英雄模式在 yh.bqdr。
+        // 雷之一闪的雷球上限：PlayerThunderMode.maxOrbCount（序列化字段，默认 10，读的时候限制在 1~32），英雄模式在 yh.bqdu。
         // 改过的实例都记下原值：英雄模型从对象池取（下一局可能还是这个实例）、变身时 bpia 会换成别的组件，所以撤销时把记下的全部改回去，
         // 不依赖撤销那一刻的本地玩家
         private static readonly List<(WeakReference mode, int original)> thunderTouched = new List<(WeakReference, int)>();
         private static AccessTools.FieldRef<PlayerThunderMode, int> maxOrbCount;
 
         // 本地玩家当前的雷电模式（变身中、不是雷电时为 null）
-        public static object ThunderMode(Component p) => ((yh)p).bqdr as PlayerThunderMode;
+        public static object ThunderMode(Component p) => ((yh)p).bqdu as PlayerThunderMode;
 
         public static void SetThunderOrbs(object target, int extra)
         {
-            maxOrbCount = maxOrbCount ?? AccessTools.FieldRefAccess<PlayerThunderMode, int>("maxOrbCount");
+            if (maxOrbCount == null)
+                using (AsciiPath.Enter())
+                    maxOrbCount = AccessTools.FieldRefAccess<PlayerThunderMode, int>("maxOrbCount");
             // 先把其他改过的实例改回原值、清掉已经销毁的
             for (int i = thunderTouched.Count - 1; i >= 0; i--)
             {
@@ -1889,17 +1891,17 @@ namespace DBModKit
 
         // 攻击距离：yh.ivb(加量)，遗物"瞄准镜"用的同一个，会同步给服务器（fbk 是诱饵）
         public static void AddAttackRange(Component p, float amount) => ((yh)p).ivb(amount);
-        public static float CooldownRemaining(object s) => ((bii)s).kcded58bae4384e80be7e3c7692b07553;
-        public static int Cost(object s, Component p) => ((bii)s).k7e56a69102964080a19da99e5918efbd((bbr)p);
+        public static float CooldownRemaining(object s) => ((bii)s).kf027782612bc462da70312d68cecc52e;
+        public static int Cost(object s, Component p) => ((bii)s).k736f9d25b9e14a858ca4e799ff482ed9((bbr)p);
         // PayToWin 技能花的是金币不是蓝
-        public static bool CostsGold(object s) => ((bii)s).bqmk;
+        public static bool CostsGold(object s) => ((bii)s).bqmn;
         // 开关类技能（献祭等）当前开着
-        public static bool IsToggledOn(object s) => ((bii)s).bigx;
-        public static int Charges(object s) => ((bii)s).kbe15cb76268e4fbb89ea8ce8d729300d;
-        public static int MaxCharges(object s) => ((bii)s).k09a3cc1b9c344ba6b25d3feceefd8b57;
-        // bii.bigi 技能按钮、bhnd 所属玩家
-        public static object ButtonSkill(object s) => ((bii)s).bigi?.bjzu;
-        public static Component SkillOwner(object s) => ((bii)s).bigf;
+        public static bool IsToggledOn(object s) => ((bii)s).bigz;
+        public static int Charges(object s) => ((bii)s).k4fa7bfc3bee94949a1e3fafe49f6a90b;
+        public static int MaxCharges(object s) => ((bii)s).ke4ed491c02044a32beafe70b37115652;
+        // bii.bigk 技能按钮、bhnd 所属玩家
+        public static object ButtonSkill(object s) => ((bii)s).bigk?.bjzw;
+        public static Component SkillOwner(object s) => ((bii)s).bigh;
 
         // ---- 英雄专属技能：hero 表 skill 列是编号，zhuDong 为真时是主动技能（ActiveSkillEnum），否则是被动（PasssiveSkillEnum）。
         // 出生时 bbr.lio 按它发放（主动 yh.izt、被动 yh.izu） ----
@@ -1907,7 +1909,7 @@ namespace DBModKit
         {
             skillId = 0;
             active = false;
-            if (!cx.baji.TryGetValue("hero", out var t) || !(t is Dictionary<string, object> rows)
+            if (!cx.bajk.TryGetValue("hero", out var t) || !(t is Dictionary<string, object> rows)
                 || !rows.TryGetValue(heroId.ToString(), out var r) || !(r is Dictionary<string, object> row))
                 return false;
             if (!int.TryParse(Cell(row, "skill"), out skillId)) return false;
@@ -1920,7 +1922,7 @@ namespace DBModKit
         {
             icon = null;
             values = new float[0];
-            if (!cx.baji.TryGetValue("passsiveSkill", out var t) || !(t is Dictionary<string, object> rows)
+            if (!cx.bajk.TryGetValue("passsiveSkill", out var t) || !(t is Dictionary<string, object> rows)
                 || !rows.TryGetValue(id.ToString(), out var r) || !(r is Dictionary<string, object> row))
                 return false;
             icon = IconPath("Skill/", Cell(row, "icon"));
@@ -1936,7 +1938,7 @@ namespace DBModKit
         {
             cost = duration = damageBase = damageValue = 0f;
             charges = 0;
-            if (!cj.bpth.bdga.TryGetValue((ActiveSkillEnum)id, out var d)) return false;
+            if (!cj.bptk.bdgc.TryGetValue((ActiveSkillEnum)id, out var d)) return false;
             cost = d.cost;
             duration = d.duration;
             charges = d.chargingNum;
@@ -1945,13 +1947,13 @@ namespace DBModKit
             return true;
         }
 
-        public static string SkillIcon(int id) => cj.bpth.bdga.TryGetValue((ActiveSkillEnum)id, out var d) ? IconPath("Skill/", d.icon) : null;
+        public static string SkillIcon(int id) => cj.bptk.bdgc.TryGetValue((ActiveSkillEnum)id, out var d) ? IconPath("Skill/", d.icon) : null;
 
         // 玩家身上的技能 bbr.roleSkillList：主动技能看 bhne，被动技能（qp）看 bhnj（= 被动表的 id，见 bii.nce）
         public static object FindActiveSkill(Component p, int id)
         {
             foreach (var s in ((bbr)p).roleSkillList)
-                if (s != null && !(s is qv) && (int)s.bigg == id) return s;
+                if (s != null && !(s is qv) && (int)s.bigi == id) return s;
             return null;
         }
 
@@ -1963,29 +1965,29 @@ namespace DBModKit
         {
             string key = id.ToString();
             foreach (var s in ((bbr)p).roleSkillList)
-                if (s is qv && s.bigl == key) return s;
+                if (s is qv && s.bign == key) return s;
             return null;
         }
 
         // ---- bht 上从表里拷来的数值（yh.izv / yh.izt 获得技能时拷贝；yh.njw 是诱饵）。nr.fvb 不校验这些，游戏自己（iz.epg）也直接写 ----
-        public static float CooldownTotal(object s) => ((bii)s).k2da5916a8da840dba685b192dc6a61a7;
-        public static void SetCooldownTotal(object s, float v) => ((bii)s).k2da5916a8da840dba685b192dc6a61a7 = v;
-        public static void SetCooldownRemaining(object s, float v) => ((bii)s).kcded58bae4384e80be7e3c7692b07553 = v;
+        public static float CooldownTotal(object s) => ((bii)s).kc70826deba7d4bcba786b95dfec058fc;
+        public static void SetCooldownTotal(object s, float v) => ((bii)s).kc70826deba7d4bcba786b95dfec058fc = v;
+        public static void SetCooldownRemaining(object s, float v) => ((bii)s).kf027782612bc462da70312d68cecc52e = v;
         // 按键时判断蓝够不够用它；真正扣蓝时 ez.dyy 重新查表（所以 TuningHooks 还要临时替换表）
-        public static int BaseCost(object s) => ((bii)s).k164c5ded09214170a636d8dad1df6c46;
-        public static void SetBaseCost(object s, int v) => ((bii)s).k164c5ded09214170a636d8dad1df6c46 = v;
+        public static int BaseCost(object s) => ((bii)s).k7d9fe565baad4f10ba49ca4558bf2990;
+        public static void SetBaseCost(object s, int v) => ((bii)s).k7d9fe565baad4f10ba49ca4558bf2990 = v;
         public static void SetMaxCharges(object s, int v)
         {
             var skill = (bii)s;
-            skill.k09a3cc1b9c344ba6b25d3feceefd8b57 = v;
-            if (skill.kbe15cb76268e4fbb89ea8ce8d729300d > v) skill.kbe15cb76268e4fbb89ea8ce8d729300d = v;
+            skill.ke4ed491c02044a32beafe70b37115652 = v;
+            if (skill.k4fa7bfc3bee94949a1e3fafe49f6a90b > v) skill.k4fa7bfc3bee94949a1e3fafe49f6a90b = v;
         }
 
         // 被动技能的数值：获得时 bii.nce 把表里的 value 解析进私有 bhnq，再由 mtm 算出 bhnp = bhnq + levelup × 等级；
         // 多数被动每次触发都读 bhnp。升级（grs）会用 bhnq 重算覆盖，所以两个一起改
-        private static readonly AccessTools.FieldRef<bii, float[]> passiveBase = AccessTools.FieldRefAccess<bii, float[]>("bigs");
+        private static readonly AccessTools.FieldRef<bii, float[]> passiveBase = AccessTools.FieldRefAccess<bii, float[]>("bigu");
 
-        public static float[] PassiveValues(object s) => ((bii)s).bigr;
+        public static float[] PassiveValues(object s) => ((bii)s).bigt;
 
         // 504 内部折扣在 gou 里把折扣加进 shopDiscount、gov 按值删除；511 电锯恶魔在 gou 里把数值缓存到私有字段。
         // 这两个要先 gov（按旧值撤销），改完再 gou（按新值生效）
@@ -1994,9 +1996,9 @@ namespace DBModKit
         public static void SetPassiveValues(object s, float[] values)
         {
             var skill = (qv)s;
-            bool rebind = rebindPassives.Contains(skill.bigl);
+            bool rebind = rebindPassives.Contains(skill.bign);
             if (rebind) skill.gsj();
-            var current = skill.bigr;
+            var current = skill.bigt;
             var baseValues = passiveBase(skill);
             for (int i = 0; i < values.Length; i++)
             {
@@ -2012,18 +2014,18 @@ namespace DBModKit
 
         public static bool BeginSwap(Component caster, int id)
         {
-            if (caster == null || caster != nr.bpwv) return false;
+            if (caster == null || caster != nr.bpwy) return false;
             var tune = SkillTuning.Get(id);
             if (tune.Cost == 1f && tune.Duration == 1f) return false;
             var key = (ActiveSkillEnum)id;
             // 嵌套调用（dyf 里会再走到 dzc）时表已经换过了
             foreach (var s in swaps)
                 if (s.key == key) return false;
-            if (!cj.bpth.bdga.TryGetValue(key, out var original)) return false;
+            if (!cj.bptk.bdgc.TryGetValue(key, out var original)) return false;
             var tuned = original;
             tuned.cost = Mathf.Max(0, Mathf.RoundToInt(original.cost * tune.Cost));
             tuned.duration = original.duration * tune.Duration;
-            cj.bpth.bdga[key] = tuned;
+            cj.bptk.bdgc[key] = tuned;
             swaps.Add((key, original));
             return true;
         }
@@ -2033,16 +2035,16 @@ namespace DBModKit
             if (swaps.Count == 0) return;
             var (key, original) = swaps[swaps.Count - 1];
             swaps.RemoveAt(swaps.Count - 1);
-            cj.bpth.bdga[key] = original;
+            cj.bptk.bdgc[key] = original;
         }
 
         // 换过之后 dyf 的参数也要换成调过的那份
-        public static ActiveSkillData CurrentRow(ActiveSkillEnum key) => cj.bpth.bdga[key];
+        public static ActiveSkillData CurrentRow(ActiveSkillEnum key) => cj.bptk.bdgc[key];
 
         // ez.dyx(玩家, 技能, 目标点, 技能数据, 朝向, 目标 netId, 技能书编号, h = true)：游戏的免费释放（被动"长老的多重施法"就这么用）。
         // 不查蓝、不扣蓝、不进冷却，技能自己的检查和状态切换照常。不要用 h = false：冷却会扣到最后按下的那一格
         public static bool FreeCast(Component p, int skill, Vector3 pos, float rotation, int target, int book)
-            => cj.bpth.bdga.TryGetValue((ActiveSkillEnum)skill, out var d)
+            => cj.bptk.bdgc.TryGetValue((ActiveSkillEnum)skill, out var d)
                && ez.dyx((bbr)p, (ActiveSkillEnum)skill, pos, d, rotation, target, book, h: true);
 
         // ---- 属性加成（都是累加，负数撤销；不在 nr.fvb 的校验范围内）----
@@ -2052,22 +2054,22 @@ namespace DBModKit
         public static void AddArmor(Component p, int amount) => ((yh)p).iwq(amount);
 
         // ---- 男枪（PlayerShotgunMode，普攻组件）的弹药 bcc ----
-        // bgac 弹数（私有 setter）、bgad 装填中、bgae 装填进度；上限是编译期常量 2（bcq.bgtd）。真方法：lpy 消耗、lpz 开始装填、
+        // bgac 弹数（私有 setter）、bgad 装填中、bgae 装填进度；上限是编译期常量 2（bcq.bgtf）。真方法：lpy 消耗、lpz 开始装填、
         // lqb 推进装填（满了直接 bgac = 2）、lqc 冲锋 +1（Min(2, …)）、lpx 补满、lqd 远端同步（Clamp 0..2）；其余同签名的都是诱饵。
         // huq 里空闲时"弹数 < 2 且停了 tacticalReloadDelay 秒"就战术装填；llk 把 bgac | (装填中 ? 4 : 0) 发给别人（弹数 ≥ 4 会溢出到装填位）。
         // 弹药 UI bij：mwj 建 2 个弹壳（bhro / bhrp，readonly 数组），LateUpdate 按 bhro.Length 逐个上色
-        private static readonly AccessTools.FieldRef<PlayerShotgunMode, bcq> shotgunAmmo = AccessTools.FieldRefAccess<PlayerShotgunMode, bcq>("bgnq");
-        private static readonly AccessTools.FieldRef<PlayerShotgunMode, float> shotgunIdle = AccessTools.FieldRefAccess<PlayerShotgunMode, float>("bgnx");
+        private static readonly AccessTools.FieldRef<PlayerShotgunMode, bcq> shotgunAmmo = AccessTools.FieldRefAccess<PlayerShotgunMode, bcq>("bgns");
+        private static readonly AccessTools.FieldRef<PlayerShotgunMode, float> shotgunIdle = AccessTools.FieldRefAccess<PlayerShotgunMode, float>("bgnz");
         private static readonly AccessTools.FieldRef<PlayerShotgunMode, float> tacticalDelay = AccessTools.FieldRefAccess<PlayerShotgunMode, float>("tacticalReloadDelay");
-        private static readonly AccessTools.FieldRef<bcq, bool> ammoReloading = AccessTools.FieldRefAccess<bcq, bool>("<bgtf>k__BackingField");
-        private static readonly AccessTools.FieldRef<bcq, float> ammoProgress = AccessTools.FieldRefAccess<bcq, float>("<bgtg>k__BackingField");
-        private static readonly AccessTools.FieldRef<bcq, int> ammoCount = AccessTools.FieldRefAccess<bcq, int>("<bgte>k__BackingField");
+        private static readonly AccessTools.FieldRef<bcq, bool> ammoReloading = AccessTools.FieldRefAccess<bcq, bool>("<bgth>k__BackingField");
+        private static readonly AccessTools.FieldRef<bcq, float> ammoProgress = AccessTools.FieldRefAccess<bcq, float>("<bgti>k__BackingField");
+        private static readonly AccessTools.FieldRef<bcq, int> ammoCount = AccessTools.FieldRefAccess<bcq, int>("<bgtg>k__BackingField");
         private static readonly AccessTools.FieldRef<yh, RoleModeBase> roleMode = AccessTools.FieldRefAccess<yh, RoleModeBase>("roleModeBase");
 
         // 本地玩家的弹药对象（不是男枪时为 null）
         public static object LocalShotgunAmmo()
         {
-            var p = nr.bpwv;
+            var p = nr.bpwy;
             return p != null && roleMode(p) is PlayerShotgunMode m ? shotgunAmmo(m) : null;
         }
 
@@ -2113,30 +2115,30 @@ namespace DBModKit
             var m = (PlayerShotgunMode)mode;
             var b = shotgunAmmo(m);
             var p = m.playerBase;
-            if (p == null || p != nr.bpwv || p.jdh() || ammoReloading(b)) return;
-            if (p.bqdp != RoleState.Idle && p.bqdp != RoleState.Run) return;
+            if (p == null || p != nr.bpwy || p.jdh() || ammoReloading(b)) return;
+            if (p.bqds != RoleState.Idle && p.bqds != RoleState.Run) return;
             int n = ammoCount(b);
             if (n >= 2 && n < max && shotgunIdle(m) >= tacticalDelay(m)) AmmoStartReload(b, max);
         }
 
-        public static bool IsLocalShotgun(object mode) => mode is PlayerShotgunMode m && m.playerBase != null && m.playerBase == nr.bpwv;
+        public static bool IsLocalShotgun(object mode) => mode is PlayerShotgunMode m && m.playerBase != null && m.playerBase == nr.bpwy;
 
         // llk 的替代：发给别人的弹数截到 3，免得溢出到"装填中"那一位
-        private static readonly AccessTools.FieldRef<PlayerShotgunMode, int> ammoSent = AccessTools.FieldRefAccess<PlayerShotgunMode, int>("bgod");
+        private static readonly AccessTools.FieldRef<PlayerShotgunMode, int> ammoSent = AccessTools.FieldRefAccess<PlayerShotgunMode, int>("bgof");
 
         public static void AmmoSync(object mode)
         {
             var m = (PlayerShotgunMode)mode;
-            if (!m.playerBase.bqyb) return;
+            if (!m.playerBase.bqye) return;
             var b = shotgunAmmo(m);
             int num = Math.Min(3, ammoCount(b)) | (ammoReloading(b) ? 4 : 0);
             if (num != ammoSent(m) && m.playerBase.jei(num)) ammoSent(m) = num;
         }
 
         // 弹药 UI：弹壳不够 max 个时照 mwj 的样子补上（多的删掉，最少 2 个）
-        private static readonly FieldInfo uiShells = AccessTools.Field(typeof(bix), "bikq");
-        private static readonly FieldInfo uiBrass = AccessTools.Field(typeof(bix), "bikr");
-        private static readonly AccessTools.FieldRef<bix, RectTransform> uiRoot = AccessTools.FieldRefAccess<bix, RectTransform>("biko");
+        private static readonly FieldInfo uiShells = AccessTools.Field(typeof(bix), "biks");
+        private static readonly FieldInfo uiBrass = AccessTools.Field(typeof(bix), "bikt");
+        private static readonly AccessTools.FieldRef<bix, RectTransform> uiRoot = AccessTools.FieldRefAccess<bix, RectTransform>("bikq");
 
         public static void AmmoUi(object ui, int max)
         {
@@ -2185,7 +2187,7 @@ namespace DBModKit
         {
             var b = (bbr)p;
             b.attackNum += n;
-            if (b.bqyb) b.CmdAttackNum(b.attackNum);
+            if (b.bqye) b.CmdAttackNum(b.attackNum);
         }
 
         public static int AttackNum(Component p) => ((yh)p).attackNum;
@@ -2206,10 +2208,10 @@ namespace DBModKit
             // 照抄 fsp 的伤害部分：不播特效（频繁调用时每次都 CmdPlayEffect 会刷屏，也占网络），或者跳过队友的怪
             var a = (yh)p;
             bool crit = a.jee(AttackType.Skill);
-            foreach (yh item in cj.bptk.fza(radius, center))
+            foreach (yh item in cj.bptn.fza(radius, center))
             {
                 if (spareTeammates && IsTeammateMonster(p, item)) continue;
-                ez.dyl(a, item, (int)damage, ez.dyn(item.bqdo.position, center), AttackType.Skill, crit, 0f);
+                ez.dyl(a, item, (int)damage, ez.dyn(item.bqdr.position, center), AttackType.Skill, crit, 0f);
             }
             if (effect != null) ((bbr)p).CmdPlayEffect(effect, 1f, center, effectScale);
         }
@@ -2222,7 +2224,7 @@ namespace DBModKit
         public static void GiveGold(Component me, Vector3 pos, int pay, int drop)
         {
             var p = (bbr)me;
-            if (pay > 0) p.k98b329accfd04307bcf31c49e30a82fe(p.jbc(), -pay, c: false);
+            if (pay > 0) p.ka840cd1e920444e3b6ab4a286d305e16(p.jbc(), -pay, c: false);
             if (drop > 0) p.CmdCreateItemByPosWithNum(ItemType.Gold, pos, drop, false);
         }
 
@@ -2243,11 +2245,11 @@ namespace DBModKit
         {
             LocalBuffType type = buff == PlayerBuff.SkillHaste ? LocalBuffType.SkillHaste
                 : buff == PlayerBuff.Armor ? LocalBuffType.IronArmor : LocalBuffType.SacredEmberBlessing;
-            ((bbr)me).CmdAddBuff(((yh)target).bqyc, ((yh)me).bqyc, type, value, seconds, 0);
+            ((bbr)me).CmdAddBuff(((yh)target).bqyf, ((yh)me).bqyf, type, value, seconds, 0);
         }
 
         // ---- 通用加成（海克斯通用强化）----
-        // ez.ecn(键, 整数)：遗物、卡牌、锻体读"键|值"时走的就是它，作用于本地玩家 nr.bpwv。百分比类的键传 25 表示 25%。
+        // ez.ecn(键, 整数)：遗物、卡牌、锻体读"键|值"时走的就是它，作用于本地玩家 nr.bpwy。百分比类的键传 25 表示 25%。
         // 有的分支直接写字段（skillCdReduce、addDamagePercent……），不经过防篡改校验，也不会自动撤销，撤销就传负数
         private static Action<string, int> addAttribute;
 
@@ -2263,15 +2265,15 @@ namespace DBModKit
         {
             var result = new List<object>();
             foreach (var s in ((bbr)p).roleSkillList)
-                if (s != null && !(s is qv) && s.bigg != ActiveSkillEnum.None) result.Add(s);
+                if (s != null && !(s is qv) && s.bigi != ActiveSkillEnum.None) result.Add(s);
             return result;
         }
 
-        // 属性锻造器：商店买锻造器走 pq.gkr → 检查 ez.dzo（三选一界面空闲）和 nr.bcfk → pq.gmu(ForgingTier)。
+        // 属性锻造器：商店买锻造器走 pq.gkr → 检查 ez.dzo（三选一界面空闲）和 nr.bcfm → pq.gmu(ForgingTier)。
         // gjl 抽稀有度、弹"属性选择"三选一，选中后经 pq.gmv 加属性（官方路径，过防篡改）。直接调 gjl 和买一个一样，只是价格不涨
         private static Action<pq, pq.ForgingTier> forge;
 
-        public static bool CanForge() => !nr.bcfk && !ChoiceBusy() && bz.dej<pq>() != null;
+        public static bool CanForge() => !nr.bcfm && !ChoiceBusy() && bz.dej<pq>() != null;
 
         public static void Forge(int tier)
         {
@@ -2282,8 +2284,8 @@ namespace DBModKit
 
         // 沙漠死神的普攻组件 PlayerKoboldMode：噬魂一击把 bftv 置为 true（下一次普攻强化），lko 在出手时结算：
         // 伤害 kcm(kse(out 普攻增伤))，dxt 返回值 ≥ 目标生命 + 护盾算击杀，击杀调 lkp(目标) 叠层（普通 4 / 精英 12 / Boss 75），
-        // 多重攻击的额外目标是 kqs 返回的共享列表 nr.bcfp。结算完调 lkt 清掉强化——补丁挂在 lkt 前面，这时 bftv 还是 true
-        private static readonly AccessTools.FieldRef<PlayerKoboldMode, bool> koboldEmpowered = AccessTools.FieldRefAccess<PlayerKoboldMode, bool>("bgmx");
+        // 多重攻击的额外目标是 kqs 返回的共享列表 nr.bcfr。结算完调 lkt 清掉强化——补丁挂在 lkt 前面，这时 bftv 还是 true
+        private static readonly AccessTools.FieldRef<PlayerKoboldMode, bool> koboldEmpowered = AccessTools.FieldRefAccess<PlayerKoboldMode, bool>("bgmz");
         private static Action<PlayerKoboldMode, yh> koboldKillStack;
         private static Action<PlayerKoboldMode, int> koboldAddStacks;
         private static Func<PlayerKoboldMode, long, long> koboldDamage;
@@ -2292,7 +2294,7 @@ namespace DBModKit
         // 镜像 Boss 用的子类、别人的英雄、没有强化的普攻都不算
         public static bool IsLocalEmpoweredStrike(object mode)
             => mode is PlayerKoboldMode m && m.GetType() == typeof(PlayerKoboldMode) && koboldEmpowered(m)
-               && m.playerBase != null && m.playerBase == nr.bpwv && m.playerBase.bqyb && m.playerBase.trackRoleBase != null;
+               && m.playerBase != null && m.playerBase == nr.bpwy && m.playerBase.bqye && m.playerBase.trackRoleBase != null;
 
         // 对主目标周围的敌人再打一次（伤害 × ratio），击杀照常叠层；hitStacks > 0 时没打死也加这么多层（休息阶段不加）。返回打到几个
         public static int SoulSplash(object mode, float radius, float ratio, int hitStacks)
@@ -2303,35 +2305,35 @@ namespace DBModKit
             koboldDamage = koboldDamage ?? AccessTools.MethodDelegate<Func<PlayerKoboldMode, long, long>>(AccessTools.Method(typeof(PlayerKoboldMode), "kki"));
             var p = m.playerBase;
             var main = p.trackRoleBase;
-            Vector3 center = main.bqdo.position;
+            Vector3 center = main.bqdr.position;
             splashTargets.Clear();
             foreach (var e in p.jeg())
             {
-                if (e == null || e == main || !e.gameObject.activeInHierarchy || e.bqdr == null || !e.jdi()) continue;
-                if (p.attackNum > 1 && nr.bcfp.Contains(e)) continue;
-                if (ez.dyo(e.bqdo.position, center) <= radius + e.bqdr.addRange) splashTargets.Add(e);
+                if (e == null || e == main || !e.gameObject.activeInHierarchy || e.bqdu == null || !e.jdi()) continue;
+                if (p.attackNum > 1 && nr.bcfr.Contains(e)) continue;
+                if (ez.dyo(e.bqdr.position, center) <= radius + e.bqdu.addRange) splashTargets.Add(e);
             }
             if (splashTargets.Count == 0) return 0;
             long damage = (long)Math.Round(koboldDamage(m, p.lad(out float bonus)) * (double)ratio);
-            float angle = p.bqdo.eulerAngles.y;
+            float angle = p.bqdr.eulerAngles.y;
             foreach (var e in splashTargets)
             {
-                long before = e.hp + e.bqcq;
+                long before = e.hp + e.bqct;
                 long dealt = ez.dyl(p, e, damage, angle, AttackType.Normal, p.jee(AttackType.Normal), bonus);
                 if (dealt >= before) koboldKillStack(m, e);
-                else if (hitStacks > 0 && !nr.bcfb && e is xu) koboldAddStacks(m, hitStacks);
+                else if (hitStacks > 0 && !nr.bcfd && e is xu) koboldAddStacks(m, hitStacks);
             }
             return splashTargets.Count;
         }
         // 游戏的无敌药水 buff（roleBuffManager.mim<T>(名字, 秒)，同名 buff 重复添加时刷新时长）
         public static void GiveInvulnerable(Component p, float seconds) => ((yh)p).roleBuffManager.mrr<Buff无敌>("Buff无敌", seconds);
 
-        // ---- 悬停提示框 bka：技能（wh）、遗物和 buff（iq）、三选一卡片（bqq.pcg）都用它。njb(true, 信息) 显示、njb(false, default) 隐藏；
-        // 还没创建时用 dqk 打开（同 bqq.pcg）----
+        // ---- 悬停提示框 bka：技能（wh）、遗物和 buff（iq）、三选一卡片（bqq.pch）都用它。njb(true, 信息) 显示、njb(false, default) 隐藏；
+        // 还没创建时用 dqk 打开（同 bqq.pch）----
         public static void ShowTip(string name, string info, string icon, Vector3 position, int quality)
         {
-            var tip = cj.bpsx?.dri<bko>() ?? cj.bpsx?.drb<bko>() as bko;
-            tip?.nsh(true, new bko.TipInfo
+            var tip = cj.bpta?.dri<bko>() ?? cj.bpta?.drb<bko>() as bko;
+            tip?.nsi(true, new bko.TipInfo
             {
                 nameStr = name ?? "",
                 info = info ?? "",
@@ -2342,45 +2344,45 @@ namespace DBModKit
             });
         }
 
-        public static void HideTip() => cj.bpsx?.dri<bko>()?.nsh(false, default(bko.TipInfo));
+        public static void HideTip() => cj.bpta?.dri<bko>()?.nsi(false, default(bko.TipInfo));
 
-        // bii.bihh：技能悬停提示末尾的附加说明（wn.OnPointerEnter 拼在描述后面）。游戏自己也会写（五五开的外挂、土豆兄弟），所以只追加
-        public static string SkillExtraInfo(object s) => ((bii)s).bihh;
-        public static void SetSkillExtraInfo(object s, string v) => ((bii)s).bihh = v;
+        // bii.bihj：技能悬停提示末尾的附加说明（wn.OnPointerEnter 拼在描述后面）。游戏自己也会写（五五开的外挂、土豆兄弟），所以只追加
+        public static string SkillExtraInfo(object s) => ((bii)s).bihj;
+        public static void SetSkillExtraInfo(object s, string v) => ((bii)s).bihj = v;
 
-        // ---- 波次配置 nr.bcep（SOSpawnConfig）：enemySpawnData[i] 是第 i+1 波，eventList 带 Roguelike 时，
+        // ---- 波次配置 nr.bcer（SOSpawnConfig）：enemySpawnData[i] 是第 i+1 波，eventList 带 Roguelike 时，
         // 进入这一波前的休息阶段弹遗物三选一（服务器先 bbsr++ 再发 OnStartRest）----
-        public static int TotalWaves() => nr.bcep?.enemySpawnData?.Length ?? 0;
+        public static int TotalWaves() => nr.bcer?.enemySpawnData?.Length ?? 0;
 
         public static bool RelicBeforeWave(int index)
         {
-            var waves = nr.bcep?.enemySpawnData;
+            var waves = nr.bcer?.enemySpawnData;
             if (waves == null || index < 0 || index >= waves.Length) return false;
             var events = waves[index].eventList;
             return events != null && Array.IndexOf(events, RoguelikeEventType.Roguelike) >= 0;
         }
 
-        // 开场界面 bkh：关闭时（bift = MyServerNetworkManager.qsp）游戏弹开局遗物
+        // 开场界面 bkh：关闭时（bift = MyServerNetworkManager.qsq）游戏弹开局遗物
         public static bool OpeningPending()
         {
-            var ui = cj.bpsx?.dri<bkv>();
-            return ui != null && ui.banm;
+            var ui = cj.bpta?.dri<bkv>();
+            return ui != null && ui.bano;
         }
 
-        // 重试波次的快照有效（wh.bpyd）
-        public static bool CheckpointValid() => wh.bpyd;
+        // 重试波次的快照有效（wh.bpyg）
+        public static bool CheckpointValid() => wh.bpyg;
 
-        // ---- 技能栏 bps.bjyc（bpf 按钮，bpt.bjzu 技能实例，bpt.bjzw 图标上的 bpa 组件） ----
+        // ---- 技能栏 bps.bjye（bpf 按钮，bpt.bjzw 技能实例，bpt.bjzy 图标上的 bpa 组件） ----
         public static void ReadSkillBar(List<(object button, object skill, RectTransform icon)> output)
         {
             output.Clear();
-            var bar = cj.bpsx?.dri<bps>();
-            if (bar?.bjyc == null) return;
-            foreach (var b in bar.bjyc)
+            var bar = cj.bpta?.dri<bps>();
+            if (bar?.bjye == null) return;
+            foreach (var b in bar.bjye)
             {
-                if (b == null || b.bjzw == null) continue;
-                object skill = b.bjzu != null && b.bjzu.bigg != ActiveSkillEnum.None ? b.bjzu : null;
-                output.Add((b, skill, (RectTransform)b.bjzw.transform));
+                if (b == null || b.bjzy == null) continue;
+                object skill = b.bjzw != null && b.bjzw.bigi != ActiveSkillEnum.None ? b.bjzw : null;
+                output.Add((b, skill, (RectTransform)b.bjzy.transform));
             }
         }
     }
@@ -2413,7 +2415,7 @@ namespace DBModKit
         public override void gsq()
         {
             base.gsq();
-            if (bigf != null && bigf == nr.bpwv) PassiveSkills.Update(Instance, this);
+            if (bigh != null && bigh == nr.bpwy) PassiveSkills.Update(Instance, this);
         }
     }
 
@@ -2450,7 +2452,7 @@ namespace DBModKit
         public override void gwt()
         {
             base.gwt();
-            if (bdvb != null && bdvb == nr.bpwv) CustomRelics.Update(Instance, this);
+            if (bdvd != null && bdvd == nr.bpwy) CustomRelics.Update(Instance, this);
         }
     }
 
@@ -2464,7 +2466,7 @@ namespace DBModKit
 
         public ModEquipEffect(int defId) => DefId = defId;
 
-        private bool Local => bboh != null && bboh == nr.bpwv;
+        private bool Local => bboj != null && bboj == nr.bpwy;
 
         public override void Init(kb equipBaseValue)
         {
@@ -2482,16 +2484,16 @@ namespace DBModKit
 
         public override void exl()
         {
-            int old = bboi;
+            int old = bbok;
             base.exl();
-            if (Instance != 0) CustomEquipEffects.LevelChanged(Instance, this, old, bboi);
+            if (Instance != 0) CustomEquipEffects.LevelChanged(Instance, this, old, bbok);
         }
 
         public override void exm(int a)
         {
-            int old = bboi;
+            int old = bbok;
             base.exm(a);
-            if (Instance != 0) CustomEquipEffects.LevelChanged(Instance, this, old, bboi);
+            if (Instance != 0) CustomEquipEffects.LevelChanged(Instance, this, old, bbok);
         }
 
         public override void ewv()

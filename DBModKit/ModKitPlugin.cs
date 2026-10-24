@@ -12,7 +12,7 @@ namespace DBModKit
         public const string Guid = "plge0n.dungeonbrawl.modkit";
         public const string Name = "DBModKit";
         // 发布时同步修改 CHANGELOG.md；pack.ps1 从这里读取版本号
-        public const string Version = "0.32.0";
+        public const string Version = "0.33.0";
 
         private void Awake()
         {
@@ -67,6 +67,15 @@ namespace DBModKit
             Log.Source ??= BepInEx.Logging.Logger.CreateLogSource(ModKitPlugin.Name);
             Host.Create();
 
+            if (AsciiPath.EnsureDumpedAssemblies())
+                ScreenNotice.Show($"{ModKitPlugin.Name}：游戏目录带中文，已自动调整 BepInEx 设置，请重启游戏后再用 Mod。", 20f);
+            // 打补丁、建字段访问器（GameRaw 的静态字段）期间用纯英文的当前目录，见 AsciiPath
+            using (AsciiPath.Enter())
+                Initialize();
+        }
+
+        private static void Initialize()
+        {
             var missing = Compat.FindMissing();
             if (missing.Count > 0)
             {
@@ -81,6 +90,15 @@ namespace DBModKit
                 ScreenNotice.Show($"{ModKitPlugin.Name} 未在游戏版本 {GameVersion} 上测试过，如遇异常请关闭相关 Mod。", 8f);
             }
 
+            // GameRaw 的静态字段里有字段访问器，要在纯英文当前目录下建好（平时第一次用到时才建）
+            try
+            {
+                System.Runtime.CompilerServices.RuntimeHelpers.RunClassConstructor(typeof(GameRaw).TypeHandle);
+            }
+            catch (System.Exception e)
+            {
+                Log.Error($"初始化游戏接口失败：{e}");
+            }
             if (!Hooks.Install(new Harmony(ModKitPlugin.Guid)))
             {
                 Log.Error("排行榜上传拦截安装失败，为遵守游戏规则，所有依赖 ModKit 的 Mod 已停用");
