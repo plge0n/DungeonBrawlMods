@@ -5,7 +5,7 @@
 - `Game.Teammates()`：除了自己以外的玩家
 - `Player.HealAlly(队友, 量)`：治疗队友（`yb.iwz`，和装备 MadMan 治疗队友一样）
 - `Player.ShieldNearbyPlayers(半径, 比例)`：周围所有玩家（含自己）各加 生命上限 × 比例 的护盾（`CmdAddNearbyHumanityShield`，服务器限制半径 ≤ 50、比例 ≤ 1）
-- `Player.BlessPlayer(玩家, 增伤, 秒, 护甲)`：原版的"圣焰祝福" buff（`CmdAddBuff` + `SacredEmberBlessing`）
+- `Player.GiveBuff(玩家, PlayerBuff, 数值, 秒)`：上原版 buff（`CmdAddBuff`）：技能急速、护甲、持续伤害（"圣焰祝福"只加持续伤害，普攻和技能不吃）
 - `Player.PlayEffect(特效, 位置, 缩放)`：播放特效
 - `Player.DamageArea` 的特效传 null 时不播特效（频繁判定时用）；新重载 `DamageArea(..., spareTeammates)` 不打队友的怪
 - `GameEventKind.TeammateLevelUp`：队友升级（Target = 队友，原版 `onTeammateLevelUp`）
@@ -14,7 +14,8 @@
 
 ## 0.27.0
 海克斯联机用的改动（**未实测**，要两人联机）：
-- 敌人倍率（`EnemyBoosts`）联机时以房主为准、作用于全房间：攻击倍率改为主机放大所有玩家受到的怪物伤害（远端玩家的伤害由主机算完再发 `CmdAttackOtherPlayer`，以前只放大了房主自己）；客户端设置的倍率不起作用（生命、护盾本来就只在主机刷怪时乘）
+- 敌人攻击倍率（`EnemyBoosts`）改为在"攻击的怪归本机"时放大：联机时每个玩家有自己的怪，怪的命中在主人本机算，以前只对本地玩家挨打生效，
+  打到别的玩家时漏掉了。生命、护盾倍率只有房主的有效（只在主机刷怪时乘）
 - `LobbySync.ReadHost(键)`：读房主写的大厅数据
 
 ## 0.26.0

@@ -74,7 +74,7 @@ namespace DBModKit
             ["bqa"] = new[] { "osj", "bacf" },
             ["RoguelikeUIData"] = new[] { "name", "dec", "icon", "quality", "data" },
             ["GoldIncomeSource"] = new[] { "Gameplay" },
-            ["LocalBuffType"] = new[] { "SacredEmberBlessing" },
+            ["LocalBuffType"] = new[] { "SacredEmberBlessing", "SkillHaste", "IronArmor" },
             ["bee"] = new[] { "mec" },
             ["ciy"] = new[] { "bmyj", "bmyc" },
             ["cik"] = new[] { "bqcb", "bmvl" },

@@ -1,13 +1,13 @@
 # Hextech changelog (English)
 
 ## 0.5.0
-- 4 "feed the carry" augments: give gold to the teammate you support, grow when teammates level up, buff your supported teammate
+- 4 "feed the carry" augments: give gold to the teammate you support, grow when teammates level up, skill haste for your supported teammate
 - 9 teammate augments inspired by Arena (only offered when you have teammates; they use the game's own heal, shield and buff, so teammates don't need mods)
 
 ## 0.4.0
 - Multiplayer: works when everyone in the room has the same mods (or the host allows it in DBStudio); if that stops being true mid-run, no more picks are offered but existing ones stay
 - In multiplayer the pick only appears during the rest phase (the game can't be paused)
-- Enemy augments follow the host's setting and apply to the whole room; teammates with Hextech see what the enemies got
+- Enemy augments follow the host's setting: enemy HP applies to the whole room, enemy attack only to players with Hextech; teammates with Hextech see what the enemies got
 
 ## 0.3.0
 - Shotgun hero signature (three tiers): more ammo, two shells per dash, and ammo from crit damage (up to 12)

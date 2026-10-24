@@ -796,12 +796,13 @@ namespace DBModKit
         }
 
         // yb.iwk 挂在受伤的一方：玩家被怪物（xo）打时按 EnemyBoosts.Attack 放大伤害。
-        // 怪物 AI 跑在主机上：主机算完远端玩家受到的伤害，在 iwk 里改发 CmdAttackOtherPlayer（yb.cs 13311 附近），
-        // 所以主机放大所有玩家受到的伤害（没装 Mod 的队友也一样）；客户端不乘，免得和主机重复
+        // 联机时每只怪的控制权在它的主人那边（bey.cs 200），怪的 AI 和命中都在主人本机算（xo 的命中要求 bqbw），
+        // 打到别的玩家时再在 iwk 里改发 CmdAttackOtherPlayer。所以只在"攻击的怪归本机"时乘，每次伤害只乘一次。
+        // 单人时所有怪都归自己，和以前一样
         internal static void EnemyDamagePrefix(yb __instance, yb __0, ref double __1)
         {
             if (!EnemyBoosts.Active || EnemyBoosts.Attack == 1f || !(__0 is xo)) return;
-            if (!Game.IsHost || __instance.roleType != RoleType.Player) return;
+            if (!__0.bqbw || __instance.roleType != RoleType.Player) return;
             __1 *= EnemyBoosts.Attack;
         }
 

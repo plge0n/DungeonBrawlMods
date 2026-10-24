@@ -1,10 +1,10 @@
 # DBModKit changelog (English)
 
 ## 0.28.0
-- Teammate APIs using the game's own commands (work even if teammates don't have mods): `Game.Teammates`, `Player.HealAlly`, `Player.ShieldNearbyPlayers`, `Player.BlessPlayer`, `Player.PlayEffect`; `DamageArea` with a null effect plays no effect, `DamageArea(..., spareTeammates)`, `Role.IsTeammateMonster`, `GameEventKind.TeammateLevelUp`, `Player.GiveGold`
+- Teammate APIs using the game's own commands (work even if teammates don't have mods): `Game.Teammates`, `Player.HealAlly`, `Player.ShieldNearbyPlayers`, `Player.GiveBuff` (skill haste, armor, DoT damage), `Player.PlayEffect`; `DamageArea` with a null effect plays no effect, `DamageArea(..., spareTeammates)`, `Role.IsTeammateMonster`, `GameEventKind.TeammateLevelUp`, `Player.GiveGold`
 
 ## 0.27.0
-- Enemy boosts follow the host in multiplayer and apply to the whole room (the host now scales monster damage to every player, not just itself); boosts set on clients have no effect
+- Enemy attack boost now applies wherever the attacking monster is owned (each player owns their own monsters in multiplayer); HP/shield boosts only take effect on the host
 - `LobbySync.ReadHost(key)`: read the lobby owner's member data
 
 ## 0.26.0

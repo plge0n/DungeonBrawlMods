@@ -327,6 +327,9 @@ namespace Hextech
 
         public static bool Has(string augmentId) => Active && Picked(augmentId);
 
+        // 海克斯三选一在等着弹（Team 的供养选择要让它先）
+        public static bool OfferPending => run.Pending && !blocked;
+
         // 已经拿到这个系列的第几档（0 = 没拿）
         private static int SeriesRank(string series) => Best(series)?.Rank ?? 0;
 
@@ -411,7 +414,8 @@ namespace Hextech
             {
                 run.RefreshLeft--;
                 run.RefreshIndex++;
-                run.Pending = true;
+                // 联机降级之后不再弹（也别挂着 Pending，否则欠的锻造一直等它）
+                run.Pending = !blocked;
                 openAt = Time.unscaledTime + 0.3f;
                 mod.RunLog.Info("三选一", "刷新", ("剩余", run.RefreshLeft));
                 return;
@@ -474,6 +478,8 @@ namespace Hextech
                 ScreenNotice.Show($"<color=#FF6060>敌人获得海克斯「{c.Name}」（房主）：之后刷出的{string.Join("、", c.Lines)}</color>", 4f);
             }
             run.EnemyPicks = picks;
+            // 自己的怪打人时按房主的攻击倍率放大（生命倍率在客户端不起作用，设了也无妨）
+            ApplyState();
             Hud.Refresh();
         }
 
@@ -653,7 +659,7 @@ namespace Hextech
 
         private static void TickForge()
         {
-            if (run.Forges.Count == 0 || inWave || run.Pending) return;
+            if (run.Forges.Count == 0 || inWave || run.Pending && !blocked) return;
             float now = Time.unscaledTime;
             if (ChoicePanel.IsBusy)
             {
@@ -758,6 +764,8 @@ namespace Hextech
             mod.ClearSkillTunes();
             foreach (int id in SkillIds()) mod.SetSkillTooltip(id, null);
             Triggers.Clear(revert: true);
+            // 房主撤销了：敌人海克斯也不算了，别让客户端继续显示、多给刷新
+            if (OwnEnemy) LobbySync.Clear(EnemyKey);
             var player = Game.LocalPlayer;
             if (player != null && profile != null && !profile.Active && appliedPassive != null)
                 player.SetPassiveValues(profile.SkillId, profile.BaseValues);

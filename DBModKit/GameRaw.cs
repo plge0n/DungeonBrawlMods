@@ -2170,10 +2170,15 @@ namespace DBModKit
         // bbe.CmdAddNearbyHumanityShield(范围, 比例)：服务器 kxp 给自己周围的所有玩家（含自己）各加 最大生命 × 比例 的护盾，范围 ≤ 50、比例 ≤ 1
         public static void ShieldNearbyPlayers(Component me, float radius, float ratio) => ((bbe)me).CmdAddNearbyHumanityShield(radius, ratio);
 
-        // bbe.CmdAddBuff(目标, 来源, 类型, 值, 时长, 等级) → 服务器 lcp → 目标 RpcAddBuff。
-        // SacredEmberBlessing（效果类 hu）：值 = 增伤比例（加在 buffAddDamage 上），等级 = 护甲；重复上 buff 时取较大值并刷新时长
-        public static void BlessPlayer(Component me, Component target, float damageBonus, float seconds, int armor)
-            => ((bbe)me).CmdAddBuff(((yb)target).bqbx, ((yb)me).bqbx, LocalBuffType.SacredEmberBlessing, damageBonus, seconds, armor);
+        // bbe.CmdAddBuff(目标, 来源, 类型, 值, 时长, 等级) → 服务器 lcp → 目标 RpcAddBuff → yb 里按类型 new 效果类（yb.cs 4240 起的 switch）：
+        // SkillHaste → hy：skillCdReduce += 值（技能急速）；IronArmor → ha：护甲 bepy += 值；
+        // SacredEmberBlessing → hu：值加在 buffAddDamage 上——只有 AttackType.Buff（持续伤害）读它，普攻和技能不吃
+        public static void GiveBuff(Component me, Component target, PlayerBuff buff, float value, float seconds)
+        {
+            LocalBuffType type = buff == PlayerBuff.SkillHaste ? LocalBuffType.SkillHaste
+                : buff == PlayerBuff.Armor ? LocalBuffType.IronArmor : LocalBuffType.SacredEmberBlessing;
+            ((bbe)me).CmdAddBuff(((yb)target).bqbx, ((yb)me).bqbx, type, value, seconds, 0);
+        }
 
         // ---- 通用加成（海克斯通用强化）----
         // ez.ebt(键, 整数)：遗物、卡牌、锻体读"键|值"时走的就是它，作用于本地玩家 nn.bpbu。百分比类的键传 25 表示 25%。

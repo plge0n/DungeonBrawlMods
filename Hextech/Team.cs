@@ -6,7 +6,7 @@ using UnityEngine;
 
 namespace Hextech
 {
-    // 队友卡（参照斗魂竞技场）：读队友的位置、血量，用游戏原版的治疗、范围护盾、圣焰祝福影响队友，队友没装 Mod 也生效。
+    // 队友卡（参照斗魂竞技场）：读队友的位置、血量，用游戏原版的治疗、范围护盾、技能急速 buff 影响队友，队友没装 Mod 也生效。
     // 联机时没有重试波次，限时加成（复仇）在波次结束时撤销。
     // 每个玩家有自己的怪、打别人的怪收益归动手的人：在队友身边的范围伤害（音爆、晾衣绳）跳过队友的怪，不抢收益
     internal static class Team
@@ -18,16 +18,20 @@ namespace Hextech
         public const int JuiceItem = Augments.FruitItem;
         public const float ManeuverRadius = 10f, ManeuverShield = 0.2f, ManeuverHeal = 0.1f, ManeuverCooldown = 30f;
         public const float LinkRatio = 0.2f, LinkBudget = 0.03f;
-        public const float BannerDamage = 0.2f, BannerSeconds = 6f;
+        public const int BannerHaste = 40;
+        public const float BannerSeconds = 6f;
         public const float BoomRadius = 4f, BoomDamage = 3f, BoomCooldown = 2f;
         public const float DivineInterval = 20f, DivineRadius = 12f, DivineShield = 0.15f, DivineInvulnerable = 1.5f;
         public const float LineRange = 25f, LineInterval = 0.5f, LineDamage = 0.4f, LineWidth = 1.5f;
+        private const float IdleDelay = 1.5f;
         // 让经济
         public const float PatronPay = 0.2f, PatronRate = 1.5f;
         public const int BacklineStats = 3;
-        public const float OathRange = 15f, OathDamage = 0.15f;
-        public const float AllInPay = 0.4f, AllInRate = 2f, AllInRange = 25f, AllInDamage = 0.25f;
-        // 祝福每隔这么久续一次，持续时间比间隔长一点，不会断
+        public const float OathRange = 15f;
+        public const int OathHaste = 20;
+        public const float AllInPay = 0.4f, AllInRate = 2f, AllInRange = 25f;
+        public const int AllInHaste = 40;
+        // buff 每隔这么久续一次，持续时间比间隔长一点，不会断
         private const float BlessEvery = 4f, BlessSeconds = 5f;
 
         // 队友列表每秒刷新一次（Game.Teammates 会遍历场景）
@@ -41,6 +45,13 @@ namespace Hextech
         private static float maneuverAt, divineAt, lineAt, lineEffectAt, linkBudgetAt;
         private static double linkBudget;
         private static bool vengeanceOn;
+        // 后排成长累计加了多少（撤销用）
+        private static int backlineTotal;
+        // 供养选择：休息开始的时间、界面最后一次忙的时间
+        private static float restAt, busyAt;
+        // 灵魂连接：攒着的治疗量，隔一会儿发一次
+        private static readonly Dictionary<Player, double> linkPending = new Dictionary<Player, double>();
+        private static float linkSendAt;
         // 供养的队友；要（重新）指定时 carryPending
         private static Player carry;
         private static bool carryPending;
@@ -67,14 +78,18 @@ namespace Hextech
             carry = null;
             carryPending = false;
             blessAt = 0f;
+            backlineTotal = 0;
+            restAt = busyAt = 0f;
+            linkPending.Clear();
+            linkSendAt = 0f;
         }
 
-        // 不管选没选队友卡都要刷新：抽卡时要知道有没有队友
+        // 不管选没选队友卡都要刷新：抽卡时要知道有没有队友。单人时不用遍历场景
         public static void RefreshMates()
         {
             if (Time.unscaledTime < matesAt) return;
             matesAt = Time.unscaledTime + 1f;
-            mates = Game.Teammates();
+            mates = Game.IsSolo ? new List<Player>() : Game.Teammates();
         }
 
         public static void Tick(Player me, bool inWave)
@@ -82,8 +97,18 @@ namespace Hextech
             RefreshMates();
             if (!me.IsAlive) return;
             float now = Time.time;
+            if (ChoicePanel.IsBusy) busyAt = Time.unscaledTime;
+            if (inWave) restAt = 0f;
+            else if (restAt == 0f) restAt = Time.unscaledTime;
             foreach (var m in mates)
             {
+                // 掉线、退出的队友对象已经销毁：不算"倒下"，等下次刷新列表时去掉
+                if (m.Raw == null)
+                {
+                    lastAlive.Remove(m);
+                    lastHp.Remove(m);
+                    continue;
+                }
                 bool alive = m.IsAlive;
                 long hp = alive ? m.Hp : 0;
                 // 第一次看到的队友不算"刚倒下"（可能本来就躺着）
@@ -118,6 +143,7 @@ namespace Hextech
                 lineAt = now + LineInterval;
                 Clothesline(me, now);
             }
+            FlushLink(me, now);
             TickCarry(me, inWave, now);
         }
 
@@ -143,10 +169,10 @@ namespace Hextech
             if (carryPending && mates.Count > 0) ChooseCarry(inWave);
             if (carry == null || !carry.IsAlive || now < blessAt) return;
             blessAt = now + BlessEvery;
-            float bonus = 0f;
-            if (Has("oath") && carry.DistanceTo(me) <= OathRange) bonus = Math.Max(bonus, OathDamage);
-            if (Has("allin") && carry.DistanceTo(me) <= AllInRange) bonus = Math.Max(bonus, AllInDamage);
-            if (bonus > 0f) me.BlessPlayer(carry, bonus, BlessSeconds);
+            int haste = 0;
+            if (Has("oath") && carry.DistanceTo(me) <= OathRange) haste = Math.Max(haste, OathHaste);
+            if (Has("allin") && carry.DistanceTo(me) <= AllInRange) haste = Math.Max(haste, AllInHaste);
+            if (haste > 0) me.GiveBuff(carry, PlayerBuff.SkillHaste, haste, BlessSeconds);
         }
 
         private static void ChooseCarry(bool inWave)
@@ -156,8 +182,11 @@ namespace Hextech
                 SetCarry(mates[0]);
                 return;
             }
-            // 有好几个队友时弹一个选择；不在波次中弹（联机不能暂停），三选一界面被占用就等下一帧
-            if (inWave || ChoicePanel.IsBusy) return;
+            // 有好几个队友时弹一个选择：不在波次中弹（联机不能暂停）；休息开始后先让游戏的遗物选择、海克斯三选一出来，
+            // 界面空闲够久再弹（否则游戏的选择盖上来时会替这次随机选一个）
+            float now = Time.unscaledTime;
+            if (inWave || ChoicePanel.IsBusy || Engine.OfferPending) return;
+            if (restAt == 0f || now - restAt < IdleDelay * 2f || now - busyAt < IdleDelay) return;
             var list = mates.Take(ChoicePanel.MaxOptions).ToList();
             var options = list.Select(m => new ChoiceOption
             {
@@ -194,7 +223,9 @@ namespace Hextech
         // 后排成长：队友升级时加属性
         public static void OnTeammateLevelUp(Player me)
         {
-            if (Has("backline")) me.AddStats(BacklineStats, BacklineStats, BacklineStats, 0);
+            if (!Has("backline")) return;
+            me.AddStats(BacklineStats, BacklineStats, BacklineStats, 0);
+            backlineTotal += BacklineStats;
         }
 
         private static IEnumerable<Player> Near(Player me, float radius) => mates.Where(m => m.IsAlive && m.DistanceTo(me) <= radius);
@@ -210,6 +241,7 @@ namespace Hextech
             mod.RunLog.Debug("甘愿牺牲", "治疗队友", ("队友", m.Name), ("法力", cost));
         }
 
+        // 灵魂连接：先攒着，每 0.3 秒发一次治疗（队友持续掉血时每次同步都发一条治疗太频繁）
         private static void SpiritLink(Player me, Player m, long lost)
         {
             float now = Time.time;
@@ -219,10 +251,23 @@ namespace Hextech
                 linkBudget = me.MaxHp * LinkBudget;
             }
             double heal = Math.Min(lost * LinkRatio, linkBudget);
-            if (heal < 1) return;
+            if (heal <= 0) return;
             linkBudget -= heal;
-            me.HealAlly(m, heal);
-            Boom(me, m);
+            linkPending[m] = (linkPending.TryGetValue(m, out var had) ? had : 0) + heal;
+        }
+
+        private static void FlushLink(Player me, float now)
+        {
+            if (linkPending.Count == 0 || now < linkSendAt) return;
+            linkSendAt = now + 0.3f;
+            foreach (var kv in linkPending.ToList())
+            {
+                if (kv.Value < 1) continue;
+                linkPending.Remove(kv.Key);
+                if (kv.Key.Raw == null || !kv.Key.IsAlive) continue;
+                me.HealAlly(kv.Key, kv.Value);
+                Boom(me, kv.Key);
+            }
         }
 
         private static void StartVengeance(Player me, Player fallen)
@@ -248,7 +293,7 @@ namespace Hextech
             if (!Has("banner")) return;
             var m = Near(me, Range).OrderBy(x => x.DistanceTo(me)).FirstOrDefault();
             if (m == null) return;
-            me.BlessPlayer(m, BannerDamage, BannerSeconds);
+            me.GiveBuff(m, PlayerBuff.SkillHaste, BannerHaste, BannerSeconds);
             Boom(me, m);
         }
 
@@ -259,7 +304,7 @@ namespace Hextech
             float now = Time.time;
             if (boomAt.TryGetValue(m, out var at) && now < at) return;
             boomAt[m] = now + BoomCooldown;
-            me.DamageArea((float)Math.Min(float.MaxValue / 4, me.Attack * BoomDamage), m.Position, BoomRadius, "Effect/DeathExplosion", 1f, spareTeammates: true);
+            me.DamageArea((float)Math.Min(int.MaxValue, me.Attack * BoomDamage), m.Position, BoomRadius, "Effect/DeathExplosion", 1f, spareTeammates: true);
         }
 
         // 晾衣绳：沿两人连线每隔一个宽度判定一次（不播特效）；每秒在线的中点播一次小特效，让人知道线在哪
@@ -267,7 +312,7 @@ namespace Hextech
         {
             bool effect = now >= lineEffectAt;
             if (effect) lineEffectAt = now + 1f;
-            float damage = (float)Math.Min(float.MaxValue / 4, me.Attack * LineDamage);
+            float damage = (float)Math.Min(int.MaxValue, me.Attack * LineDamage);
             foreach (var m in Near(me, LineRange))
             {
                 Vector3 a = me.Position, b = m.Position;
@@ -293,7 +338,10 @@ namespace Hextech
 
         public static void Revert(Player me)
         {
-            if (me != null) StopVengeance(me);
+            if (me == null) return;
+            StopVengeance(me);
+            if (backlineTotal > 0) me.AddStats(-backlineTotal, -backlineTotal, -backlineTotal, 0);
+            backlineTotal = 0;
         }
 
         private static ModContext mod;
