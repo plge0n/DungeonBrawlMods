@@ -322,8 +322,8 @@ namespace Hextech
                 openAt = now + IdleDelay;
                 return false;
             }
-            // 联机时游戏不暂停：只在休息阶段弹，错过开局的话等第一波打完
-            if (!Game.IsSolo && inWave)
+            // 联机时游戏不暂停：只在休息阶段弹，错过开局的话等第一波打完；额外的（棱彩蛋、嬗变）单人也等休息
+            if (inWave && (!Game.IsSolo || !run.Pending))
             {
                 openAt = now + IdleDelay;
                 return false;
@@ -472,7 +472,8 @@ namespace Hextech
             if (card.Augment?.Support == true) Team.OnSupportPicked();
             if (card.Augment?.Id == "transmute") QueueExtra(Tier.Gold, "嬗变：黄金");
             string notice = $"获得海克斯强化「{card.Name}」";
-            if (OwnEnemy && Plugin.EnemyAugments.Value)
+            // 额外的选择（棱彩蛋、嬗变）不给敌人加卡：种子按回合算，会和上一次抽到同一张
+            if (OwnEnemy && Plugin.EnemyAugments.Value && !extra)
             {
                 var rng = new System.Random(run.Seed ^ (run.Round * 31337));
                 var pool = Augments.All.Where(a => a.Pool == AugmentPool.Enemy && a.Tier == tier).ToList();
@@ -827,6 +828,7 @@ namespace Hextech
                 if (run.InfiniteBonus > 0) me.AddAttribute("CoolDown", -run.InfiniteBonus);
                 RevertMana(me);
                 if (run.ConvStr != 0 || run.ConvAgi != 0) me.AddStats(-run.ConvStr, -run.ConvAgi, 0, 0);
+                Batch3.Revert();
                 run.ConvStr = run.ConvAgi = 0;
                 StopExcited(me);
                 if (run.TankHp > 0) me.AddAttribute("HP", -run.TankHp);
@@ -853,6 +855,8 @@ namespace Hextech
             if (checkpoint == null) return;
             run = checkpoint.Clone();
             Triggers.Clear(revert: false);
+            // 游戏把技能实例的字段写回快照（自动释放回到关），实例不换：自动施放要重新开；无休恢复的位置重新记
+            Batch3.Reset();
             excitedOn = false;
             appliedPassive = null;
             mod.RunLog.Info("重试波次", "还原", ("已选", run.Picks.Count), ("待弹", run.Pending));

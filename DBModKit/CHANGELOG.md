@@ -2,9 +2,10 @@
 
 ## 0.29.0
 海克斯第三批用的接口（**未实测**）：
-- `GameEventKind.Died`：本地玩家死亡（原版 `dieEvent`，Target = 凶手）
+- `GameEventKind.Died`：本地玩家死亡（原版 `dieEvent`，Target = 自己）
 - `Player.AddAttackRange(米)`：攻击距离（`yb.iqg`，遗物"瞄准镜"同款）
-- `SkillSlot.SetAutoCast(开/关)`：和右键技能图标一样开关自动释放，表里不允许自动的技能不会打开
+- `SkillSlot.SetAutoCast(开/关)`：和右键技能图标一样开关自动释放，表里不允许自动的技能不会打开；`SkillSlot.IsOnSkillBar`
+- 范围伤害截到 20 亿以内（游戏按 int 转，超过会溢出成负数）
 
 ## 0.28.0
 队友相关的接口（都走游戏原版的命令，队友没装 Mod 也生效；**未实测**，要两人联机）：

@@ -139,6 +139,9 @@ namespace DBModKit
         /// <summary>右键开启了自动释放。</summary>
         public bool IsAutoCastOn => GameRaw.IsAutoCastOn(Native);
 
+        /// <summary>在技能栏上（有按钮正显示这个技能）。</summary>
+        public bool IsOnSkillBar => GameRaw.IsOnSkillBar(Native);
+
         /// <summary>
         /// 打开或关闭自动释放（和右键技能图标一样，图标上的自动标记跟着变）。只能用于本地玩家的技能；
         /// 表里不允许自动的技能（<see cref="SkillInfo.CanAutoCast"/> 为 false）不会打开。玩家之后仍然可以右键关掉。

@@ -125,8 +125,8 @@ namespace DBModKit
                 Relife = () => GameEvents.Raise(new GameEvent(GameEventKind.Revived)),
                 // onTeammateLevelUp：队友升级时本地玩家身上触发（bbe.cs 10844，伙伴之刃被动用它）
                 TeammateLevelUp = mate => GameEvents.Raise(new GameEvent(GameEventKind.TeammateLevelUp, Role.Wrap(mate))),
-                // dieEvent(凶手)：在 yb.hky 里触发（死灵祭司"对死者的供奉"也挂它）
-                Died = killer => GameEvents.Raise(new GameEvent(GameEventKind.Died, Role.Wrap(killer))),
+                // dieEvent(参数名叫 attackRole，实际传的是死者自己：yb.hky 里 dieEvent?.Invoke(this))
+                Died = dead => GameEvents.Raise(new GameEvent(GameEventKind.Died, Role.Wrap(dead))),
                 BagItem = item => GameEvents.Raise(new GameEvent(GameEventKind.ItemPicked, itemId: (int)item)),
                 // localActiveSkillCastEvent(玩家, 技能, 目标点, 朝向, 目标 netId, 技能书编号, 是否免费)：只在 ez.dyf 末尾触发（真正放出技能时），
                 // 免费释放（dyf 的 h = true）也会触发
@@ -1831,12 +1831,16 @@ namespace DBModKit
         public static int SkillId(object s) => s is qp ? (int)ActiveSkillEnum.None : (int)((bht)s).bhne;
         public static bool IsAutoCastOn(object s) => ((bht)s).bhny;
 
+        // 在技能栏上：按钮 bhng 正显示这个技能
+        public static bool IsOnSkillBar(object s) => ((bht)s).bhng is bpf b && ReferenceEquals(b.bjgk, s);
+
         // 自动释放开关：右键技能图标时游戏调 bht.mtt()（翻转 bhny 并显示按钮上的自动标记 bhng.bjgl）；不在技能栏上（没有按钮）时只改字段
         public static void SetAutoCast(object s, bool on)
         {
             var b = (bht)s;
             if (b.bhny == on) return;
-            if (b.bhng != null && b.bhng.bjgl != null) b.mtt();
+            // 按钮换绑到别的技能后旧技能的 bhng 不清，这时 mtt 会改错格子的标记：只在按钮正显示这个技能时走 mtt
+            if (b.bhng != null && b.bhng.bjgl != null && ReferenceEquals(b.bhng.bjgk, b)) b.mtt();
             else b.bhny = on;
         }
 
@@ -2149,6 +2153,8 @@ namespace DBModKit
         // 范围伤害：nn.fsp（死灵祭司"对死者的供奉"用的）——范围内的敌人各吃一次技能伤害（暴击照常判定），再播特效
         public static void DamageArea(Component p, float damage, Vector3 center, float radius, string effect, float effectScale, bool spareTeammates = false)
         {
+            // 游戏按 (int) 转：float 的 int.MaxValue 是 2147483648，转过去溢出成负数
+            damage = Mathf.Min(damage, 2e9f);
             if (effect != null && !spareTeammates)
             {
                 nn.fsp((yb)p, damage, center, radius, effect, effectScale);
