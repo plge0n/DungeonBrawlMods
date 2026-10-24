@@ -103,6 +103,7 @@ namespace DBModKit
             public Action LevelUp;
             public Action Relife;
             public Action<bbe> TeammateLevelUp;
+            public yb.DieEvent Died;
             public bbe.AddBagItem BagItem;
             public yb.LocalActiveSkillCastEvent LocalCast;
         }
@@ -124,6 +125,8 @@ namespace DBModKit
                 Relife = () => GameEvents.Raise(new GameEvent(GameEventKind.Revived)),
                 // onTeammateLevelUp：队友升级时本地玩家身上触发（bbe.cs 10844，伙伴之刃被动用它）
                 TeammateLevelUp = mate => GameEvents.Raise(new GameEvent(GameEventKind.TeammateLevelUp, Role.Wrap(mate))),
+                // dieEvent(参数名叫 attackRole，实际传的是死者自己：yb.hky 里 dieEvent?.Invoke(this))
+                Died = dead => GameEvents.Raise(new GameEvent(GameEventKind.Died, Role.Wrap(dead))),
                 BagItem = item => GameEvents.Raise(new GameEvent(GameEventKind.ItemPicked, itemId: (int)item)),
                 // localActiveSkillCastEvent(玩家, 技能, 目标点, 朝向, 目标 netId, 技能书编号, 是否免费)：只在 ez.dyf 末尾触发（真正放出技能时），
                 // 免费释放（dyf 的 h = true）也会触发
@@ -136,6 +139,7 @@ namespace DBModKit
             p.onPlayerLevelUp += b.LevelUp;
             p.onPlayerRelife += b.Relife;
             p.onTeammateLevelUp += b.TeammateLevelUp;
+            p.dieEvent += b.Died;
             p.addBagItemEvent += b.BagItem;
             p.localActiveSkillCastEvent += b.LocalCast;
             return b;
@@ -153,6 +157,7 @@ namespace DBModKit
             p.onPlayerLevelUp -= b.LevelUp;
             p.onPlayerRelife -= b.Relife;
             p.onTeammateLevelUp -= b.TeammateLevelUp;
+            p.dieEvent -= b.Died;
             p.addBagItemEvent -= b.BagItem;
             p.localActiveSkillCastEvent -= b.LocalCast;
         }
@@ -1825,6 +1830,65 @@ namespace DBModKit
         // 被动（qp）的 bhne 是默认值 0，而 0 是 D_SpellThunder，所以被动返回 None（-1）
         public static int SkillId(object s) => s is qp ? (int)ActiveSkillEnum.None : (int)((bht)s).bhne;
         public static bool IsAutoCastOn(object s) => ((bht)s).bhny;
+
+        // 在技能栏上：按钮 bhng 正显示这个技能
+        public static bool IsOnSkillBar(object s) => ((bht)s).bhng is bpf b && ReferenceEquals(b.bjgk, s);
+
+        // 自动释放开关：右键技能图标时游戏调 bht.mtt()（翻转 bhny 并显示按钮上的自动标记 bhng.bjgl）；不在技能栏上（没有按钮）时只改字段
+        public static void SetAutoCast(object s, bool on)
+        {
+            var b = (bht)s;
+            if (b.bhny == on) return;
+            // 按钮换绑到别的技能后旧技能的 bhng 不清，这时 mtt 会改错格子的标记：只在按钮正显示这个技能时走 mtt
+            if (b.bhng != null && b.bhng.bjgl != null && ReferenceEquals(b.bhng.bjgk, b)) b.mtt();
+            else b.bhny = on;
+        }
+
+        // 免费放一个现成技能：yb.CmdCreateSkill(技能, 位置, 朝向角度, 目标, 技能书) → 服务器 → RpcCreateSkill，每个客户端都生成技能实例。
+        // 不扣蓝、不进冷却、不播动作、不触发施法事件，身上也不需要有这个技能。原版用法：装备落雷 sc.cs（D_SpellThunder 落在敌人位置，目标 -1）、
+        // 月光大剑 mh.cs（在自己位置朝敌人方向，角度 ez.dxv(目标, 自己)）。伤害在施法者本机算、归施法者
+        public static void CastSkillFree(Component me, int skillId, Vector3 pos, float rotation) => ((yb)me).CmdCreateSkill((ActiveSkillEnum)skillId, pos, rotation, -1, 0);
+
+        // 从 from 看向 to 的朝向角度（游戏的 ez.dxv）
+        public static float Facing(Vector3 from, Vector3 to) => ez.dxv(to, from);
+
+        // 雷之一闪的雷球上限：PlayerThunderMode.maxOrbCount（序列化字段，默认 10，读的时候限制在 1~32），英雄模式在 yb.bpia。
+        // 改过的实例都记下原值：英雄模型从对象池取（下一局可能还是这个实例）、变身时 bpia 会换成别的组件，所以撤销时把记下的全部改回去，
+        // 不依赖撤销那一刻的本地玩家
+        private static readonly List<(WeakReference mode, int original)> thunderTouched = new List<(WeakReference, int)>();
+        private static AccessTools.FieldRef<PlayerThunderMode, int> maxOrbCount;
+
+        // 本地玩家当前的雷电模式（变身中、不是雷电时为 null）
+        public static object ThunderMode(Component p) => ((yb)p).bpia as PlayerThunderMode;
+
+        public static void SetThunderOrbs(object target, int extra)
+        {
+            maxOrbCount = maxOrbCount ?? AccessTools.FieldRefAccess<PlayerThunderMode, int>("maxOrbCount");
+            // 先把其他改过的实例改回原值、清掉已经销毁的
+            for (int i = thunderTouched.Count - 1; i >= 0; i--)
+            {
+                var mode = thunderTouched[i].mode.Target as PlayerThunderMode;
+                if (mode == null)
+                {
+                    thunderTouched.RemoveAt(i);
+                    continue;
+                }
+                if (ReferenceEquals(mode, target) && extra > 0) continue;
+                maxOrbCount(mode) = thunderTouched[i].original;
+                thunderTouched.RemoveAt(i);
+            }
+            if (!(target is PlayerThunderMode current) || extra <= 0) return;
+            int index = thunderTouched.FindIndex(t => ReferenceEquals(t.mode.Target, current));
+            if (index < 0)
+            {
+                thunderTouched.Add((new WeakReference(current), maxOrbCount(current)));
+                index = thunderTouched.Count - 1;
+            }
+            maxOrbCount(current) = thunderTouched[index].original + extra;
+        }
+
+        // 攻击距离：yb.iqg(加量)，遗物"瞄准镜"用的同一个，会同步给服务器（fbk 是诱饵）
+        public static void AddAttackRange(Component p, float amount) => ((yb)p).iqg(amount);
         public static float CooldownRemaining(object s) => ((bht)s).k896ff3548b31472b8b2cf8f649c25e65;
         public static int Cost(object s, Component p) => ((bht)s).kacb7d091b5904139a602f04ed9552242((bbe)p);
         // PayToWin 技能花的是金币不是蓝
@@ -2132,6 +2196,8 @@ namespace DBModKit
         // 范围伤害：nn.fsp（死灵祭司"对死者的供奉"用的）——范围内的敌人各吃一次技能伤害（暴击照常判定），再播特效
         public static void DamageArea(Component p, float damage, Vector3 center, float radius, string effect, float effectScale, bool spareTeammates = false)
         {
+            // 游戏按 (int) 转：float 的 int.MaxValue 是 2147483648，转过去溢出成负数
+            damage = Mathf.Min(damage, 2e9f);
             if (effect != null && !spareTeammates)
             {
                 nn.fsp((yb)p, damage, center, radius, effect, effectScale);

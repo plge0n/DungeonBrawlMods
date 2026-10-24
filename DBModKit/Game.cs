@@ -439,6 +439,29 @@ namespace DBModKit
             RunLog.Info(RunLog.CallerMod(), "玩家", "改护甲", ("加成", amount), ("护甲", $"{before}→{Armor}"));
         }
 
+        /// <summary>
+        /// 免费放一个游戏现成的技能（ActiveSkillEnum 编号，比如 100 = C 级落雷、201 = B 级剑气），身上不需要有这个技能：
+        /// 不扣蓝、不进冷却、不播动作、不触发 <see cref="Combat.Cast"/>。position 是技能生成的位置（落雷落在哪），
+        /// aimAt 是朝向点，但有的技能不读它：剑气用的是你当前面朝的方向。走原版同步，别人看得到；伤害算你的（命中带技能来源，处理命中时注意别无限连锁）。
+        /// 游戏的"有玩家生成技能"事件照常触发：带反击词缀的敌人会因此反击（有自己的冷却）。会在命中回调里高频调用，不写日志。
+        /// </summary>
+        public void CastSkillFree(int skillId, Vector3 position, Vector3? aimAt = null)
+        {
+            RequireLocal();
+            float rotation = aimAt.HasValue ? GameRaw.Facing(position, aimAt.Value) : 0f;
+            GameRaw.CastSkillFree(Native, skillId, position, rotation);
+        }
+
+        /// <summary>加攻击距离（米，负数撤销），遗物"瞄准镜"用的同一个方法，会同步。本局有效，不会自动撤销。</summary>
+        public void AddAttackRange(float meters)
+        {
+            RequireLocal();
+            if (meters == 0f) return;
+            float before = AttackRange;
+            GameRaw.AddAttackRange(Native, meters);
+            RunLog.Info(RunLog.CallerMod(), "玩家", "改攻击距离", ("加", meters), ("距离", $"{before:0.##}→{AttackRange:0.##}"));
+        }
+
         /// <summary>无敌若干秒（游戏的无敌药水效果，重复使用时刷新时长）。</summary>
         public void GiveInvulnerable(float seconds)
         {

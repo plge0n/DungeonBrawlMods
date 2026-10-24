@@ -7,7 +7,7 @@ using UnityEngine.UI;
 
 namespace Hextech
 {
-    // 已选强化的图标：放在背包右边、传送头像（"F1"那格）下面，2×2 最多 4 个，悬停用游戏原生的提示框显示效果。
+    // 已选强化的图标：放在背包右边、传送头像（"F1"那格）下面，4 张以内 2×2、更多时 3 列，悬停用游戏原生的提示框显示效果。
     // 联机时那一栏里还有队友的头像：排在最下面那个头像的下面，有人进出时重新排（没实测）
     internal static class Hud
     {
@@ -40,7 +40,9 @@ namespace Hextech
             if (shown == picks.Count) return;
             shown = picks.Count;
             foreach (Transform c in strip) Object.Destroy(c.gameObject);
-            for (int i = 0; i < picks.Count && i < Engine.Rounds; i++) AddIcon(i, picks[i]);
+            // 4 张以内 2×2，多了（棱彩蛋、嬗变的额外选择）排成 3 列，免得往下太长
+            int columns = picks.Count > 4 ? 3 : 2;
+            for (int i = 0; i < picks.Count; i++) AddIcon(i, picks[i], columns);
         }
 
         // 找传送头像栏（ui_playerState 下的 trans_teleportTip），按它第一格的大小、位置排
@@ -72,7 +74,7 @@ namespace Hextech
 
         private static float CellSize => strip.parent.GetChild(0) is RectTransform head ? head.rect.width : 40f;
 
-        private static void AddIcon(int index, Card card)
+        private static void AddIcon(int index, Card card, int columns)
         {
             float size = CellSize;
             var frame = new GameObject("augment" + index, typeof(RectTransform), typeof(Image));
@@ -80,7 +82,7 @@ namespace Hextech
             rt.SetParent(strip, false);
             rt.anchorMin = rt.anchorMax = rt.pivot = new Vector2(0f, 1f);
             rt.sizeDelta = new Vector2(size, size);
-            rt.anchoredPosition = new Vector2(index % 2 * (size + Gap), -(index / 2) * (size + Gap));
+            rt.anchoredPosition = new Vector2(index % columns * (size + Gap), -(index / columns) * (size + Gap));
             frame.GetComponent<Image>().color = TierColor(card.Tier);
 
             var icon = new GameObject("icon", typeof(RectTransform), typeof(Image));

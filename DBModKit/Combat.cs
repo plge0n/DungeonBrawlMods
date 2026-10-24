@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace DBModKit
@@ -123,6 +124,29 @@ namespace DBModKit
 
         // 有订阅者时才值得去取调用栈
         internal static bool HasSubscribers => Hit != null;
+
+        /// <summary>致命伤害拦截的补丁装上了（<see cref="ModContext.OnLethalDamage"/> 可用）。</summary>
+        public static bool LethalGuardAvailable { get; internal set; }
+
+        private static readonly List<Func<double, bool>> lethalGuards = new List<Func<double, bool>>();
+
+        internal static bool HasLethalGuards => lethalGuards.Count > 0;
+
+        internal static void AddLethalGuard(Func<double, bool> guard) => lethalGuards.Add(guard);
+
+        internal static void RemoveLethalGuard(Func<double, bool> guard) => lethalGuards.Remove(guard);
+
+        // 依次问，第一个返回 true 的拦下（后面的不再问，免得两张免死卡一次全用掉）
+        internal static bool RaiseLethal(double damage)
+        {
+            foreach (var g in lethalGuards.ToArray())
+            {
+                bool stop = false;
+                Safe.Run("致命伤害拦截", () => stop = g(damage));
+                if (stop) return true;
+            }
+            return false;
+        }
 
         /// <summary>伤害上下文的钩子已安装（<see cref="HitInfo.Type"/>、<see cref="HitInfo.Origin"/>、<see cref="HitInfo.SourceSkillId"/> 可用）。</summary>
         public static bool ContextAvailable { get; internal set; }

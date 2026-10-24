@@ -304,7 +304,7 @@ namespace Hextech
             float now = Time.time;
             if (boomAt.TryGetValue(m, out var at) && now < at) return;
             boomAt[m] = now + BoomCooldown;
-            me.DamageArea((float)Math.Min(int.MaxValue, me.Attack * BoomDamage), m.Position, BoomRadius, "Effect/DeathExplosion", 1f, spareTeammates: true);
+            me.DamageArea((float)Math.Min(2e9, me.Attack * BoomDamage), m.Position, BoomRadius, "Effect/DeathExplosion", 1f, spareTeammates: true);
         }
 
         // 晾衣绳：沿两人连线每隔一个宽度判定一次（不播特效）；每秒在线的中点播一次小特效，让人知道线在哪
@@ -312,7 +312,7 @@ namespace Hextech
         {
             bool effect = now >= lineEffectAt;
             if (effect) lineEffectAt = now + 1f;
-            float damage = (float)Math.Min(int.MaxValue, me.Attack * LineDamage);
+            float damage = (float)Math.Min(2e9, me.Attack * LineDamage);
             foreach (var m in Near(me, LineRange))
             {
                 Vector3 a = me.Position, b = m.Position;
