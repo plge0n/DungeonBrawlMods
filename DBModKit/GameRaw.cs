@@ -2126,7 +2126,33 @@ namespace DBModKit
 
         // 范围伤害：nn.fsp（死灵祭司"对死者的供奉"用的）——范围内的敌人各吃一次技能伤害（暴击照常判定），再播特效
         public static void DamageArea(Component p, float damage, Vector3 center, float radius, string effect, float effectScale)
-            => nn.fsp((yb)p, damage, center, radius, effect, effectScale);
+        {
+            if (effect != null)
+            {
+                nn.fsp((yb)p, damage, center, radius, effect, effectScale);
+                return;
+            }
+            // 不播特效：照抄 fsp 的伤害部分（频繁调用时每次都 CmdPlayEffect 会刷屏，也占网络）
+            var a = (yb)p;
+            bool crit = a.izi(AttackType.Skill);
+            foreach (yb item in cj.boyo.fvw(radius, center))
+                ez.dxt(a, item, (int)damage, ez.dxv(item.bphx.position, center), AttackType.Skill, crit, 0f);
+        }
+
+        // 特效：bbe.CmdPlayEffect(路径, 速度, 位置, 缩放)，广播给所有人（fsp 也这么播）
+        public static void PlayEffect(Component p, string effect, Vector3 pos, float scale) => ((bbe)p).CmdPlayEffect(effect, 1f, pos, scale);
+
+        // ---- 队友（都是原版的命令，队友没装 Mod 也能正常处理）----
+        // yb.iwz(量, 目标)：治疗目标，内部 CmdUpdateHp(+量, 目标 netId)，服务器不校验发送者（装备 MadMan 治疗队友就这么用）
+        public static void HealOther(Component me, Component target, double amount) => ((yb)me).iwz(amount, (yb)target);
+
+        // bbe.CmdAddNearbyHumanityShield(范围, 比例)：服务器 kxp 给自己周围的所有玩家（含自己）各加 最大生命 × 比例 的护盾，范围 ≤ 50、比例 ≤ 1
+        public static void ShieldNearbyPlayers(Component me, float radius, float ratio) => ((bbe)me).CmdAddNearbyHumanityShield(radius, ratio);
+
+        // bbe.CmdAddBuff(目标, 来源, 类型, 值, 时长, 等级) → 服务器 lcp → 目标 RpcAddBuff。
+        // SacredEmberBlessing（效果类 hu）：值 = 增伤比例（加在 buffAddDamage 上），等级 = 护甲；重复上 buff 时取较大值并刷新时长
+        public static void BlessPlayer(Component me, Component target, float damageBonus, float seconds, int armor)
+            => ((bbe)me).CmdAddBuff(((yb)target).bqbx, ((yb)me).bqbx, LocalBuffType.SacredEmberBlessing, damageBonus, seconds, armor);
 
         // ---- 通用加成（海克斯通用强化）----
         // ez.ebt(键, 整数)：遗物、卡牌、锻体读"键|值"时走的就是它，作用于本地玩家 nn.bpbu。百分比类的键传 25 表示 25%。

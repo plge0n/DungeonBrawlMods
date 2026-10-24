@@ -1,5 +1,8 @@
 # Hextech changelog (English)
 
+## 0.5.0
+- 9 teammate augments inspired by Arena (only offered when you have teammates; they use the game's own heal, shield and buff, so teammates don't need mods)
+
 ## 0.4.0
 - Multiplayer: works when everyone in the room has the same mods (or the host allows it in DBStudio); if that stops being true mid-run, no more picks are offered but existing ones stay
 - In multiplayer the pick only appears during the rest phase (the game can't be paused)

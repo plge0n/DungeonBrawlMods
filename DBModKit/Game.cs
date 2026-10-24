@@ -77,6 +77,14 @@ namespace DBModKit
             return result;
         }
 
+        /// <summary>场上除了自己以外的玩家（不含国王对决的国王）。会遍历场景，不要每帧调用。</summary>
+        public static List<Player> Teammates()
+        {
+            var result = Players();
+            result.RemoveAll(p => p.IsLocal || GameRaw.IsKing(p.Native));
+            return result;
+        }
+
         /// <summary>游戏设置里的"自动战斗"开着。</summary>
         public static bool AutoBattle => ModKit.Compatible && GameRaw.AutoBattleOn();
 
@@ -276,6 +284,7 @@ namespace DBModKit
 
         /// <summary>
         /// 以 center 为圆心对范围内的敌人各造成一次技能伤害（暴击照常判定，算本地玩家打的），并播放特效（游戏的特效路径，例如 "Effect/DeathExplosion"）。
+        /// effect 传 null 不播特效（频繁调用时用，否则每次都广播一个特效）。
         /// </summary>
         public void DamageArea(float damage, Vector3 center, float radius, string effect = "Effect/DeathExplosion", float effectScale = 1f)
         {
@@ -283,6 +292,49 @@ namespace DBModKit
             if (damage <= 0f || radius <= 0f) return;
             GameRaw.DamageArea(Native, damage, center, radius, effect, effectScale);
             RunLog.Debug(RunLog.CallerMod(), "玩家", "范围伤害", ("伤害", Mathf.Round(damage)), ("半径", radius));
+        }
+
+        /// <summary>在某个位置播放游戏的特效（例如 "Effect/DeathExplosion"），所有玩家都看得到。不要每帧调用。</summary>
+        public void PlayEffect(string effect, Vector3 position, float scale = 1f)
+        {
+            RequireLocal();
+            if (string.IsNullOrEmpty(effect)) return;
+            GameRaw.PlayEffect(Native, effect, position, scale);
+        }
+
+        /// <summary>
+        /// 治疗另一个玩家（队友），算自己治疗的。走游戏原版的治疗同步，队友没装 Mod 也会回血。不能超过对方的生命上限。
+        /// </summary>
+        public void HealAlly(Player ally, double amount)
+        {
+            RequireLocal();
+            if (ally == null || ally == this || amount <= 0 || !ally.IsAlive || ally.Hp >= ally.MaxHp) return;
+            GameRaw.HealOther(Native, ally.Native, amount);
+            RunLog.Debug(RunLog.CallerMod(), "队友", "治疗", ("队友", ally.Name), ("量", Math.Round(amount)));
+        }
+
+        /// <summary>
+        /// 自己周围 radius 米内的所有玩家（含自己）各加一个护盾：各自生命上限 × ratio。游戏装备"人性"系列的原版效果，由服务器执行，
+        /// 范围最多 50、比例最多 1。
+        /// </summary>
+        public void ShieldNearbyPlayers(float radius, float ratio)
+        {
+            RequireLocal();
+            if (radius <= 0f || ratio <= 0f) return;
+            GameRaw.ShieldNearbyPlayers(Native, Mathf.Min(radius, 50f), Mathf.Min(ratio, 1f));
+            RunLog.Debug(RunLog.CallerMod(), "队友", "范围护盾", ("半径", radius), ("比例", ratio));
+        }
+
+        /// <summary>
+        /// 给一个玩家（可以是队友，也可以是自己）上游戏原版的"圣焰祝福"：伤害 +damageBonus（0.2 = +20%）、护甲 +armor，持续 seconds 秒；
+        /// 重复上时取较大的值并刷新时长。走原版 buff 同步，队友没装 Mod 也生效。
+        /// </summary>
+        public void BlessPlayer(Player target, float damageBonus, float seconds, int armor = 0)
+        {
+            RequireLocal();
+            if (target == null || !target.IsAlive || seconds <= 0f) return;
+            GameRaw.BlessPlayer(Native, target.Native, Mathf.Max(0f, damageBonus), seconds, Mathf.Max(0, armor));
+            RunLog.Debug(RunLog.CallerMod(), "队友", "祝福", ("对象", target.Name), ("增伤", damageBonus), ("护甲", armor), ("秒", seconds));
         }
 
         /// <summary>身上所有的主动技能（专属技能、技能书学到的、自定义的），不含被动。</summary>

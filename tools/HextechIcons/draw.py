@@ -363,10 +363,110 @@ def cannon3():  # 大炮·极：一排子弹 + 爆炸（棱彩）
         shell(ic, x, 0.66, 0.75)
     return ic
 
+# ---------- 队友卡（斗魂竞技场）：小人 = 圆脑袋 + 梯形身子 ----------
+def buddy(ic, cx, cy, k=1.0, color=(90, 150, 220)):
+    """一个小人（脑袋中心 cx, cy）。"""
+    body = [(cx - 0.11 * k, cy + 0.32 * k), (cx - 0.07 * k, cy + 0.1 * k), (cx + 0.07 * k, cy + 0.1 * k), (cx + 0.11 * k, cy + 0.32 * k)]
+    shape(ic, body, color, 0.02)
+    shape(ic, circle(cx, cy, 0.08 * k, 20), (250, 215, 180), 0.02)
+
+
+def sacrifice():  # 甘愿牺牲：小人捧出一颗心（银）
+    ic = Icon(111, "silver")
+    buddy(ic, 0.3, 0.36)
+    buddy(ic, 0.72, 0.4, 0.85, (220, 120, 90))
+    shape(ic, heart(0.51, 0.5, 0.11), (225, 60, 70), 0.02)
+    ic.line([(0.38, 0.56), (0.45, 0.52)], width=0.02, passes=1)
+    return ic
+
+
+def vengeance():  # 复仇：红色怒火拳头（银）
+    ic = Icon(112, "silver")
+    flame = [(0.5, 0.1), (0.62, 0.3), (0.74, 0.22), (0.78, 0.5), (0.68, 0.84), (0.32, 0.84), (0.22, 0.5), (0.3, 0.26), (0.4, 0.34)]
+    shape(ic, flame, (235, 90, 50))
+    fist = [(0.36, 0.48), (0.64, 0.48), (0.66, 0.74), (0.34, 0.74)]
+    shape(ic, fist, (250, 215, 180), 0.02)
+    for x in (0.43, 0.5, 0.57):
+        ic.line([(x, 0.48), (x, 0.58)], width=0.015, passes=1)
+    return ic
+
+
+def juicebox():  # 果汁盒：盒装果汁 + 吸管（银）
+    ic = Icon(113, "silver")
+    box = [(0.3, 0.32), (0.66, 0.32), (0.66, 0.84), (0.3, 0.84)]
+    shape(ic, box, (250, 170, 60))
+    top = [(0.3, 0.32), (0.4, 0.22), (0.76, 0.22), (0.66, 0.32)]
+    shape(ic, top, (255, 205, 110), 0.02)
+    side = [(0.66, 0.32), (0.76, 0.22), (0.76, 0.74), (0.66, 0.84)]
+    shape(ic, side, (220, 140, 40), 0.02)
+    ic.line([(0.56, 0.26), (0.62, 0.08), (0.72, 0.06)], color=(230, 70, 90), width=0.03, passes=1)
+    shape(ic, heart(0.48, 0.58, 0.1), (225, 60, 70), 0.02)
+    return ic
+
+
+def maneuvers():  # 防御策略：大盾牌罩住两个小人（金）
+    ic = Icon(214, "gold")
+    sh = [(0.14, 0.16), (0.5, 0.1), (0.86, 0.16), (0.84, 0.52), (0.5, 0.9), (0.16, 0.52)]
+    shape(ic, sh, (120, 180, 235))
+    buddy(ic, 0.38, 0.42, 0.8)
+    buddy(ic, 0.62, 0.42, 0.8, (220, 120, 90))
+    return ic
+
+
+def spiritlink():  # 灵魂连接：两颗心连着链子（金）
+    ic = Icon(215, "gold")
+    shape(ic, heart(0.26, 0.5, 0.15), (225, 60, 70), 0.02)
+    shape(ic, heart(0.74, 0.5, 0.15), (150, 110, 230), 0.02)
+    for x in (0.4, 0.5, 0.6):
+        ic.line(circle(x, 0.48, 0.045, 14), closed=True, color=(170, 170, 185), width=0.02, passes=1)
+    return ic
+
+
+def banner():  # 号令之旗：旗杆 + 飘扬的旗子（金）
+    ic = Icon(216, "gold")
+    ic.line([(0.3, 0.1), (0.3, 0.9)], color=(140, 95, 55), width=0.04, passes=1)
+    flag = [(0.32, 0.14), (0.82, 0.2), (0.7, 0.33), (0.84, 0.46), (0.32, 0.46)]
+    shape(ic, flag, (225, 60, 60))
+    shape(ic, star(0.54, 0.3, 0.07, 0.03, 5, -90), (250, 220, 70), 0.015)
+    return ic
+
+
+def sonicboom():  # 音爆：一圈圈声波 + 爆炸（金）
+    ic = Icon(217, "gold")
+    shape(ic, star(0.5, 0.52, 0.2, 0.1, 9, 10), (245, 140, 40), 0.02)
+    for r in (0.28, 0.38):
+        ic.line(arc(0.5, 0.52, r, 200, 340, 20), color=(90, 150, 220), width=0.025, passes=1)
+        ic.line(arc(0.5, 0.52, r, 20, 160, 20), color=(90, 150, 220), width=0.025, passes=1)
+    return ic
+
+
+def divine():  # 神圣干预：光环 + 翅膀（棱彩）
+    ic = Icon(307, "prism")
+    for flip in (False, True):
+        def m(x, y):
+            return (1 - x, y) if flip else (x, y)
+        wing = [m(0.46, 0.5), m(0.3, 0.3), m(0.12, 0.34), m(0.18, 0.46), m(0.1, 0.56), m(0.22, 0.64), m(0.18, 0.74), m(0.44, 0.66)]
+        shape(ic, wing, (250, 250, 245), 0.02)
+    ic.line(arc(0.5, 0.24, 0.14, 0, 360, 30, 0.35), closed=True, color=(245, 200, 60), width=0.035, passes=1)
+    shape(ic, circle(0.5, 0.54, 0.09, 20), (250, 230, 120), 0.02)
+    return ic
+
+
+def clothesline():  # 晾衣绳：两个小人拉着一条闪电绳（棱彩）
+    ic = Icon(308, "prism")
+    buddy(ic, 0.18, 0.4, 0.8)
+    buddy(ic, 0.82, 0.4, 0.8, (220, 120, 90))
+    rope = [(0.26, 0.56), (0.38, 0.48), (0.46, 0.6), (0.54, 0.48), (0.62, 0.6), (0.74, 0.56)]
+    ic.line(rope, color=(250, 210, 60), width=0.035, passes=1)
+    ic.sparkle(0.5, 0.3)
+    return ic
+
+
 ICONS = {f.__name__: f for f in (blunt, deft, goredrink, stats, goldrush, mind,
                                   recursion, critical, colossus, axiom, manamune, bonk1, bonk, bonk3,
                                   infinite, stats3, goliath, loop,
-                                  excited, fruitify, tank, porcupine, archmage, dualwield, cannon1, cannon, cannon3)}
+                                  excited, fruitify, tank, porcupine, archmage, dualwield, cannon1, cannon, cannon3,
+                                  sacrifice, vengeance, juicebox, maneuvers, spiritlink, banner, sonicboom, divine, clothesline)}
 
 if __name__ == "__main__":
     os.makedirs(OUT, exist_ok=True)

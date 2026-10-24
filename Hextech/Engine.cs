@@ -107,6 +107,7 @@ namespace Hextech
             mod.OnCheckpointSaved(() => checkpoint = run.Clone());
             mod.OnCheckpointRestored(Restore);
             mod.OnUpdate(Tick);
+            Team.Attach(ctx);
         }
 
         private static void Reset()
@@ -128,6 +129,7 @@ namespace Hextech
             mod.ClearSkillTunes();
             ClearState();
             Triggers.Clear(revert: false);
+            Team.Reset();
         }
 
         // 持续状态（溅射、怪物倍率）清空：只改 ModKit 里的设置，不碰英雄
@@ -178,6 +180,7 @@ namespace Hextech
             }
 
             Triggers.Tick(player);
+            Team.Tick(player, inWave);
             TickHostEnemy();
             TickOffer();
             TickForge();
@@ -236,6 +239,7 @@ namespace Hextech
             {
                 StopExcited(me);
                 FlushTank(me);
+                if (Active) Team.OnWaveEnded(me);
             }
             // 休息阶段：限时加成提前结束（游戏随后拍重试快照，快照里不能带着加成）
             Triggers.Clear(revert: true);
@@ -316,6 +320,8 @@ namespace Hextech
 
         private static bool Picked(string augmentId) => run.Picks.Any(c => c.Augment?.Id == augmentId);
 
+        public static bool Has(string augmentId) => Active && Picked(augmentId);
+
         // 已经拿到这个系列的第几档（0 = 没拿）
         private static int SeriesRank(string series) => Best(series)?.Rank ?? 0;
 
@@ -339,8 +345,9 @@ namespace Hextech
                     if (cards.All(x => x.Name != c.Name)) cards.Add(c);
             }
             int general = 3 - cards.Count;
+            // 队友卡只在房间里有队友时出现
             var pool = Augments.All.Where(a => a.Pool == AugmentPool.General && a.Tier == tier && !Picked(a.Id)
-                && (a.Requires == null || a.Requires.Any(Picked))).ToList();
+                && (a.Requires == null || a.Requires.Any(Picked)) && (!a.Team || Team.HasTeammates)).ToList();
             var fresh = pool.Where(a => !run.Shown.Contains("a:" + a.Id)).ToList();
             int heroId = Game.LocalPlayer?.HeroId ?? -1;
             cards.AddRange(Augments.Draw(fresh.Count >= general ? fresh : pool, heroId, general, rng).Select(a => a.ToCard()));
@@ -589,6 +596,7 @@ namespace Hextech
         {
             if (cast.IsFree || !Active) return;
             if (Picked("archmage")) Archmage(cast);
+            if (Game.LocalPlayer is Player me) Team.OnCast(me);
             if (!Picked("manamune") || run.ManamuneStacks >= Augments.ManamuneMaxStacks) return;
             run.ManamuneStacks++;
             if (run.ManamuneStacks == Augments.ManamuneMaxStacks) ScreenNotice.Show("魔宗叠满，变成「魔切」：攻击加成翻倍", 3f);
@@ -736,6 +744,7 @@ namespace Hextech
                 RevertMana(me);
                 StopExcited(me);
                 if (run.TankHp > 0) me.AddAttribute("HP", -run.TankHp);
+                Team.Revert(me);
             }
             run.InfiniteBonus = run.TankHp = run.TankPending = 0;
             run.Forges.Clear();

@@ -15,8 +15,11 @@ namespace Hextech
     {
         public string Id;
         public string Name;
-        // 大乱斗里的原名，写在说明最后
+        // 大乱斗（或 Source 指定的模式）里的原名，写在说明最后
         public string Origin;
+        public string Source = "海克斯大乱斗";
+        // 队友卡：房间里有队友时才出现（效果见 Team.cs）
+        public bool Team;
         public AugmentPool Pool;
         public Tier Tier;
         public string[] Lines;
@@ -46,7 +49,7 @@ namespace Hextech
         {
             Tier = Tier,
             Name = Name,
-            Lines = Origin == null ? Lines.ToList() : Lines.Append($"<color=#8A8A8A>（海克斯大乱斗「{Origin}」）</color>").ToList(),
+            Lines = Origin == null ? Lines.ToList() : Lines.Append($"<color=#8A8A8A>（{Source}「{Origin}」）</color>").ToList(),
             Augment = this,
         };
     }
@@ -98,6 +101,11 @@ namespace Hextech
             Id = id, Name = name, Origin = origin, Pool = AugmentPool.General, Tier = tier, Lines = new[] { line }, IconPath = icon, HeroWeights = weights,
             OnPick = p => p.AddAttribute(key, amount),
             Revert = p => p.AddAttribute(key, -amount),
+        };
+
+        private static Augment TeamCard(string id, string name, string origin, Tier tier, params string[] lines) => new Augment
+        {
+            Id = id, Name = name, Origin = origin, Source = "斗魂竞技场", Pool = AugmentPool.General, Tier = tier, Lines = lines, IconPath = EpicIcon, Team = true,
         };
 
         private static readonly Dictionary<int, float> Frieren = new Dictionary<int, float> { [FrierenHero] = 3f };
@@ -251,6 +259,30 @@ namespace Hextech
                 Ammo = new AmmoRule { Flat = 1, Dash = 2, PerCrit = 0.5f },
                 Lines = new[] { "弹药上限 +1，暴击伤害超过 150% 的部分每 50% 再 +1 发（最多 12 发）", "冲锋装填一次装 2 发" },
             },
+
+            // ---- 队友（参照斗魂竞技场；都走游戏原版的治疗、护盾、buff，队友没装 Mod 也生效）----
+            TeamCard("sacrifice", "甘愿牺牲", "甘愿牺牲", Tier.Silver,
+                $"{Team.Range:0} 米内的队友生命低于 {Team.LowHp:P0} 时：消耗你 {Team.SacrificeMana:P0} 的当前法力，治疗他 你生命上限的 {Team.SacrificeHeal:P0}",
+                $"同一个队友每 {Team.SacrificeCooldown:0} 秒最多一次"),
+            TeamCard("vengeance", "复仇", "复仇", Tier.Silver,
+                $"有队友倒下时，这一波剩下的时间里总伤害 +{Team.VengeanceDamage}%、吸血 +{Team.VengeanceLifesteal}%"),
+            TeamCard("juicebox", "果汁盒", "果汁盒", Tier.Silver,
+                "每次休息开始时，在每个玩家脚下掉一个痊愈神符"),
+            TeamCard("maneuvers", "防御策略", "防御策略", Tier.Gold,
+                $"你的生命低于 {Team.LowHp:P0} 时：{Team.ManeuverRadius:0} 米内的所有玩家得到 {Team.ManeuverShield:P0} 生命上限的护盾，范围内的队友回复 {Team.ManeuverHeal:P0} 生命",
+                $"每 {Team.ManeuverCooldown:0} 秒最多一次"),
+            TeamCard("spiritlink", "灵魂连接", "灵魂连接", Tier.Gold,
+                $"{Team.Range:0} 米内的队友掉血时，治疗他掉血量的 {Team.LinkRatio:P0}",
+                $"每秒最多治疗你生命上限的 {Team.LinkBudget:P0}"),
+            TeamCard("banner", "号令之旗", "号令之旗", Tier.Gold,
+                $"你放主动技能时，最近的队友（{Team.Range:0} 米内）获得圣焰祝福：伤害 +{Team.BannerDamage:P0}，持续 {Team.BannerSeconds:0} 秒"),
+            TeamCard("sonicboom", "音爆", "音爆", Tier.Gold,
+                $"你的海克斯治疗、护盾、祝福队友时，在他周围 {Team.BoomRadius:0} 米爆炸，造成你攻击 {Team.BoomDamage:P0} 的伤害",
+                $"同一个队友每 {Team.BoomCooldown:0} 秒最多一次；和其他队友卡搭配"),
+            TeamCard("divine", "神圣干预", "神圣干预", Tier.Prism,
+                $"每 {Team.DivineInterval:0} 秒，{Team.DivineRadius:0} 米内的所有玩家得到 {Team.DivineShield:P0} 生命上限的护盾，你无敌 {Team.DivineInvulnerable:0.#} 秒"),
+            TeamCard("clothesline", "晾衣绳", "晾衣绳", Tier.Prism,
+                $"你和 {Team.LineRange:0} 米内的每个队友之间连一条线，每 {Team.LineInterval:0.#} 秒对线上的敌人造成你攻击 {Team.LineDamage:P0} 的伤害"),
 
             // ---- 敌人 ----
             new Augment { Id = "e_tough", Name = "坚韧", Pool = AugmentPool.Enemy, Tier = Tier.Silver, EnemyHp = 1.1f, Lines = new[] { "敌人生命 +10%" } },

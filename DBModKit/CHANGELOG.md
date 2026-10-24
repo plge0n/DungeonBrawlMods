@@ -1,5 +1,14 @@
 # DBModKit 更新日志
 
+## 0.28.0
+队友相关的接口（都走游戏原版的命令，队友没装 Mod 也生效；**未实测**，要两人联机）：
+- `Game.Teammates()`：除了自己以外的玩家
+- `Player.HealAlly(队友, 量)`：治疗队友（`yb.iwz`，和装备 MadMan 治疗队友一样）
+- `Player.ShieldNearbyPlayers(半径, 比例)`：周围所有玩家（含自己）各加 生命上限 × 比例 的护盾（`CmdAddNearbyHumanityShield`，服务器限制半径 ≤ 50、比例 ≤ 1）
+- `Player.BlessPlayer(玩家, 增伤, 秒, 护甲)`：原版的"圣焰祝福" buff（`CmdAddBuff` + `SacredEmberBlessing`）
+- `Player.PlayEffect(特效, 位置, 缩放)`：播放特效
+- `Player.DamageArea` 的特效传 null 时不播特效（频繁判定时用）
+
 ## 0.27.0
 海克斯联机用的改动（**未实测**，要两人联机）：
 - 敌人倍率（`EnemyBoosts`）联机时以房主为准、作用于全房间：攻击倍率改为主机放大所有玩家受到的怪物伤害（远端玩家的伤害由主机算完再发 `CmdAttackOtherPlayer`，以前只放大了房主自己）；客户端设置的倍率不起作用（生命、护盾本来就只在主机刷怪时乘）
