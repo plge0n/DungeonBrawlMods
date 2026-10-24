@@ -1,5 +1,11 @@
 # DBModKit 更新日志
 
+## 0.31.0
+海克斯招牌卡用的接口（`SkillForms`，**未实测**）：
+- `mod.SetBiteGrowth(倍率)`：哥布林之王撕咬击杀加的生命上限乘倍率（补丁 `bbe.kjv`，服务器上算，只在单人或房主时生效）
+- `mod.SetBombRange(倍率)`：炸弹客的十字爆炸范围乘倍率（补丁 `bhk.msj` 后缀改 `bhlh`）
+- `mod.SetThunderOrbs(加几个)`：雷电雷之一闪的雷球上限（`PlayerThunderMode.maxOrbCount`，游戏最多 32）
+
 ## 0.30.0
 海克斯中等触发卡用的接口（**未实测**）：
 - `mod.OnLethalDamage(伤害 => 是否拦下)`：本地玩家受到致命伤害前调用，返回 true 免死（伤害改成 0）。补丁 `yb.iwl` 前缀（所有伤害最后结算的地方），

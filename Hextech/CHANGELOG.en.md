@@ -1,5 +1,8 @@
 # Hextech changelog (English)
 
+## 0.8.0
+- Signature augments (3 tiers each): Goblin King's Bite growth (Stackosaurus, host only in multiplayer), Bomber's bomb range (Nuke), Raiden's Thunder Flash orb cap
+
 ## 0.7.0
 - 6 medium trigger augments: Magic Missile, Dawnbringer's Resolve, Flying Sword, Still Here (cheat death once per wave), Sky Strike, Undying (cheat death 3 times per run)
 

@@ -1852,6 +1852,20 @@ namespace DBModKit
         // 从 from 看向 to 的朝向角度（游戏的 ez.dxv）
         public static float Facing(Vector3 from, Vector3 to) => ez.dxv(to, from);
 
+        // 雷之一闪的雷球上限：PlayerThunderMode.maxOrbCount（序列化字段，默认 10，读的时候限制在 1~32），英雄模式在 yb.bpia。
+        // 第一次改时记下原值，extra = 0 时改回去
+        private static readonly System.Runtime.CompilerServices.ConditionalWeakTable<PlayerThunderMode, object> thunderOriginal =
+            new System.Runtime.CompilerServices.ConditionalWeakTable<PlayerThunderMode, object>();
+        private static AccessTools.FieldRef<PlayerThunderMode, int> maxOrbCount;
+
+        public static void SetThunderOrbs(Component p, int extra)
+        {
+            if (!(((yb)p).bpia is PlayerThunderMode mode)) return;
+            maxOrbCount = maxOrbCount ?? AccessTools.FieldRefAccess<PlayerThunderMode, int>("maxOrbCount");
+            int original = (int)thunderOriginal.GetValue(mode, m => maxOrbCount(m));
+            maxOrbCount(mode) = original + Math.Max(0, extra);
+        }
+
         // 攻击距离：yb.iqg(加量)，遗物"瞄准镜"用的同一个，会同步给服务器（fbk 是诱饵）
         public static void AddAttackRange(Component p, float amount) => ((yb)p).iqg(amount);
         public static float CooldownRemaining(object s) => ((bht)s).k896ff3548b31472b8b2cf8f649c25e65;

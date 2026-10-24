@@ -48,6 +48,11 @@ namespace Hextech
         public SoulSplash Splash;
         // 「大炮」：男枪弹药
         public AmmoRule Ammo;
+        // 第五批招牌：撕咬成长倍率、炸弹范围倍率、雷球上限加几个
+        public float BiteGrowth, BombRange;
+        public int ThunderOrbs;
+        // 能不能出现（补丁没装上、只在房主时生效的卡）；null = 总是可以
+        public Func<bool> Available;
 
         public float WeightFor(int heroId) => HeroWeights != null && HeroWeights.TryGetValue(heroId, out var w) ? w : 1f;
 
@@ -100,6 +105,7 @@ namespace Hextech
         public const float PorcupineTrigger = 0.2f, PorcupineDamage = 0.5f, PorcupineRadius = 5f;
         public const float ArchmageRatio = 0.3f;
         public const int ShotgunSkill = 520;
+        public const int BiteSkill = 518, BombSkill = 513, ThunderSkill = 521;
         // 第三批
         public const float ConvertRatio = 0.25f, AutoCastCost = 0.7f, ScopesRange = 1.5f;
         public const int EggKills = 5, UrfKills = 8, UrfForges = 2;
@@ -419,6 +425,61 @@ namespace Hextech
             SupportCard("allin", "举国之力", Tier.Prism,
                 $"每次休息开始时，交出你当前金币的 {Team.AllInPay:P0}，在你供养的队友脚下掉 {Team.AllInRate:0.#} 倍的金币",
                 $"他在 {Team.AllInRange:0} 米内时，持续获得技能急速 +{Team.AllInHaste}"),
+
+            // ---- 第五批招牌：哥布林之王撕咬（只在单人或房主时生效：成长在服务器上算）----
+            new Augment
+            {
+                Id = "bite1", Name = "贪吃", Origin = "叠角龙", Pool = AugmentPool.Signature, Tier = Tier.Silver, SkillId = BiteSkill, Series = "bite", Rank = 1,
+                BiteGrowth = 1.5f, Available = () => SkillForms.BiteAvailable && Game.IsHost,
+                Lines = new[] { "撕咬击杀加的生命上限 +50%", "联机时只有房主能用（成长在房主那边算）" },
+            },
+            new Augment
+            {
+                Id = "bite", Name = "叠角龙", Origin = "叠角龙", Pool = AugmentPool.Signature, Tier = Tier.Gold, SkillId = BiteSkill, Series = "bite", Rank = 2,
+                BiteGrowth = 2f, Available = () => SkillForms.BiteAvailable && Game.IsHost,
+                Lines = new[] { "撕咬击杀加的生命上限翻倍", "联机时只有房主能用（成长在房主那边算）" },
+            },
+            new Augment
+            {
+                Id = "bite3", Name = "叠角龙·极", Origin = "叠角龙", Pool = AugmentPool.Signature, Tier = Tier.Prism, SkillId = BiteSkill, Series = "bite", Rank = 3,
+                BiteGrowth = 3f, Available = () => SkillForms.BiteAvailable && Game.IsHost,
+                Lines = new[] { "撕咬击杀加的生命上限 ×3", "联机时只有房主能用（成长在房主那边算）" },
+            },
+            // ---- 炸弹客 ----
+            new Augment
+            {
+                Id = "bomb1", Name = "大炸弹", Pool = AugmentPool.Signature, Tier = Tier.Silver, SkillId = BombSkill, Series = "bomb", Rank = 1,
+                BombRange = 1.25f, Available = () => SkillForms.BombAvailable,
+                Lines = new[] { "炸弹的十字爆炸范围 +25%" },
+            },
+            new Augment
+            {
+                Id = "bomb", Name = "核弹", Pool = AugmentPool.Signature, Tier = Tier.Gold, SkillId = BombSkill, Series = "bomb", Rank = 2,
+                BombRange = 1.5f, Available = () => SkillForms.BombAvailable,
+                Lines = new[] { "炸弹的十字爆炸范围 +50%" },
+            },
+            new Augment
+            {
+                Id = "bomb3", Name = "核弹·极", Pool = AugmentPool.Signature, Tier = Tier.Prism, SkillId = BombSkill, Series = "bomb", Rank = 3,
+                BombRange = 2f, Available = () => SkillForms.BombAvailable,
+                Lines = new[] { "炸弹的十字爆炸范围翻倍" },
+            },
+            // ---- 雷电 ----
+            new Augment
+            {
+                Id = "thunder1", Name = "雷暴", Pool = AugmentPool.Signature, Tier = Tier.Silver, SkillId = ThunderSkill, Series = "thunder", Rank = 1,
+                ThunderOrbs = 2, Lines = new[] { "雷之一闪的雷球上限 +2（最多多闪 2 段）" },
+            },
+            new Augment
+            {
+                Id = "thunder", Name = "万雷", Pool = AugmentPool.Signature, Tier = Tier.Gold, SkillId = ThunderSkill, Series = "thunder", Rank = 2,
+                ThunderOrbs = 4, Lines = new[] { "雷之一闪的雷球上限 +4（最多多闪 4 段）" },
+            },
+            new Augment
+            {
+                Id = "thunder3", Name = "雷神", Pool = AugmentPool.Signature, Tier = Tier.Prism, SkillId = ThunderSkill, Series = "thunder", Rank = 3,
+                ThunderOrbs = 8, Lines = new[] { "雷之一闪的雷球上限 +8（最多多闪 8 段，每段伤害照常递增）" },
+            },
 
             // ---- 敌人 ----
             new Augment { Id = "e_tough", Name = "坚韧", Pool = AugmentPool.Enemy, Tier = Tier.Silver, EnemyHp = 1.1f, Lines = new[] { "敌人生命 +10%" } },
