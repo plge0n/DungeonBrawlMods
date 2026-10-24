@@ -13,7 +13,7 @@ namespace DBModKit
         public static bool Install(Harmony harmony)
         {
             if (!TryPatch(harmony, typeof(LeaderboardHooks), "排行榜上传拦截",
-                    AccessTools.Method(typeof(bxl), "rfh", new[]
+                    AccessTools.Method(typeof(bxl), "rfj", new[]
                     {
                         typeof(int), typeof(int), typeof(de.TeamBuildData), typeof(Action<bxj>),
                         typeof(Action<LeaderboardUploadStage>), typeof(string),
@@ -35,7 +35,7 @@ namespace DBModKit
                     prefix: nameof(AutoCastHooks.TargetPrefix));
 
             GameEvents.WaveEventsAvailable = TryPatch(harmony, typeof(WaveHooks), "波次事件",
-                AccessTools.Method(typeof(MyServerNetworkManager), "qsi", new[] { typeof(ClientNetMessage) }),
+                AccessTools.Method(typeof(MyServerNetworkManager), "qsj", new[] { typeof(ClientNetMessage) }),
                 postfix: nameof(WaveHooks.MessagePostfix));
 
             // 分开打：gad 失败时 ModKit 在进入战斗时补写倍率，gaf 失败时出场覆盖的数值不乘倍率
@@ -54,9 +54,9 @@ namespace DBModKit
                 }),
                 prefix: nameof(GameDataHooks.EnemyDamagePrefix));
 
-            // 三选一卡片 bqk.par 按品质给图标染色（原版的深色技能图标染了才有色调），Mod 注册的图标保留原色
+            // 三选一卡片 bqk.pas 按品质给图标染色（原版的深色技能图标染了才有色调），Mod 注册的图标保留原色
             TryPatch(harmony, typeof(ChoiceIconHooks), "三选一图标保留原色",
-                AccessTools.Method(typeof(bqk), "par", new[] { typeof(RoguelikeUIData), typeof(int), typeof(bool), typeof(int) }),
+                AccessTools.Method(typeof(bqk), "pas", new[] { typeof(RoguelikeUIData), typeof(int), typeof(bool), typeof(int) }),
                 postfix: nameof(ChoiceIconHooks.CardPostfix));
 
             // 男枪弹药 bcc：lpz 开始装填、lqb 推进装填、lqc 冲锋、lpx 补满（同签名的其他方法是诱饵）；
@@ -104,7 +104,7 @@ namespace DBModKit
                 prefix: nameof(SoulDevourerHooks.StrikeEndPrefix));
 
             HeroSkins.Available = TryPatch(harmony, typeof(HeroSkinHooks), "英雄皮肤（查找模型）",
-                AccessTools.Method(typeof(buz), "qhf", new[] { typeof(int), typeof(string).MakeByRefType(), typeof(LocalWorkshopManifest).MakeByRefType() }),
+                AccessTools.Method(typeof(buz), "qhg", new[] { typeof(int), typeof(string).MakeByRefType(), typeof(LocalWorkshopManifest).MakeByRefType() }),
                 prefix: nameof(HeroSkinHooks.ResolvePrefix));
             // 出生、变身期间记下是哪个角色：pwu 据此对其他玩家返回原版（模型和名字都按原版）
             HeroSkins.OnlyLocalPlayerAvailable =
@@ -121,7 +121,7 @@ namespace DBModKit
             // 开关技能开着时，自动释放直接把它关掉，不经过 dxx
             if (AutoCast.Available)
                 TryPatch(harmony, typeof(AutoCastHooks), "开关技能自动关闭",
-                    AccessTools.Method(typeof(bii), "ke036b94f6c9b405d82a4ead3e0f3f1b4", new Type[0]),
+                    AccessTools.Method(typeof(bii), "kaa9e7d5c7e8c45fba32a2a2dddfc87a1", new Type[0]),
                     prefix: nameof(AutoCastHooks.TogglePrefix), postfix: nameof(AutoCastHooks.TogglePostfix));
 
             MoveControl.Available =
@@ -245,7 +245,7 @@ namespace DBModKit
                 AccessTools.Method(typeof(Resources), nameof(Resources.Load), new[] { typeof(string), typeof(Type) }),
                 prefix: nameof(AssetHooks.ResourcesPrefix));
             TryPatch(harmony, typeof(AssetHooks), "Mod 图标（技能栏）",
-                AccessTools.Method(typeof(bpt), "oyp"),
+                AccessTools.Method(typeof(bpt), "oyq"),
                 postfix: nameof(AssetHooks.SkillButtonPostfix));
 
             // 变体英雄：出生时临时换属性表和专属技能，结束后换回；名字在出生后改
@@ -289,13 +289,13 @@ namespace DBModKit
     }
 
     // 游戏作者的规则：装了 Mod 不能上传排行榜（违规可能被拉进按 Steam 账号判定的黑名单，连累整队）。
-    // 两道拦截：自己上传（bxl.rfh），以及在别人房间里把构筑快照交给房主上传（bbr.lba）。
-    // bxl.rfh 是排行榜上传入口（由主机 MyServerNetworkManager 调用；bxl.nlq 是同签名的诱饵）。
+    // 两道拦截：自己上传（bxl.rfj），以及在别人房间里把构筑快照交给房主上传（bbr.lba）。
+    // bxl.rfj 是排行榜上传入口（由主机 MyServerNetworkManager 调用；bxl.nlq 是同签名的诱饵）。
     // 强制拦截，不提供开关；按游戏自己的失败流程回调，结算界面会显示上传失败。
     internal static class LeaderboardHooks
     {
         private static readonly MethodInfo makeFailure =
-            AccessTools.Method(typeof(bxl), "rfr", new[] { typeof(LeaderboardUploadFailure), typeof(string) });
+            AccessTools.Method(typeof(bxl), "rft", new[] { typeof(LeaderboardUploadFailure), typeof(string) });
 
         internal static bool UploadPrefix(Action<bxj> __3)
         {
@@ -308,7 +308,7 @@ namespace DBModKit
         }
 
         // bbr.lba(局, 回合)：国王对决结算时把本地玩家的构筑快照（ez.ecd）用 CmdUploadLocalKingData 发给房主（ody/gif/hjf 是诱饵副本）。
-        // 房主（MyServerNetworkManager.qtm）把各人的快照汇总进队伍数据，再用 bxl.rfh 一起上传排行榜，只要求有房主自己的快照
+        // 房主（MyServerNetworkManager.qtn）把各人的快照汇总进队伍数据，再用 bxl.rfj 一起上传排行榜，只要求有房主自己的快照
         // （qlk），别人的可以缺。房主装了 ModKit 时 quj 已被拦截；房主没装时我们拦不住它的上传，所以在这里不发，
         // 队伍照常上传，只是不带我们。自己当房主时照常发给自己（最后的上传会被 quj 拦截，提示和原来一样）
         internal static bool KingSnapshotPrefix()
@@ -394,14 +394,14 @@ namespace DBModKit
             return false;
         }
 
-        // bht.kcac92…()：bpt.oyr 每帧在冷却好时调用的自动释放入口。开关技能开着（bhnv）时它会直接关掉技能，
+        // bht.kcac92…()：bpt.oys 每帧在冷却好时调用的自动释放入口。开关技能开着（bhnv）时它会直接关掉技能，
         // 这里先问处理器：Skip = 保持开着，其余 = 照原版关掉
         internal static bool TogglePrefix(bii __instance, ref bool __result, out State? __state)
         {
             __state = null;
             var handler = AutoCast.Handler;
-            var native = __instance.bigi?.bjzu;
-            if (handler == null || native == null || !native.bigx || __instance.bigf == null || __instance.bigf != GameRaw.LocalPlayer())
+            var native = __instance.bigk?.bjzw;
+            if (handler == null || native == null || !native.bigz || __instance.bigh == null || __instance.bigh != GameRaw.LocalPlayer())
                 return true;
 
             var slot = SkillSlot.Wrap(native);
@@ -676,7 +676,7 @@ namespace DBModKit
     }
 
     // bbr.kyh(bool)：待机/移动状态每帧的控制逻辑（含官方自动战斗）；bbr.kyg()：攻击状态每帧，玩家有移动输入时会打断攻击。
-    // 两者都从 oy.bdhv / oy.bdhw 读移动输入。处理器要移动时，在调用期间把方向写进输入、结束后还原，
+    // 两者都从 oy.bdhx / oy.bdhy 读移动输入。处理器要移动时，在调用期间把方向写进输入、结束后还原，
     // 游戏就会按"玩家按住方向键"处理：转向、移速、碰撞、打断攻击都走原版逻辑。
     internal static class MoveHooks
     {
@@ -699,8 +699,8 @@ namespace DBModKit
         {
             if (__state is Saved s)
             {
-                oy.bdhv = s.X;
-                oy.bdhw = s.Z;
+                oy.bdhx = s.X;
+                oy.bdhy = s.Z;
             }
         }
 
@@ -708,9 +708,9 @@ namespace DBModKit
         {
             var handler = MoveControl.Handler;
             if (handler == null || player == null || player != GameRaw.LocalPlayer()) return null;
-            if (player.roleType == RoleType.King || nr.bcfi) return null;
+            if (player.roleType == RoleType.King || nr.bcfk) return null;
             // 玩家自己在操作
-            if (!Mathf.Approximately(oy.bdhv, 0f) || !Mathf.Approximately(oy.bdhw, 0f)) return null;
+            if (!Mathf.Approximately(oy.bdhx, 0f) || !Mathf.Approximately(oy.bdhy, 0f)) return null;
 
             var p = Game.LocalPlayer;
             if (p == null) return null;
@@ -727,9 +727,9 @@ namespace DBModKit
             if (!cmd.Override) return null;
 
             MoveControl.Last = cmd;
-            var saved = new Saved { X = oy.bdhv, Z = oy.bdhw };
-            oy.bdhv = cmd.Direction.x;
-            oy.bdhw = cmd.Direction.z;
+            var saved = new Saved { X = oy.bdhx, Z = oy.bdhy };
+            oy.bdhx = cmd.Direction.x;
+            oy.bdhy = cmd.Direction.z;
             return saved;
         }
     }
@@ -760,14 +760,14 @@ namespace DBModKit
         internal static void DamagePrefix(yh __0, ref double __1, ActiveSkillEnum __6, bfs __8)
         {
             if (__0 == null || __0 != GameRaw.LocalPlayer()) return;
-            var skill = __8 != null ? __8.bhpk : __6;
+            var skill = __8 != null ? __8.bhpm : __6;
             if (skill == ActiveSkillEnum.None) return;
             float m = SkillTuning.Get((int)skill).Damage;
             if (m != 1f) __1 *= m;
         }
     }
 
-    // 重试波次（wb）：wh.hby 在 OnStartRest 之后的下一次网络循环里拍快照（wh.bpyd 为真表示快照有效）；
+    // 重试波次（wb）：wh.hby 在 OnStartRest 之后的下一次网络循环里拍快照（wh.bpyg 为真表示快照有效）；
     // wh.hca 是点"重试"后的还原入口，同步执行完还原，返回是否成功
     internal static class CheckpointHooks
     {
@@ -820,18 +820,18 @@ namespace DBModKit
         internal static void EnemyDamagePrefix(yh __instance, yh __0, ref double __1)
         {
             if (!EnemyBoosts.Active || EnemyBoosts.Attack == 1f || !(__0 is xu)) return;
-            if (!__0.bqyb || __instance.roleType != RoleType.Player) return;
+            if (!__0.bqye || __instance.roleType != RoleType.Player) return;
             __1 *= EnemyBoosts.Attack;
         }
 
         // 与 gaf 的判断一致：出场类型不是 None、出场次数 ≥ 0，且 bcrv 里有出场次数不超过它的条目
         private static bool OccurrenceOverrides(ou table, EnemyType enemy, EnemySpawnKind kind, int occurrence)
         {
-            if (kind == EnemySpawnKind.None || occurrence < 0 || table?.bdfz == null) return false;
+            if (kind == EnemySpawnKind.None || occurrence < 0 || table?.bdgb == null) return false;
             // 键的格式同 ou.gdk：(int)怪物 + "_" + (int)出场类型
-            if (!table.bdfz.TryGetValue((int)enemy + "_" + (int)kind, out var list) || list == null) return false;
+            if (!table.bdgb.TryGetValue((int)enemy + "_" + (int)kind, out var list) || list == null) return false;
             foreach (var n in list)
-                if (n != null && n.bcpy <= occurrence) return true;
+                if (n != null && n.bcqa <= occurrence) return true;
             return false;
         }
 
@@ -849,29 +849,29 @@ namespace DBModKit
     internal static class SkillFormHooks
     {
         // kjv：哥布林之王击杀时 bpmz（累计成长，背后是 bfpe）+= 成长量，再 iww(成长量) 加生命上限。前缀记下之前的值，后缀按差额补上多出来的部分
-        internal static void BitePrefix(bbr __instance, out long __state) => __state = __instance.bqjb;
+        internal static void BitePrefix(bbr __instance, out long __state) => __state = __instance.bqje;
 
         internal static void BitePostfix(bbr __instance, long __state)
         {
             float m = SkillForms.BiteMultiplier;
-            if (m <= 1f || (object)__instance != nr.bpwv) return;
-            long gained = __instance.bqjb - __state;
+            if (m <= 1f || (object)__instance != nr.bpwy) return;
+            long gained = __instance.bqje - __state;
             if (gained <= 0) return;
             long extra = (long)Math.Min(long.MaxValue / 4, gained * (double)(m - 1f));
             if (extra <= 0) return;
-            __instance.bqjb = __instance.bqjb + Math.Min(extra, long.MaxValue - __instance.bqjb);
+            __instance.bqje = __instance.bqje + Math.Min(extra, long.MaxValue - __instance.bqje);
             __instance.jbr(extra);
-            (__instance.bqdr as PlayerBiteMode)?.kkm();
+            (__instance.bqdu as PlayerBiteMode)?.kkm();
         }
 
         // msj(技能, 施法者, 位置, 表, 敏捷, 时长, 范围倍率)：十字长度 biej，宽度是 biej / 6，爆炸特效按 biej / 40 缩放，都跟着变。
         // 每个客户端都会生成炸弹实例；伤害只在施法者本机算，所以只改本地玩家放的
-        internal static void BombPostfix(yh __1, ref float ___biej, GameObject ___biek)
+        internal static void BombPostfix(yh __1, ref float ___biel, GameObject ___biem)
         {
             float m = SkillForms.BombMultiplier;
-            if (m <= 1f || (object)__1 != nr.bpwv) return;
-            ___biej *= m;
-            if (___biek != null) ___biek.transform.localScale *= 1f + (m - 1f) * 0.5f;
+            if (m <= 1f || (object)__1 != nr.bpwy) return;
+            ___biel *= m;
+            if (___biem != null) ___biem.transform.localScale *= 1f + (m - 1f) * 0.5f;
         }
     }
 
@@ -886,10 +886,10 @@ namespace DBModKit
         // 已经死了不拦：iwr（持续伤害）和 lfr（远端伤害）不查死亡就进 iwl，死后 hp = 0 的任何伤害都会被当成致命
         internal static void SettlePrefix(yh __instance, ref double __0, bool __4)
         {
-            if (!Combat.HasLethalGuards || __0 <= 0.0 || __instance.bffk || (object)__instance != nr.bpwv) return;
-            if (__instance.hp <= 0 || __instance.bqdp == RoleState.Dead) return;
+            if (!Combat.HasLethalGuards || __0 <= 0.0 || __instance.bffm || (object)__instance != nr.bpwy) return;
+            if (__instance.hp <= 0 || __instance.bqds == RoleState.Dead) return;
             double damage = Math.Round(__0 * (__4 ? nr.fuf() : 1f));
-            bool client = !cjp.bntf;
+            bool client = !cjp.bnti;
             if (client && Time.time > unsyncedUntil) unsynced = 0;
             double left = __instance.hp + GameRaw.Shield(__instance) - (client ? unsynced : 0);
             if (damage >= left && Combat.RaiseLethal(damage))
@@ -911,7 +911,7 @@ namespace DBModKit
         internal static void StrikeEndPrefix(object __instance) => SoulDevourer.OnStrikeEnd(__instance);
     }
 
-    // MyServerNetworkManager.qsi(ClientNetMessage)：客户端（含主机自己）收到服务器消息后的分发（在 cjb.vtj 里注册，是真方法）。
+    // MyServerNetworkManager.qsj(ClientNetMessage)：客户端（含主机自己）收到服务器消息后的分发（在 cjb.vtl 里注册，是真方法）。
     // 用后缀：游戏先处理完（比如更新波次），再通知 Mod
     internal static class WaveHooks
     {
@@ -935,11 +935,11 @@ namespace DBModKit
         }
     }
 
-    // buz.qhf(英雄编号, out 文件夹, out manifest)：查找英雄模型文件夹的唯一入口，出生、选英雄预览、变身、英雄名和头像覆盖都经过它
+    // buz.qhg(英雄编号, out 文件夹, out manifest)：查找英雄模型文件夹的唯一入口，出生、选英雄预览、变身、英雄名和头像覆盖都经过它
     //   （wy 是同签名的诱饵）。原版顺序：PlayerPrefs Workshop.LocalHeroModel.<编号> → 设置里的本地文件 Mod → 工坊绑定。
     //   只按英雄查本机设置，所以原版在你这边会把同英雄的其他玩家也换掉，名字（roleName）也换成模型里的 heroName
-    // bbr.lio：出生（ClientRpcBornPos），每个客户端对每个玩家都会调用；里面 yh.izc → ez.dwe 算名字、buz.qgs 换模型
-    // bhh.mzw（变身技能）、bcd.lxg（变身状态恢复）：通过 buz.qgu → pwl 给新模型换上 additionalModels
+    // bbr.lio：出生（ClientRpcBornPos），每个客户端对每个玩家都会调用；里面 yh.izc → ez.dwe 算名字、buz.qgt 换模型
+    // bhh.mzw（变身技能）、bcd.lxg（变身状态恢复）：通过 buz.qgv → pwl 给新模型换上 additionalModels
     internal static class HeroSkinHooks
     {
         // 正在出生或变身的角色；不在这些方法里时为 null（例如选英雄界面的预览）
@@ -959,7 +959,7 @@ namespace DBModKit
                 return true;
             }
             LocalWorkshopManifest manifest = null;
-            if (folder != null && !bvf.qji(folder, out manifest)) return true;
+            if (folder != null && !bvf.qjj(folder, out manifest)) return true;
             __1 = folder ?? string.Empty;
             __2 = manifest;
             __result = folder != null;
@@ -975,7 +975,7 @@ namespace DBModKit
         internal static void SkillTransformPrefix(bhh __instance, out yh __state)
         {
             __state = owner;
-            owner = __instance.bhph;
+            owner = __instance.bhpj;
         }
 
         internal static void CheckpointTransformPrefix(bbr __0, out yh __state)
@@ -1075,7 +1075,7 @@ namespace DBModKit
 
         // 取调用栈有开销：只在有人订阅命中事件、而且是本地玩家打出的伤害时取
         private static bool ShouldTrace(yh attacker)
-            => attacker != null && attacker == nr.bpwv && Combat.HasSubscribers;
+            => attacker != null && attacker == nr.bpwy && Combat.HasSubscribers;
 
         private static Type FindCaller()
         {
