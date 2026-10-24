@@ -1,6 +1,8 @@
 # DBModKit changelog (English)
 
 ## 0.31.0
+**After updating, quit the game and run install.bat in the runtime item again** (zip users: extract the new "plugins" package), otherwise mods that need it (Hextech 0.31.0) won't load.
+
 - `SkillForms`: `mod.SetBiteGrowth`, `mod.SetBombRange`, `mod.SetThunderOrbs` (signature skill tweaks)
 
 ## 0.30.0
