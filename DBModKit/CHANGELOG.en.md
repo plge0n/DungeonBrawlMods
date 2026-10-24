@@ -1,5 +1,10 @@
 # DBModKit changelog (English)
 
+## 0.34.0
+**Updated for game version 7.03. After updating, quit the game and run install.bat in the runtime item again** (zip users: extract the new "plugins" package), otherwise all mods stay disabled.
+
+- Not play-tested; if something breaks, please export a report and let us know
+
 ## 0.33.0
 **Updated for game version 7.02. After updating, quit the game and run install.bat in the runtime item again** (zip users: extract the new "plugins" package), otherwise all mods stay disabled.
 

@@ -84,7 +84,7 @@ namespace DBModKit
     /// </summary>
     public static class Loot
     {
-        /// <summary>按 C 拾取的范围（bjc.nht）。</summary>
+        /// <summary>按 C 拾取的范围（bjw.nkv）。</summary>
         public const float PickRange = 5f;
         public const int BagSize = 6;
 

@@ -33,7 +33,7 @@ namespace DBModKit
         private static readonly Dictionary<(string skin, int hero), bool> installed = new Dictionary<(string, int), bool>();
         // 角色 netId → 对方公布的皮肤
         private static Dictionary<uint, Entry> entries = new Dictionary<uint, Entry>();
-        // 要重新换模型的角色。对方的角色还没生成时不用管，生成时（bbr.lio）会按 entries 换
+        // 要重新换模型的角色。对方的角色还没生成时不用管，生成时（bbs.ljm）会按 entries 换
         private static readonly HashSet<uint> pending = new HashSet<uint>();
 
         internal static List<RemoteSkin> Others { get; private set; } = new List<RemoteSkin>();
