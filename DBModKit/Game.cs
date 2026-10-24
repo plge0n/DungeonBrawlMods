@@ -116,7 +116,7 @@ namespace DBModKit
         internal static Role Wrap(Component native)
         {
             if (native == null) return null;
-            return cache.GetValue(native, n => n is bbe ? new Player(n) : new Role(n));
+            return cache.GetValue(native, n => n is bbr ? new Player(n) : new Role(n));
         }
 
         /// <summary>游戏原始对象（混淆类型），仅供调试；不要依赖它的成员名。</summary>

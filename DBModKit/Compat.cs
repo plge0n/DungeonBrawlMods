@@ -12,77 +12,77 @@ namespace DBModKit
     internal static class Compat
     {
         // 测试过的游戏版本（Application.version）
-        public static readonly string[] TestedVersions = { "6.45" };
+        public static readonly string[] TestedVersions = { "7.01" };
 
         // 类型名 → Mod 用到的成员（字段/属性/方法，含继承自基类的）
         private static readonly Dictionary<string, string[]> Required = new Dictionary<string, string[]>
         {
-            ["nn"] = new[] { "bpbu", "bbsr", "bbst", "bbtv", "bbtm", "bbth", "bbtz", "fqr", "frk", "MaxSkillNum", "MaxEquipNum" },
-            ["os"] = new[] { "gba", "bctl", "bctm" },
-            ["cj"] = new[] { "boyb", "boyi", "boyj", "boyl", "boyn", "boyq", "boyt" },
-            ["ez"] = new[] { "dxx", "dxy", "dyk", "dvm", "eaz", "ebc", "dzc", "dye", "dyf", "eax", "ebf", "dzo", "dxt", "dxq", "dxv", "dyl", "ebj", "eae", "ebg" },
-            ["bfl"] = new[] { "mna" },
-            ["pj"] = new[] { "bcxi", "bcxj", "bcxk", "bcxu", "gko" },
-            ["bfe"] = new[] { "bgwf", "bgwg", "bgwi", "bgwe", "bgwj", "kea", "Clear" },
+            ["nr"] = new[] { "bpwv", "bcen", "bcep", "bcfr", "bcfi", "bcfd", "bcfv", "fsw", "fto", "MaxSkillNum", "MaxEquipNum" },
+            ["oy"] = new[] { "gei", "bdhv", "bdhw" },
+            ["cj"] = new[] { "bpsx", "bpte", "bptf", "bpth", "bptj", "bptm", "bptp" },
+            ["ez"] = new[] { "dyp", "dyq", "dzc", "dwe", "ebt", "ebw", "dzu", "dyw", "dyx", "ebr", "ebz", "eag", "dyl", "dyi", "dyn", "dzd", "ecd", "eaw", "eca" },
+            ["bfz"] = new[] { "mwh" },
+            ["pr"] = new[] { "bdls", "bdlt", "bdlu", "bdme", "goa" },
+            ["bfs"] = new[] { "bhph", "bhpi", "bhpk", "bhpg", "bhpl", "klv", "Clear" },
             // 伤害来自哪个被动 / 装备 / 遗物 / Buff
-            ["qp"] = new[] { "gou", "gov" },
-            ["ke"] = new[] { "bbcl", "bbcm", "bbcn", "bbco", "bbcp", "Init", "Clear", "euv", "evl", "evm" },
-            ["lm"] = new string[0],
-            ["rn"] = new[] { "bdgp", "bdgr", "bdgv", "bdgw", "bdgy", "gtb", "gtc", "gtd", "gtf" },
-            ["hm"] = new[] { "baqz" },
-            ["jy"] = new[] { "baxw", "etb", "baxt", "bayh", "erc", "erk", "Init", "k9326fabeadf343ea92814a2f3df04aac" },
+            ["qv"] = new[] { "gsi", "gsj" },
+            ["kh"] = new[] { "bbog", "bboh", "bboi", "bboj", "bbok", "Init", "Clear", "ewv", "exl", "exm" },
+            ["lq"] = new string[0],
+            ["rt"] = new[] { "bduz", "bdvb", "bdvf", "bdvg", "bdvi", "gwp", "gwq", "gwr", "gwt" },
+            ["ho"] = new[] { "bbct" },
+            ["kb"] = new[] { "bbjr", "evb", "bbjo", "bbkc", "etc", "etk", "Init", "k58cbd18331e34716863f13584ff59167" },
             ["AttackType"] = new[] { "Normal", "Skill", "Buff", "AttackEffect", "TrueDamage" },
             ["DamageSourceKind"] = new[] { "Default", "ActiveSkill", "Aura", "Status", "Reflect", "PassiveProc", "IllusoryWeapon" },
-            ["oj"] = new[] { "bcqp", "fuv" },
-            ["ok"] = new[] { "bcqs", "bcqt", "bcqv", "bcqw", "bcqx", "bcqy" },
-            ["nw"] = new[] { "bcmf" },
-            ["bdc"] = new[] { "bgfu" },
+            ["op"] = new[] { "bdet", "fxz" },
+            ["oq"] = new[] { "bdew", "bdex", "bdez", "bdfa", "bdfb", "bdfc" },
+            ["oa"] = new[] { "bcyb" },
+            ["bdq"] = new[] { "bgyw" },
             ["ProgressCombatFact"] = new[] { "Amount", "ShieldDamage", "SkillId", "Active", "Critical", "Normal" },
             ["RoleState"] = new[] { "Attack", "Dead" },
             ["RoleType"] = new[] { "King", "Summon" },
-            ["bwu"] = new[] { "quj", "qut" },
-            ["bws"] = new string[0],
+            ["bxl"] = new[] { "rfh", "rfr" },
+            ["bxj"] = new string[0],
             ["LeaderboardUploadFailure"] = new[] { "InvalidData" },
             ["LeaderboardUploadStage"] = new string[0],
-            ["yb"] = new[]
+            ["yh"] = new[]
             {
-                "hp", "maxHp", "authorityId", "iwk", "iwr", "localRoleBuffDic", "izk", "iyn", "ivj", "bphx", "bpia", "bphc", "bqbx", "roleName", "bpgz", "beqd", "ivk", "bphy", "roleType",
-                "henShinSkillId", "timer", "iyi", "iyj", "isCheckAttack",
+                "hp", "maxHp", "authorityId", "jbf", "jbm", "localRoleBuffDic", "jeg", "jdi", "jae", "bqdo", "bqdr", "bqct", "bqyc", "roleName", "bqcq", "bffk", "jaf", "bqdp", "roleType",
+                "henShinSkillId", "timer", "jdd", "jde", "isCheckAttack",
                 "enemyDefeatedEvent", "activeSkillCastEvent", "criticalEvent", "dogeEvent",
-                "bphz", "bphq", "bphp", "bpho", "bphb", "bphl", "bphm", "bphk", "bphr", "bphv", "bpgy", "iwz", "iwh",
-                "localActiveSkillCastEvent", "iqz", "irv", "roleBuffManager", "iwk",
-                "ivb", "iva", "ixz", "izi", "iym", "iyk", "ivi", "ivh", "ivl", "overrideAnimSkillId",
+                "bqdq", "bqdh", "bqdg", "bqdf", "bqcs", "bqdc", "bqdd", "bqdb", "bqdi", "bqdm", "bqcp", "jbu", "jbc",
+                "localActiveSkillCastEvent", "ivu", "iwq", "roleBuffManager", "jbf",
+                "izw", "izv", "jcu", "jee", "jdh", "jdf", "jad", "jac", "jag", "overrideAnimSkillId",
             },
-            ["bbe"] = new[]
+            ["bbr"] = new[]
             {
-                "heroType", "kzz", "bpnc", "bfru", "bfrv", "kqi", "kqh", "addDamagePercent", "addBossEnemy", "addEliteEnemy", "addNormalEnemy",
-                "ksd", "k4a25de8c63fe4a7192613346ae51af4e", "kfd63a19d353a42878846361e6af4f637",
-                "kqk", "kkl", "CmdPickItem", "playerAttribute", "roleSkillList", "ktb", "onPlayerLevelUp", "onPlayerRelife", "addBagItemEvent",
-                "kql", "kqn", "CmdAddBuff", "CmdAddNearbyHumanityShield", "onTeammateLevelUp", "CmdCreateItemByPosWithNum",
-                "dieEvent", "iqg", "iwl", "CmdCreateSkill",
+                "heroType", "lio", "bqje", "bgko", "bgkp", "kyh", "kyg", "addDamagePercent", "addBossEnemy", "addEliteEnemy", "addNormalEnemy",
+                "lac", "kce6d0aea2c124d1fb21977b6443b14bc", "k98b329accfd04307bcf31c49e30a82fe",
+                "kyj", "ksj", "CmdPickItem", "playerAttribute", "roleSkillList", "lba", "onPlayerLevelUp", "onPlayerRelife", "addBagItemEvent",
+                "kyk", "kym", "CmdAddBuff", "CmdAddNearbyHumanityShield", "onTeammateLevelUp", "CmdCreateItemByPosWithNum",
+                "dieEvent", "ivb", "jbg", "CmdCreateSkill",
             },
             ["EnemyDefeatContext"] = new[] { "IsBoss", "IsElite" },
-            ["MyServerNetworkManager"] = new[] { "qhu", "bpue" },
+            ["MyServerNetworkManager"] = new[] { "qsi", "bqqj" },
             ["ClientNetMessage"] = new[] { "clientNetOperation" },
             ["ClientNetOperation"] = new[] { "OnStartGame", "OnStartRest", "EnemyEnterTip", "OnGameOver" },
             ["RemainsData"] = new[] { "grade", "conditions", "isUnique", "isTeam", "runAcquireLimit", "mapTypes" },
             // 掉落物拾取
-            ["ot"] = new[] { "bctu", "gdb" },
-            ["ou"] = new[] { "bcty", "bctz", "bcua", "bcuc" },
-            ["bba"] = new[] { "kgw", "bfmz", "bfna", "bfnc", "khf", "kb163cadd39ce47f38866dd8c2caf5f3c" },
-            ["AudioManager"] = new[] { "daw" },
+            ["oz"] = new[] { "bdie", "ggk" },
+            ["pa"] = new[] { "bdii", "bdij", "bdik", "bdim" },
+            ["bbl"] = new[] { "koq", "bgfk", "bgfl", "bgfn", "koz", "ka54fd8703e094fc095f862c08dbcd563" },
+            ["AudioManager"] = new[] { "dbn" },
             ["ItemType"] = new[] { "Gold", "Gem", "STRBook", "Active_Book_D", "Passsive_Book_D", "GoldCoinBag_LV1", "Talisman_Roar", "Card_0" },
-            ["bqa"] = new[] { "osj", "bacf" },
+            ["bqq"] = new[] { "pca", "banm" },
             ["RoguelikeUIData"] = new[] { "name", "dec", "icon", "quality", "data" },
             ["GoldIncomeSource"] = new[] { "Gameplay" },
             ["LocalBuffType"] = new[] { "SacredEmberBlessing", "SkillHaste", "IronArmor" },
-            ["bee"] = new[] { "mec" },
-            ["ciy"] = new[] { "bmyj", "bmyc" },
-            ["cik"] = new[] { "bqcb", "bmvl" },
-            ["xo"] = new[] { "isBoss", "isElite" },
-            ["oo"] = new[] { "bcry", "bcrw", "bcru", "bcrv", "gaf", "gad", "fzn", "bcrx", "bcsl" },
-            ["nr"] = new[] { "bcec" },
-            ["cx"] = new[] { "zyc" },
+            ["bes"] = new[] { "mnh" },
+            ["cjp"] = new[] { "bntf", "bnsy" },
+            ["cjb"] = new[] { "bqyg", "bnqh" },
+            ["xu"] = new[] { "isBoss", "isElite" },
+            ["ou"] = new[] { "bdgc", "bdga", "bdfy", "bdfz", "gdj", "gdh", "gcr", "bdgb", "bdgp" },
+            ["nv"] = new[] { "bcpy" },
+            ["cx"] = new[] { "baji" },
             ["HeroType"] = new string[0],
             ["EnemyType"] = new string[0],
             ["EnemySpawnKind"] = new string[0],
@@ -91,52 +91,52 @@ namespace DBModKit
                 "hp", "mp", "attackPower", "armor", "STR", "STRadd", "AGI", "AGIadd", "STA", "STAadd",
                 "attackSpeed", "moveSpeed", "hpRecover", "mpRecover", "shiled",
             },
-            ["du"] = new[] { "dqr", "bact" },
-            ["cl"] = new[] { "dff", "dfg", "zuj" },
+            ["du"] = new[] { "dri", "banz" },
+            ["cl"] = new[] { "dfw", "dfx", "bafp" },
             // 自定义被动
-            ["bax"] = new[] { "ker" },
+            ["bbi"] = new[] { "kmm" },
             ["MirrorBossPlayerSnapshot"] = new[] { "skills", "player", "relics" },
             // 自定义遗物
             ["MirrorBossRelicSource"] = new[] { "relic" },
             ["ItemData"] = new[] { "name", "quality", "model" },
             ["EntryConditions"] = new[] { "None" },
             ["RelicValueType"] = new[] { "Normal", "Percent", "PercentConst", "InversePercent" },
-            ["ny"] = new[] { "bcmo" },
+            ["oc"] = new[] { "bcyk" },
             ["MirrorBossSkillSource"] = new[] { "activeSkill", "skillName" },
             ["PasssiveSkillEnum"] = new string[0],
             // 自定义装备（jy、ke、bba、oo、ez、de、cl、bpe、nn 在别的条目里）
-            ["pi"] = new[] { "ghk", "gho" },
+            ["pq"] = new[] { "gks", "gkw" },
             ["EquipSkillType"] = new[] { "None" },
             // Mod 资源
-            ["m"] = new[] { "cyn", "zop", "zoq" },
+            ["m"] = new[] { "cze", "zzs", "zzt" },
             // 施法动作
-            ["ns"] = new[] { "bcez" },
+            ["nw"] = new[] { "bcqv" },
             // 自定义主动技能
-            ["bff"] = new string[0],
-            ["Mirror.NetworkManager"] = new[] { "bmxm" },
-            ["bhu"] = new[] { "mty" },
+            ["bft"] = new string[0],
+            ["Mirror.NetworkManager"] = new[] { "bnsi" },
+            ["bij"] = new[] { "ndc" },
             // 嵌套类型 de.PlayerKingData / PlayerKingSkillData 的名字没混淆，按成员检查（映射重建工具不认 "de+X" 这种写法）
             ["de"] = new[] { "PlayerKingData", "PlayerKingSkillData", "PlayerKingRelicData", "PlayerKingEquipData" },
-            ["bpe"] = new[] { "bjes", "bprr", "omt" },
-            ["bpf"] = new[] { "bjgk", "bjgm", "bjgj", "opi", "bjgl" },
-            ["bht"] = new[]
+            ["bps"] = new[] { "bjyc", "bqnt", "owb" },
+            ["bpt"] = new[] { "bjzu", "bjzw", "bjzt", "oyp", "bjzv" },
+            ["bii"] = new[]
             {
-                "bhne", "bhny", "bhnv", "bhng", "bhnd", "bpqi", "k896ff3548b31472b8b2cf8f649c25e65", "kacb7d091b5904139a602f04ed9552242",
-                "k4b2ca10ddec34cdb90bf84a3f664f727", "kbb80bea445ac47778d36b05d19be7f37", "kcac92c2266be41d3979b385715ce318e",
-                "kb7f88a1b0a6e4124b9b27921f2778742", "k443b7b692a1648099b5e5890ad35ed6d", "bhnj", "bhnp", "bhnq", "bhof",
-                "kb03f1a3bfdcd4ea8aecbd90f39216246", "gpc", "mtt",
+                "bigg", "biha", "bigx", "bigi", "bigf", "bqmk", "kcded58bae4384e80be7e3c7692b07553", "k7e56a69102964080a19da99e5918efbd",
+                "kbe15cb76268e4fbb89ea8ce8d729300d", "k09a3cc1b9c344ba6b25d3feceefd8b57", "ke036b94f6c9b405d82a4ead3e0f3f1b4",
+                "k2da5916a8da840dba685b192dc6a61a7", "k164c5ded09214170a636d8dad1df6c46", "bigl", "bigr", "bigs", "bihh",
+                "k5062536e79224451ae57d334924d2f81", "gsq", "ncy",
             },
             // 英雄专属技能：buff、重试波次、波次配置、开场界面（被动基类 qp、bff、AttackType、DamageSourceKind 在上面，
             // 字典初始化器里重复的键会让后一条覆盖前一条，这里不能再写一遍）
-            ["beu"] = new[] { "mim" },
+            ["bfi"] = new[] { "mrr" },
             ["Buff无敌"] = new string[0],
-            ["wb"] = new[] { "gyk", "gym", "bpcw" },
+            ["wh"] = new[] { "hby", "hca", "bpyd" },
             ["SOSpawnConfig"] = new[] { "enemySpawnData" },
             ["RoguelikeEventType"] = new[] { "Roguelike" },
-            ["bkh"] = new[] { "bacf" },
-            ["bka"] = new[] { "njb" },
+            ["bkv"] = new[] { "banm" },
+            ["bko"] = new[] { "nsh" },
             ["PlayerDamageFeedbackKind"] = new string[0],
-            ["RoleModeBase"] = new[] { "addRange", "ico", "myAnim" },
+            ["RoleModeBase"] = new[] { "addRange", "igm", "myAnim" },
             ["ActiveSkillData"] = new[]
             {
                 "tags", "indicator", "castingRange", "range", "cd", "canAuto", "icon",
@@ -149,19 +149,19 @@ namespace DBModKit
             },
             ["SkillTag"] = new[] { "Heal", "Revive", "Shield", "Defense", "Buff", "Summon", "Aura", "Area", "Move", "Control", "Henshin", "Duration" },
             // 英雄皮肤
-            ["buj"] = new[] { "pwu", "pwm", "pwn", "pwh", "pwf", "pyb" },
-            ["bup"] = new[] { "pyx" },
-            ["buu"] = new[] { "qaq", "qar", "bptc", "qal" },
-            ["buo"] = new[] { "bkkn" },
-            ["bum"] = new[] { "pyi" },
-            ["bgt"] = new[] { "mqp" },
-            ["bbp"] = new[] { "lob" },
-            ["bur"] = new[] { "pzk" },
+            ["buz"] = new[] { "qhf", "qgx", "qgy", "qgs", "qgq", "qim" },
+            ["bvf"] = new[] { "qji" },
+            ["bvk"] = new[] { "qlb", "qlc", "bqph", "qkw" },
+            ["bve"] = new[] { "blew" },
+            ["bvc"] = new[] { "qit" },
+            ["bhh"] = new[] { "mzw" },
+            ["bcd"] = new[] { "lxg" },
+            ["bvh"] = new[] { "qjv" },
             // 皮肤同步：Steam 大厅成员数据
-            ["pq"] = new[] { "bpcn" },
-            ["bz"] = new[] { "ddr" },
-            ["cft"] = new[] { "tqj", "tqi", "tqb", "tqc", "tqt" },
-            ["cgi"] = new[] { "uep" },
+            ["px"] = new[] { "bpxu" },
+            ["bz"] = new[] { "dej" },
+            ["cgk"] = new[] { "ubm", "ubl", "ube", "ubf", "ubw" },
+            ["cgz"] = new[] { "upt" },
             ["WorkshopItemStatus"] = new[] { "publishedFileId", "installed", "heroId", "installFolder" },
             ["LocalWorkshopManifest"] = new[] { "heroId", "title", "heroName", "heroIcon", "author", "contentType", "bundleRelativePath", "bundleAssetName" },
         };
@@ -191,8 +191,8 @@ namespace DBModKit
             var ez = AccessTools.TypeByName("ez");
             if (ez != null)
             {
-                CheckSignature(ez, "dxx", new[] { "ActiveSkillEnum", "bbe", "Int32" }, "Boolean", missing);
-                CheckSignature(ez, "dxy", new[] { "bbe", "ActiveSkillData" }, "yb", missing);
+                CheckSignature(ez, "dyp", new[] { "ActiveSkillEnum", "bbr", "Int32" }, "Boolean", missing);
+                CheckSignature(ez, "dyq", new[] { "bbr", "ActiveSkillData" }, "yh", missing);
             }
             return missing;
         }

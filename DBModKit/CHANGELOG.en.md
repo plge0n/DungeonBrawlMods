@@ -1,5 +1,8 @@
 # DBModKit changelog (English)
 
+## 0.32.0
+- Updated for game version 7.01 (each game update renames all obfuscated code; older ModKit versions disable every mod that depends on them).
+
 ## 0.31.0
 **After updating, quit the game and run install.bat in the runtime item again** (zip users: extract the new "plugins" package), otherwise mods that need it (Hextech 0.31.0) won't load.
 
