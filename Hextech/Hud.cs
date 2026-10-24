@@ -8,7 +8,7 @@ using UnityEngine.UI;
 namespace Hextech
 {
     // 已选强化的图标：放在背包右边、传送头像（"F1"那格）下面，2×2 最多 4 个，悬停用游戏原生的提示框显示效果。
-    // 只在单人时生效，那一栏除了自己的头像都是空的
+    // 联机时那一栏下面是队友的头像，图标可能盖住（没实测）
     internal static class Hud
     {
         private const string StripName = "HextechStrip";

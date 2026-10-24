@@ -795,11 +795,13 @@ namespace DBModKit
             __result.shiled *= EnemyBoosts.Shield;
         }
 
-        // yb.iwk 挂在受伤的一方：本地玩家被怪物（xo）打时按 EnemyBoosts.Attack 放大伤害
+        // yb.iwk 挂在受伤的一方：玩家被怪物（xo）打时按 EnemyBoosts.Attack 放大伤害。
+        // 怪物 AI 跑在主机上：主机算完远端玩家受到的伤害，在 iwk 里改发 CmdAttackOtherPlayer（yb.cs 13311 附近），
+        // 所以主机放大所有玩家受到的伤害（没装 Mod 的队友也一样）；客户端不乘，免得和主机重复
         internal static void EnemyDamagePrefix(yb __instance, yb __0, ref double __1)
         {
             if (!EnemyBoosts.Active || EnemyBoosts.Attack == 1f || !(__0 is xo)) return;
-            if ((object)__instance != GameRaw.LocalPlayer()) return;
+            if (!Game.IsHost || __instance.roleType != RoleType.Player) return;
             __1 *= EnemyBoosts.Attack;
         }
 

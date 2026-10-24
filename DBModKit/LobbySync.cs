@@ -59,6 +59,17 @@ namespace DBModKit
         /// <summary>清除自己写过的数据（Mod 卸载、关掉功能时调用）。</summary>
         public static void Clear(string key) => Publish(key, "");
 
+        /// <summary>房主写的数据。自己是房主、不在大厅里、或者房主没写时为 null。</summary>
+        public static string ReadHost(string key)
+        {
+            ulong lobby = Lobby;
+            if (lobby == 0) return null;
+            ulong owner = GameRaw.LobbyOwner(lobby);
+            if (owner == 0 || owner == GameRaw.MySteamId()) return null;
+            string value = GameRaw.LobbyMemberData(lobby, owner, key);
+            return string.IsNullOrEmpty(value) ? null : value;
+        }
+
         /// <summary>其他玩家写的数据（不含自己，不含空值）。不在大厅里时为空。</summary>
         public static List<LobbyEntry> Read(string key)
         {

@@ -1,5 +1,10 @@
 # Hextech changelog (English)
 
+## 0.4.0
+- Multiplayer: works when everyone in the room has the same mods (or the host allows it in DBStudio); if that stops being true mid-run, no more picks are offered but existing ones stay
+- In multiplayer the pick only appears during the rest phase (the game can't be paused)
+- Enemy augments follow the host's setting and apply to the whole room; teammates with Hextech see what the enemies got
+
 ## 0.3.0
 - Shotgun hero signature (three tiers): more ammo, two shells per dash, and ammo from crit damage (up to 12)
 - New generic augments: Get Excited, Fruitify, Tank Engine, Porcupine, Archmage, Dual Wield

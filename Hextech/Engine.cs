@@ -6,9 +6,12 @@ using UnityEngine;
 
 namespace Hextech
 {
-    // 一局里的海克斯：什么时候弹、选中后怎么生效、释放时和击杀时的触发效果、休息时打开锻造、敌人海克斯、重试波次时的存取
+    // 一局里的海克斯：什么时候弹、选中后怎么生效、释放时和击杀时的触发效果、休息时打开锻造、敌人海克斯、重试波次时的存取。
+    // 联机按 ModKit 的联机握手（Multiplayer.GameplayAllowed）：进战斗时不允许就本局不开；中途降级只是不再弹，已选的照常生效。
+    // 联机时游戏不能暂停，三选一只在休息阶段弹；敌人海克斯以房主为准（怪物在房主那边生成），房主通过大厅数据公布敌人拿到的卡
     internal static class Engine
     {
+        private const string EnemyKey = "dbmods.hextech.enemy";
         // 等游戏自己的遗物选择先弹出来，界面空闲这么久之后才弹
         private const float IdleDelay = 1.5f;
         // 开局那次：看到游戏的开局遗物（或第一波开打、或进战斗这么久）之后才弹，避免抢在开场界面前面
@@ -57,7 +60,10 @@ namespace Hextech
         // 专属技能暂不支持（没有参数的被动等）时 profile 为 null，只抽通用卡
         private static SkillProfile profile;
         private static HeroSkill heroSkill;
-        private static bool started, disabled;
+        private static bool started, disabled, blocked;
+        // 客户端：房主公布的敌人海克斯（上次读到的原文）、下次读的时间
+        private static string hostEnemy;
+        private static float hostEnemyAt;
         private static List<int> offerWaves;
         private static float openAt, battleStart, forgeAt;
         private static bool sawGameChoice, waveStarted, inWave;
@@ -71,7 +77,13 @@ namespace Hextech
         public static IReadOnlyList<Card> EnemyPicks => run.EnemyPicks;
         public static SkillProfile Profile => profile;
         public static HeroSkill HeroSkill => heroSkill;
-        public static bool Active => Plugin.Enabled.Value && !disabled && started && Game.IsSolo;
+        public static bool Active => Plugin.Enabled.Value && !disabled && started;
+
+        // 敌人海克斯由自己决定：单人，或者联机的房主（客户端跟房主走）
+        private static bool OwnEnemy => Game.IsHost;
+
+        // 本局有敌人海克斯：自己决定时看自己的设置，客户端看房主公布的
+        private static bool EnemyOn => OwnEnemy ? Plugin.EnemyAugments.Value : hostEnemy != null && hostEnemy.StartsWith("1");
 
         public static void Attach(ModContext ctx)
         {
@@ -86,6 +98,7 @@ namespace Hextech
                 started = false;
                 excitedOn = false;
                 ClearState();
+                LobbySync.Clear(EnemyKey);
             });
             mod.OnGameEvent(OnEvent);
             mod.OnSkillCast(Triggers.OnCast);
@@ -102,7 +115,9 @@ namespace Hextech
             checkpoint = null;
             profile = null;
             heroSkill = null;
-            started = disabled = false;
+            started = disabled = blocked = false;
+            hostEnemy = null;
+            hostEnemyAt = 0f;
             offerWaves = null;
             appliedPassive = null;
             battleStart = Time.unscaledTime;
@@ -137,14 +152,22 @@ namespace Hextech
                 mod.RunLog.Info("开关", "总开关关闭，本局停用");
                 return;
             }
-            if (!Game.IsSolo)
+            if (!Multiplayer.GameplayAllowed)
             {
-                // 有人进了房间：本局停用，已选的强化全部撤销
-                disabled = true;
-                RevertAll();
-                mod.RunLog.Info("房间", "有其他玩家，本局停用");
-                if (run.Picks.Count > 0) ScreenNotice.Show("海克斯强化只在单人时生效：房间里有其他玩家，本局已撤销所有强化。", 6f);
-                return;
+                if (!started)
+                {
+                    // 进战斗时联机握手就不允许：本局不开（ModKit 已经提示过"改玩法的内容本局停用"）
+                    disabled = true;
+                    mod.RunLog.Info("联机", "联机握手不允许改玩法的内容，本局不开", ("说明", Multiplayer.Status));
+                    return;
+                }
+                if (!blocked)
+                {
+                    // 中途降级（有人进房、装的不一样）：之后不再弹，已经选了的不收回（和 ModKit 的约定一样）
+                    blocked = true;
+                    run.Pending = false;
+                    mod.RunLog.Info("联机", "联机握手降级，之后不再弹三选一", ("说明", Multiplayer.Status));
+                }
             }
             if (ChoicePanel.IsBusy) sawGameChoice = true;
             if (!started)
@@ -155,6 +178,7 @@ namespace Hextech
             }
 
             Triggers.Tick(player);
+            TickHostEnemy();
             TickOffer();
             TickForge();
             TickMana(player);
@@ -216,7 +240,7 @@ namespace Hextech
             // 休息阶段：限时加成提前结束（游戏随后拍重试快照，快照里不能带着加成）
             Triggers.Clear(revert: true);
             if (run.Round >= Rounds || run.Round == 0) return;
-            if (OfferWaves().Contains(Game.Wave))
+            if (OfferWaves().Contains(Game.Wave) && !blocked)
             {
                 run.Pending = true;
                 openAt = Time.unscaledTime + IdleDelay;
@@ -246,7 +270,7 @@ namespace Hextech
 
         private static void TickOffer()
         {
-            if (!Due()) return;
+            if (blocked || !Due()) return;
             run.Pending = false;
             Offer();
         }
@@ -257,6 +281,12 @@ namespace Hextech
             if (!run.Pending) return false;
             float now = Time.unscaledTime;
             if (ChoicePanel.IsBusy)
+            {
+                openAt = now + IdleDelay;
+                return false;
+            }
+            // 联机时游戏不暂停：只在休息阶段弹，错过开局的话等第一波打完
+            if (!Game.IsSolo && inWave)
             {
                 openAt = now + IdleDelay;
                 return false;
@@ -331,7 +361,7 @@ namespace Hextech
                 return;
             }
             // 敌人海克斯：每回合多给一次刷新
-            if (Plugin.EnemyAugments.Value && run.BonusRound != run.Round)
+            if (EnemyOn && run.BonusRound != run.Round)
             {
                 run.BonusRound = run.Round;
                 run.RefreshLeft++;
@@ -351,7 +381,7 @@ namespace Hextech
                     Description = "换一批同品质的强化",
                     IconPath = heroSkill?.IconPath ?? "Bundles/UI/Icon/Shop/forging_epic",
                 });
-            string enemy = Plugin.EnemyAugments.Value ? "，敌人也会拿一张" : "";
+            string enemy = !EnemyOn ? "" : OwnEnemy ? "，敌人也会拿一张" : "，敌人海克斯跟房主走";
             string title = $"海克斯强化{(profile != null ? " · " + profile.Name : "")}（{TierName(tier)}，第 {run.Round + 1}/{Rounds} 次{enemy}）";
             if (!ChoicePanel.TryShow(title, options, i => OnPick(cards, i, tier)))
             {
@@ -383,7 +413,7 @@ namespace Hextech
             var player = Game.LocalPlayer;
             if (card.Augment?.OnPick != null && player != null) card.Augment.OnPick(player);
             string notice = $"获得海克斯强化「{card.Name}」";
-            if (Plugin.EnemyAugments.Value)
+            if (OwnEnemy && Plugin.EnemyAugments.Value)
             {
                 var rng = new System.Random(run.Seed ^ (run.Round * 31337));
                 var pool = Augments.All.Where(a => a.Pool == AugmentPool.Enemy && a.Tier == tier).ToList();
@@ -396,7 +426,42 @@ namespace Hextech
                 }
             }
             Apply();
+            PublishEnemy();
             ScreenNotice.Show(notice, 4f);
+        }
+
+        // ---- 联机的敌人海克斯：房主公布 "开关|卡,卡"，客户端照着设（客户端设的倍率 ModKit 不用，只用来显示）----
+        private static void PublishEnemy()
+        {
+            if (!OwnEnemy || !LobbySync.InLobby) return;
+            LobbySync.Publish(EnemyKey, (Plugin.EnemyAugments.Value ? "1|" : "0|") + string.Join(",", run.EnemyPicks.Select(c => c.Augment.Id)));
+        }
+
+        private static void TickHostEnemy()
+        {
+            if (Time.unscaledTime < hostEnemyAt) return;
+            hostEnemyAt = Time.unscaledTime + 1f;
+            if (OwnEnemy)
+            {
+                // 开局先公布开关，客户端好知道要不要多给刷新
+                if (run.Round == 0) PublishEnemy();
+                return;
+            }
+            string value = LobbySync.ReadHost(EnemyKey);
+            if (value == hostEnemy) return;
+            hostEnemy = value;
+            // 别人写的数据不可信：只认敌人卡池里的编号，最多 Rounds 张
+            var parts = (value ?? "").Split('|');
+            var ids = parts.Length == 2 ? parts[1].Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries) : new string[0];
+            var picks = ids.Take(Rounds).Select(id => Augments.All.FirstOrDefault(a => a.Pool == AugmentPool.Enemy && a.Id == id))
+                .Where(a => a != null).Select(a => a.ToCard()).ToList();
+            foreach (var c in picks.Skip(run.EnemyPicks.Count))
+            {
+                mod.RunLog.Info("敌人海克斯", "房主那边敌人获得", ("强化", c.Name), ("效果", string.Join("；", c.Lines)));
+                ScreenNotice.Show($"<color=#FF6060>敌人获得海克斯「{c.Name}」（房主）：之后刷出的{string.Join("、", c.Lines)}</color>", 4f);
+            }
+            run.EnemyPicks = picks;
+            Hud.Refresh();
         }
 
         // ---- 击杀触发（淘金、奥术公理、无限循环往复）----
@@ -655,7 +720,11 @@ namespace Hextech
         }
 
         // 卸载（热重载）时：技能调整由 ModContext 自动撤销，这里撤销被动数值和限时加成
-        public static void Unload() => RevertAll();
+        public static void Unload()
+        {
+            RevertAll();
+            LobbySync.Clear(EnemyKey);
+        }
 
         private static void RevertAll()
         {
