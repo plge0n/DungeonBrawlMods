@@ -6,10 +6,10 @@
 ```powershell
 dotnet build tools/Remap -c Release
 $remap = "tools/Remap/bin/Release/net8.0/Remap.dll"
-dotnet $remap update --old ../backup/7.03                 # 只检查，报告在 tools/Remap/out/report.md
-dotnet $remap update --old ../backup/7.03 --write         # 写回 DBModKit 源码
-dotnet $remap snapshot --version 7.04                                   # 适配完新版本后保存，作为下次的 --old
-dotnet $remap selftest --old ../backup/7.03 --mutate 0.03 # 自测
+dotnet $remap update --old ../backup/7.06                 # 只检查，报告在 tools/Remap/out/report.md
+dotnet $remap update --old ../backup/7.06 --write         # 写回 DBModKit 源码
+dotnet $remap snapshot --version 7.07                                   # 适配完新版本后保存，作为下次的 --old
+dotnet $remap selftest --old ../backup/7.06 --mutate 0.03 # 自测
 ```
 `dotnet $remap help` 查看全部选项。`--notes ../tools/NOTES.md` 会同时改笔记里反引号中的 `类型.成员`。
 
@@ -47,3 +47,5 @@ dotnet $remap selftest --old ../backup/7.03 --mutate 0.03 # 自测
 报告里的"重载对应到不同的名字"是同名的另一个重载被删了，实际用到的重载名字没变，可以忽略。
 
 **7.02 → 7.03（2026-10-24）**：这次又全部重新混淆了，DBModKit 改名 1813 处。手动补：`che` 的大厅成员数据读取方法；类型改名后 Compat 里写成字符串的类型名（`"bbr"` → `"bbs"`，因为旧的 `yh` 里恰好有同名成员，工具不敢改）；`ez.dyq` → `dzk`（工具报"重载对应到不同的名字"，但映射本身是确定的，按报告表格里的对应改）。
+
+**7.03 → 7.06（2026-10-26，跳过了 7.04、7.05）**：改名 1923 处。新坑：混淆器给 `ym`（角色）的一个方法也取名 `hp`，和 `hp` 字段撞名，C# 里 `.hp` 会解析成方法组，编译报 CS0428 / CS0019——改用 `AccessTools.FieldRefAccess<ym, long>("hp")`（`GameRaw.Hp`）。以后遇到"方法组"类的编译错误，先查是不是字段和方法同名。其余手动补：`chq` 大厅成员数据读写（uig/uih）、Compat 里的 `"ivx"` → `"ixb"`、Hooks 里的 `"dzq"` → `"eac"`。
