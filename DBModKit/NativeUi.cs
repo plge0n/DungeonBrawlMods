@@ -182,7 +182,7 @@ namespace DBModKit
             rowLe.preferredWidth = rowLe.minWidth = width;
             rowLe.flexibleWidth = 0f;
 
-            var box = new GameObject("bqf", typeof(RectTransform), typeof(Image), typeof(LayoutElement));
+            var box = new GameObject("bqp", typeof(RectTransform), typeof(Image), typeof(LayoutElement));
             box.transform.SetParent(row, false);
             var boxImg = box.GetComponent<Image>();
             StyleBox(boxImg, 1f);
