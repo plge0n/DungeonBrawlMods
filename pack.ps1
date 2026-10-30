@@ -1,7 +1,7 @@
 # 打包发布包到 dist/
 #   完整包（full）：BepInEx + 解决方案里的所有插件，首次安装用
 #   仅插件（plugins）：解决方案里的所有插件，已装过 BepInEx 的人更新用
-#   两个包都带中英文安装说明和发版说明；包名里的版本号是整套 Mod 的发版版本（根目录 VERSION），各插件仍有自己的版本号
+#   两个包都带中英文安装说明、发版说明、发版历史和常见问题；包名里的版本号是整套 Mod 的发版版本（根目录 VERSION），各插件仍有自己的版本号
 #   内容包：仓库 content/ 下的每个内容包，加上 -Content 指定的文件夹，原样做成工坊条目
 # 用法：pwsh ./pack.ps1 [-GameDir "X:\...\地下城竞技场"] [-Content "X:\我的内容包", ...]
 param(
@@ -50,6 +50,12 @@ $version = (Get-Content (Join-Path $root "VERSION") -Raw).Trim()
 if (-not (Select-String -Path (Join-Path $root "RELEASE_NOTES.md") -Pattern "Mods $([regex]::Escape($version))" -Quiet)) {
     throw "RELEASE_NOTES.md 里还没有 $version 的发版说明"
 }
+if (-not (Select-String -Path (Join-Path $root "RELEASE_NOTES.md") -Pattern "^\| $([regex]::Escape($version)) \|" -Quiet)) {
+    throw "RELEASE_NOTES.md 的「适配的游戏版本」表里还没有 $version 这一行"
+}
+if (-not (Select-String -Path (Join-Path $root "CHANGELOG.md") -Pattern "^## $([regex]::Escape($version)) " -Quiet)) {
+    throw "CHANGELOG.md（发版历史）里还没有 $version 的改动"
+}
 Write-Host "打包 DungeonBrawlMods $version（$(($plugins | ForEach-Object { "$_ $($versions[$_])" }) -join "、")）"
 
 dotnet build $sln -c Release -nologo -v q -p:DeployToGame=false "-p:GameDir=$GameDir"
@@ -65,7 +71,9 @@ if (-not (Test-Path $bepinexZip)) {
 if (Test-Path $dist) { Remove-Item -Recurse -Force $dist }
 New-Item -ItemType Directory -Force $dist | Out-Null
 # 放进发布包根目录的说明
-$docs = "安装说明.txt", "INSTALL-EN.txt", "RELEASE_NOTES.md", "LICENSE" | ForEach-Object { Join-Path $root $_ }
+$docs = "安装说明.txt", "INSTALL-EN.txt", "RELEASE_NOTES.md", "CHANGELOG.md", "LICENSE" | ForEach-Object { Join-Path $root $_ }
+# 放进发布包 docs/ 的说明（和仓库里的位置一样，文档之间的相对链接才对得上）
+$packDocs = "常见问题.md", "FAQ.md" | ForEach-Object { Join-Path $root "docs\$_" }
 # BepInEx 等第三方组件的许可证（LGPL-2.1 要求随再分发的文件附上），完整包和运行环境条目共用
 $licenses = Join-Path $root "workshop\Runtime\licenses"
 
@@ -91,6 +99,8 @@ function New-Package([string]$name, [bool]$withBepInEx) {
         Copy-ModContent $plugin $pluginDir
     }
     Copy-Item $docs $stage
+    New-Item -ItemType Directory -Force (Join-Path $stage "docs") | Out-Null
+    Copy-Item $packDocs (Join-Path $stage "docs")
     $zip = Join-Path $dist "DungeonBrawlMods-$version-$name.zip"
     Compress-Archive -Path (Join-Path $stage "*") -DestinationPath $zip
     Remove-Item -Recurse -Force $stage

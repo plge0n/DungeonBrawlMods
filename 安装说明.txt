@@ -9,8 +9,8 @@ English: see INSTALL-EN.txt
   DamageMeter  伤害统计
   Hextech      海克斯强化
   DBStudio     游戏内 Mod 工作台（F9）
-这个版本里还没在游戏中完整验证过的功能，列在《RELEASE_NOTES.md》的"未实测的功能"一节。
-这个版本只适配游戏 7.11（游戏每次更新都会重新混淆代码）。想把游戏固定在别的版本，见《RELEASE_NOTES.md》的"适配的游戏版本"一节。
+这个版本里还没在游戏中完整验证过的功能、更新后出问题怎么办，见 docs\常见问题.md；每次发版的改动见 CHANGELOG.md。
+这个版本只适配游戏 7.11（游戏每次更新都会重新混淆代码）。想把游戏固定在别的版本，见 docs\常见问题.md 的"固定游戏版本"一节。
 
 【安装】
 1. 在 Steam 里右键游戏 → 管理 → 浏览本地文件，打开游戏目录（里面有 DungeonBrawl.exe）。

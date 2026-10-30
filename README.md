@@ -12,7 +12,7 @@ BepInEx 5 插件，目标游戏：地下城竞技场（Steam 4246640，Unity 202
 | [DamageMeter](DamageMeter) | 伤害统计：按普攻、技能、召唤物分开统计本波和本局的伤害与 DPS；Steam 联机时显示装了它的队友的伤害 |
 | [Hextech](Hextech) | 海克斯强化：每局 4 次三选一，专属技能强化 + 参照海克斯大乱斗、斗魂竞技场的通用卡和队友卡（联机时要每个人装的一样或房主允许） |
 
-玩家说明见 [安装说明.txt](安装说明.txt)（英文 [INSTALL-EN.txt](INSTALL-EN.txt)），当前版本的发版说明见 [RELEASE_NOTES.md](RELEASE_NOTES.md)。
+玩家说明见 [安装说明.txt](安装说明.txt)（英文 [INSTALL-EN.txt](INSTALL-EN.txt)），当前版本的发版说明见 [RELEASE_NOTES.md](RELEASE_NOTES.md)，以前各版的改动见 [CHANGELOG.md](CHANGELOG.md)，更新后出问题、固定游戏版本、未实测的功能见 [docs/常见问题.md](docs/常见问题.md)（英文 [docs/FAQ.md](docs/FAQ.md)）。
 
 ## 架构
 ```
@@ -102,8 +102,8 @@ pwsh ./pack.ps1                                 # 生成 dist/ 下的发布包�
 - 公共构建配置在 `Directory.Build.props/.targets`：Mod 项目只需写 `AssemblyName` 和对 DBModKit 的 `ProjectReference`（`Private="false"`）。模板在 `templates/DBMod`。
 - 版本号（0.31 起）：整套发版用两位小数（0.31、0.32……，根目录 `VERSION`）；这次发版改过的 Mod 把 `Version` 设成同一个号（`0.31.0`），
   没改的保持原样，下次改动时再对齐。版本号只能往上走（BepInEx 的依赖检查、工坊的更新提示都按大小比），开发中的版本可以照常递增，发版时再对齐。
-- 发布新版本：改源码里的 `Version` 常量 → 在对应目录的 `CHANGELOG.md` 和 `CHANGELOG.en.md`（英文，创意工坊的更新说明会带上）加条目 → 整套发版时改根目录的 `VERSION`，在 `RELEASE_NOTES.md` 写中英文发版说明（包括哪些功能没实测）→ `pack.ps1`（缺少更新日志条目或发版说明时会报错）。
-  发布包是 `dist/DungeonBrawlMods-<VERSION>-full.zip`（带 BepInEx）和 `-plugins.zip`，根目录放 `安装说明.txt`、`INSTALL-EN.txt`、`RELEASE_NOTES.md`。
+- 发布新版本：改源码里的 `Version` 常量 → 在对应目录的 `CHANGELOG.md` 和 `CHANGELOG.en.md`（英文，创意工坊的更新说明会带上）加条目 → 整套发版时改根目录的 `VERSION`，**重写** `RELEASE_NOTES.md`（只写这一版：升级步骤、本版改动、适配的游戏版本表，英文放在折叠块里；它就是 GitHub Release 的正文），把本版改动也加到根目录 `CHANGELOG.md`（发版历史，中英两段）的最前面，新增的未实测功能、已知问题写进 `docs/常见问题.md` 和 `docs/FAQ.md` → `pack.ps1`（缺少更新日志条目、发版说明、对照表这一行或发版历史时会报错）。
+  发布包是 `dist/DungeonBrawlMods-<VERSION>-full.zip`（带 BepInEx）和 `-plugins.zip`，根目录放 `安装说明.txt`、`INSTALL-EN.txt`、`RELEASE_NOTES.md`、`CHANGELOG.md`，`docs/` 里放常见问题（中英）。
 
 ## 创意工坊
 游戏的工坊不加载 dll。DBModKit 自带加载器：订阅的条目里有 `dbmod.json`（`"Type": "plugin"`）就当成 BepInEx 插件加载，
@@ -139,7 +139,7 @@ dotnet $remap update --old ../backup/7.11 --notes ../tools/NOTES.md --write  # �
 1. 先跑一遍不带 `--write` 的，看报告里"需要人工处理"和标 ⚠ 的项，必要时对照反编译代码（`../tools/` 里的工具重新解密字符串、反编译）。
 2. 加 `--write` 写回，检查 `git diff`，编译，进游戏看 `BepInEx/LogOutput.log`（DBModKit 会列出找不到的成员），实机测一遍。
 3. 把新版本号加进 `Compat.TestedVersions`，然后 `dotnet $remap snapshot --version <新版本>` 保存这一版，作为下次的 `--old`。
-4. 发版时在 `RELEASE_NOTES.md` 的"适配的游戏版本"表里加一行（中英两份），GitHub Release 标题写上适配的游戏版本。工坊运行环境条目标题和说明里的 `{GameVersion}` 由 WorkshopUpload 从 `Compat.TestedVersions` 自动填，更新说明也会带上。
+4. 发版时在 `RELEASE_NOTES.md` 的"适配的游戏版本"表里加一行（中英两份），GitHub Release 标题写上适配的游戏版本（`gh release create … --notes-file RELEASE_NOTES.md`）。工坊运行环境条目标题和说明里的 `{GameVersion}` 由 WorkshopUpload 从 `Compat.TestedVersions` 自动填，更新说明也会带上。
 
 **不要**把游戏的 dll、反编译出来的源码放进本仓库或发布包。
 
