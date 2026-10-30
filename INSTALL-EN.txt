@@ -11,7 +11,8 @@ The package contains 7 mods, each in its own folder under BepInEx\plugins. Delet
   DamageMeter  Damage meter
   Hextech      Hextech augments
   DBStudio     In-game mod workbench (F9)
-Features that haven't been fully verified in game yet are listed under "Not yet tested in game" in RELEASE_NOTES.md.
+Features not yet fully verified in game, and what to do when an update breaks something, are in docs\FAQ.md; changes in each release are in CHANGELOG.md.
+This release only works with game version 7.11 (every game update re-obfuscates the code). To stay on another game version, see "Staying on a game version" in docs\FAQ.md.
 
 [Install]
 1. In Steam, right-click the game -> Manage -> Browse local files to open the game folder (the one with DungeonBrawl.exe).
