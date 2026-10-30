@@ -1,5 +1,12 @@
 # DBModKit changelog (English)
 
+## 0.37.0
+**Updated for game version 7.11. After updating, quit the game and run install.bat in the runtime item again** (zip users: extract the new "plugins" package), otherwise all mods stay disabled.
+
+- Not play-tested; if something breaks, please export a report and let us know
+- When the game version is incompatible, the notice now says which game version this release is for: wait for a mod update, or switch the game back to that version on Steam (the game's author is publishing older versions). The mod list shows it at the top too
+- To stay on a game version, download the matching "plugins" package from GitHub Releases and extract it over the game folder; after that, don't run install.bat when this item updates
+
 ## 0.36.0
 **Updated for game version 7.10. After updating, quit the game and run install.bat in the runtime item again** (zip users: extract the new "plugins" package), otherwise all mods stay disabled.
 

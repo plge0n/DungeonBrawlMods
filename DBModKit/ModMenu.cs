@@ -171,8 +171,8 @@ namespace DBModKit
         {
             string modKit = ModKit.Compatible
                 ? Good("和游戏兼容")
-                : Bad("和这个游戏版本不兼容，所有 Mod 已停用，请等 Mod 更新");
-            return $"游戏版本 {ModKit.GameVersion}  ·  {ModKitPlugin.Name} {ModKit.Version} {modKit}\n"
+                : Bad($"和这个游戏版本不兼容，所有 Mod 已停用：等 Mod 更新，或在 Steam 里把游戏切回 {Compat.TargetVersion}");
+            return $"游戏版本 {ModKit.GameVersion}  ·  {ModKitPlugin.Name} {ModKit.Version}（适配游戏 {Compat.TargetVersion}） {modKit}\n"
                 + Dim("装了 Mod 后成绩不上传排行榜（游戏作者的规则），其他功能不受影响。");
         }
 
