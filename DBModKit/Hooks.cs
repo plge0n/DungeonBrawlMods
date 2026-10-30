@@ -121,7 +121,7 @@ namespace DBModKit
             // 开关技能开着时，自动释放直接把它关掉，不经过 dxx
             if (AutoCast.Available)
                 TryPatch(harmony, typeof(AutoCastHooks), "开关技能自动关闭",
-                    AccessTools.Method(typeof(bir), "k4df8b6c79c054a2c84b72dea10972ca6", new Type[0]),
+                    AccessTools.Method(typeof(bir), "k475dbd72b9da4163aacdb1a9171b584b", new Type[0]),
                     prefix: nameof(AutoCastHooks.TogglePrefix), postfix: nameof(AutoCastHooks.TogglePostfix));
 
             MoveControl.Available =
@@ -400,8 +400,8 @@ namespace DBModKit
         {
             __state = null;
             var handler = AutoCast.Handler;
-            var native = __instance.bixf?.bkun;
-            if (handler == null || native == null || !native.bixu || __instance.bixc == null || __instance.bixc != GameRaw.LocalPlayer())
+            var native = __instance.bixg?.bkuo;
+            if (handler == null || native == null || !native.bixv || __instance.bixd == null || __instance.bixd != GameRaw.LocalPlayer())
                 return true;
 
             var slot = SkillSlot.Wrap(native);
@@ -676,7 +676,7 @@ namespace DBModKit
     }
 
     // bbx.lbu(bool)：待机/移动状态每帧的控制逻辑（含官方自动战斗）；bbx.lbt()：攻击状态每帧，玩家有移动输入时会打断攻击。
-    // 两者都从 oz.bdub / oz.bduc 读移动输入。处理器要移动时，在调用期间把方向写进输入、结束后还原，
+    // 两者都从 oz.bduc / oz.bdud 读移动输入。处理器要移动时，在调用期间把方向写进输入、结束后还原，
     // 游戏就会按"玩家按住方向键"处理：转向、移速、碰撞、打断攻击都走原版逻辑。
     internal static class MoveHooks
     {
@@ -699,8 +699,8 @@ namespace DBModKit
         {
             if (__state is Saved s)
             {
-                oz.bdub = s.X;
-                oz.bduc = s.Z;
+                oz.bduc = s.X;
+                oz.bdud = s.Z;
             }
         }
 
@@ -708,9 +708,9 @@ namespace DBModKit
         {
             var handler = MoveControl.Handler;
             if (handler == null || player == null || player != GameRaw.LocalPlayer()) return null;
-            if (player.roleType == RoleType.King || nr.bcre) return null;
+            if (player.roleType == RoleType.King || nr.bcrf) return null;
             // 玩家自己在操作
-            if (!Mathf.Approximately(oz.bdub, 0f) || !Mathf.Approximately(oz.bduc, 0f)) return null;
+            if (!Mathf.Approximately(oz.bduc, 0f) || !Mathf.Approximately(oz.bdud, 0f)) return null;
 
             var p = Game.LocalPlayer;
             if (p == null) return null;
@@ -727,9 +727,9 @@ namespace DBModKit
             if (!cmd.Override) return null;
 
             MoveControl.Last = cmd;
-            var saved = new Saved { X = oz.bdub, Z = oz.bduc };
-            oz.bdub = cmd.Direction.x;
-            oz.bduc = cmd.Direction.z;
+            var saved = new Saved { X = oz.bduc, Z = oz.bdud };
+            oz.bduc = cmd.Direction.x;
+            oz.bdud = cmd.Direction.z;
             return saved;
         }
     }
@@ -760,14 +760,14 @@ namespace DBModKit
         internal static void DamagePrefix(yl __0, ref double __1, ActiveSkillEnum __6, bfz __8)
         {
             if (__0 == null || __0 != GameRaw.LocalPlayer()) return;
-            var skill = __8 != null ? __8.bigb : __6;
+            var skill = __8 != null ? __8.bigc : __6;
             if (skill == ActiveSkillEnum.None) return;
             float m = SkillTuning.Get((int)skill).Damage;
             if (m != 1f) __1 *= m;
         }
     }
 
-    // 重试波次（wb）：wi.hek 在 OnStartRest 之后的下一次网络循环里拍快照（wi.bqut 为真表示快照有效）；
+    // 重试波次（wb）：wi.hek 在 OnStartRest 之后的下一次网络循环里拍快照（wi.bquu 为真表示快照有效）；
     // wi.hem 是点"重试"后的还原入口，同步执行完还原，返回是否成功
     internal static class CheckpointHooks
     {
@@ -820,18 +820,18 @@ namespace DBModKit
         internal static void EnemyDamagePrefix(yl __instance, yl __0, ref double __1)
         {
             if (!EnemyBoosts.Active || EnemyBoosts.Attack == 1f || !(__0 is xy)) return;
-            if (!__0.brvs || __instance.roleType != RoleType.Player) return;
+            if (!__0.brvt || __instance.roleType != RoleType.Player) return;
             __1 *= EnemyBoosts.Attack;
         }
 
         // 与 gaf 的判断一致：出场类型不是 None、出场次数 ≥ 0，且 bcrv 里有出场次数不超过它的条目
         private static bool OccurrenceOverrides(ov table, EnemyType enemy, EnemySpawnKind kind, int occurrence)
         {
-            if (kind == EnemySpawnKind.None || occurrence < 0 || table?.bdsf == null) return false;
+            if (kind == EnemySpawnKind.None || occurrence < 0 || table?.bdsg == null) return false;
             // 键的格式同 ov.gfr：(int)怪物 + "_" + (int)出场类型
-            if (!table.bdsf.TryGetValue((int)enemy + "_" + (int)kind, out var list) || list == null) return false;
+            if (!table.bdsg.TryGetValue((int)enemy + "_" + (int)kind, out var list) || list == null) return false;
             foreach (var n in list)
-                if (n != null && n.bdbu <= occurrence) return true;
+                if (n != null && n.bdbv <= occurrence) return true;
             return false;
         }
 
@@ -849,29 +849,29 @@ namespace DBModKit
     internal static class SkillFormHooks
     {
         // kjv：哥布林之王击杀时 bpmz（累计成长，背后是 bfpe）+= 成长量，再 iww(成长量) 加生命上限。前缀记下之前的值，后缀按差额补上多出来的部分
-        internal static void BitePrefix(bbx __instance, out long __state) => __state = __instance.brfv;
+        internal static void BitePrefix(bbx __instance, out long __state) => __state = __instance.brfw;
 
         internal static void BitePostfix(bbx __instance, long __state)
         {
             float m = SkillForms.BiteMultiplier;
-            if (m <= 1f || (object)__instance != nr.bqtl) return;
-            long gained = __instance.brfv - __state;
+            if (m <= 1f || (object)__instance != nr.bqtm) return;
+            long gained = __instance.brfw - __state;
             if (gained <= 0) return;
             long extra = (long)Math.Min(long.MaxValue / 4, gained * (double)(m - 1f));
             if (extra <= 0) return;
-            __instance.brfv = __instance.brfv + Math.Min(extra, long.MaxValue - __instance.brfv);
+            __instance.brfw = __instance.brfw + Math.Min(extra, long.MaxValue - __instance.brfw);
             __instance.jep(extra);
-            (__instance.brah as PlayerBiteMode)?.knq();
+            (__instance.brai as PlayerBiteMode)?.knq();
         }
 
         // msj(技能, 施法者, 位置, 表, 敏捷, 时长, 范围倍率)：十字长度 biej，宽度是 biej / 6，爆炸特效按 biej / 40 缩放，都跟着变。
         // 每个客户端都会生成炸弹实例；伤害只在施法者本机算，所以只改本地玩家放的
-        internal static void BombPostfix(yl __1, ref float ___bivg, GameObject ___bivh)
+        internal static void BombPostfix(yl __1, ref float ___bivh, GameObject ___bivi)
         {
             float m = SkillForms.BombMultiplier;
-            if (m <= 1f || (object)__1 != nr.bqtl) return;
-            ___bivg *= m;
-            if (___bivh != null) ___bivh.transform.localScale *= 1f + (m - 1f) * 0.5f;
+            if (m <= 1f || (object)__1 != nr.bqtm) return;
+            ___bivh *= m;
+            if (___bivi != null) ___bivi.transform.localScale *= 1f + (m - 1f) * 0.5f;
         }
     }
 
@@ -886,10 +886,10 @@ namespace DBModKit
         // 已经死了不拦：iwr（持续伤害）和 lfr（远端伤害）不查死亡就进 iwl，死后 hp = 0 的任何伤害都会被当成致命
         internal static void SettlePrefix(yl __instance, ref double __0, bool __4)
         {
-            if (!Combat.HasLethalGuards || __0 <= 0.0 || __instance.bfsd || (object)__instance != nr.bqtl) return;
-            if (GameRaw.Hp(__instance) <= 0 || __instance.braf == RoleState.Dead) return;
+            if (!Combat.HasLethalGuards || __0 <= 0.0 || __instance.bfse || (object)__instance != nr.bqtm) return;
+            if (GameRaw.Hp(__instance) <= 0 || __instance.brag == RoleState.Dead) return;
             double damage = Math.Round(__0 * (__4 ? nr.fwh() : 1f));
-            bool client = !cla.bopv;
+            bool client = !cla.bopw;
             if (client && Time.time > unsyncedUntil) unsynced = 0;
             double left = GameRaw.Hp(__instance) + GameRaw.Shield(__instance) - (client ? unsynced : 0);
             if (damage >= left && Combat.RaiseLethal(damage))
@@ -911,7 +911,7 @@ namespace DBModKit
         internal static void StrikeEndPrefix(object __instance) => SoulDevourer.OnStrikeEnd(__instance);
     }
 
-    // MyServerNetworkManager.rcs(ClientNetMessage)：客户端（含主机自己）收到服务器消息后的分发（在 ckm.wet 里注册，是真方法）。
+    // MyServerNetworkManager.rcs(ClientNetMessage)：客户端（含主机自己）收到服务器消息后的分发（在 ckm.weu 里注册，是真方法）。
     // 用后缀：游戏先处理完（比如更新波次），再通知 Mod
     internal static class WaveHooks
     {
@@ -975,7 +975,7 @@ namespace DBModKit
         internal static void SkillTransformPrefix(bhq __instance, out yl __state)
         {
             __state = owner;
-            owner = __instance.bify;
+            owner = __instance.bifz;
         }
 
         internal static void CheckpointTransformPrefix(bbx __0, out yl __state)
@@ -1075,7 +1075,7 @@ namespace DBModKit
 
         // 取调用栈有开销：只在有人订阅命中事件、而且是本地玩家打出的伤害时取
         private static bool ShouldTrace(yl attacker)
-            => attacker != null && attacker == nr.bqtl && Combat.HasSubscribers;
+            => attacker != null && attacker == nr.bqtm && Combat.HasSubscribers;
 
         private static Type FindCaller()
         {

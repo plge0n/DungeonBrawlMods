@@ -6,10 +6,10 @@
 ```powershell
 dotnet build tools/Remap -c Release
 $remap = "tools/Remap/bin/Release/net8.0/Remap.dll"
-dotnet $remap update --old ../backup/7.10                 # 只检查，报告在 tools/Remap/out/report.md
-dotnet $remap update --old ../backup/7.10 --write         # 写回 DBModKit 源码
-dotnet $remap snapshot --version 7.11                                   # 适配完新版本后保存，作为下次的 --old
-dotnet $remap selftest --old ../backup/7.10 --mutate 0.03 # 自测
+dotnet $remap update --old ../backup/7.11                 # 只检查，报告在 tools/Remap/out/report.md
+dotnet $remap update --old ../backup/7.11 --write         # 写回 DBModKit 源码
+dotnet $remap snapshot --version 7.12                                   # 适配完新版本后保存，作为下次的 --old
+dotnet $remap selftest --old ../backup/7.11 --mutate 0.03 # 自测
 ```
 `dotnet $remap help` 查看全部选项。`--notes ../tools/NOTES.md` 会同时改笔记里反引号中的 `类型.成员`。
 
@@ -51,3 +51,5 @@ dotnet $remap selftest --old ../backup/7.10 --mutate 0.03 # 自测
 **7.03 → 7.06（2026-10-26，跳过了 7.04、7.05）**：改名 1923 处。新坑：混淆器给 `ym`（角色）的一个方法也取名 `hp`，和 `hp` 字段撞名，C# 里 `.hp` 会解析成方法组，编译报 CS0428 / CS0019——改用 `AccessTools.FieldRefAccess<ym, long>("hp")`（`GameRaw.Hp`）。以后遇到"方法组"类的编译错误，先查是不是字段和方法同名。其余手动补：`chq` 大厅成员数据读写（uig/uih）、Compat 里的 `"ivx"` → `"ixb"`、Hooks 里的 `"dzq"` → `"eac"`。
 
 **7.06 → 7.10（2026-10-30，跳过了 7.07–7.09）**：改名 1968 处。这次有几个方法改了签名，工具对应不上（报"没有对应"）：伤害结算 `ez.dzr` 末尾加了 `AttackType? k`（只影响伤害数字的显示类型）→ `ey.eae`；技能工厂 `ez.eba` 末尾加了 `Quaternion? j`（朝向覆盖）→ `ey.ebn`，Harmony 的参数类型数组要补上 `typeof(Quaternion?)`；炸弹初始化 `bif.nez` → `bii.niw`（签名没变，但诱饵副本太像）；大厅成员数据读取 `chq.uig` → `chv.umv`（逐字节相同的副本任选一个）。做法：反编译新版，按签名找候选，数调用次数——诱饵副本没有调用者，真的那个有（`ey.eae` 189 处）。
+
+**7.10 → 7.11（2026-10-30）**：作者修 bug 的小更新，没有全部重新混淆，改名 665 处。只有大厅成员数据读取 `chv.umv` → `chv.umw` 要手动补；报告里 `yl.lbz` 的"重载对应到不同的名字"可以忽略（用到的是 `bbx.lbz(rv)`），字符串 `"cd"` 是表格列名，不用改。

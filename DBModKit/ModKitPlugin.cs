@@ -12,7 +12,7 @@ namespace DBModKit
         public const string Guid = "plge0n.dungeonbrawl.modkit";
         public const string Name = "DBModKit";
         // 发布时同步修改 CHANGELOG.md；pack.ps1 从这里读取版本号
-        public const string Version = "0.36.0";
+        public const string Version = "0.37.0";
 
         private void Awake()
         {
@@ -81,13 +81,13 @@ namespace DBModKit
             {
                 MissingMembers = missing;
                 Log.Error($"游戏版本 {GameVersion} 与 {ModKitPlugin.Name} {Version} 不兼容，所有依赖 ModKit 的 Mod 已停用。缺失：{string.Join("，", missing)}");
-                ScreenNotice.Show($"{ModKitPlugin.Name} {Version} 与游戏版本 {GameVersion} 不兼容，相关 Mod 已停用，请等待更新。", 20f);
+                ScreenNotice.Show($"{ModKitPlugin.Name} {Version} 适配的是游戏 {Compat.TargetVersion}，与当前游戏 {GameVersion} 不兼容，相关 Mod 已停用。可以等 Mod 更新，或在 Steam 里把游戏切回 {Compat.TargetVersion}。", 20f);
                 return;
             }
             if (!Compat.IsTestedVersion)
             {
                 Log.Warning($"游戏版本 {GameVersion} 未经测试（测试过：{string.Join("、", Compat.TestedVersions)}）");
-                ScreenNotice.Show($"{ModKitPlugin.Name} 未在游戏版本 {GameVersion} 上测试过，如遇异常请关闭相关 Mod。", 8f);
+                ScreenNotice.Show($"{ModKitPlugin.Name} 适配的是游戏 {Compat.TargetVersion}，未在 {GameVersion} 上测试过，如遇异常请关闭相关 Mod。", 8f);
             }
 
             // GameRaw 的静态字段里有字段访问器，要在纯英文当前目录下建好（平时第一次用到时才建）
