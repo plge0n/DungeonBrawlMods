@@ -32,15 +32,19 @@ internal static class Program
         ulong id = item.Value<ulong>("Id");
         string folder = Path.GetFullPath(Path.Combine(root, item.Value<string>("Folder")));
         string preview = Path.GetFullPath(Path.Combine(root, item.Value<string>("Preview")));
-        var titles = item["Title"].ToObject<Dictionary<string, string>>();
-        var descriptions = item["Description"].ToObject<Dictionary<string, string>>();
+        // 标题和说明里的 {GameVersion} 换成 DBModKit 适配的游戏版本（Compat.TestedVersions），每次适配游戏更新不用手改 items.json
+        string gameVersion = TargetGameVersion(root);
+        var titles = FillGameVersion(item["Title"].ToObject<Dictionary<string, string>>(), gameVersion);
+        var descriptions = FillGameVersion(item["Description"].ToObject<Dictionary<string, string>>(), gameVersion);
         var tags = item["Tags"]?.ToObject<List<string>>() ?? new List<string>();
         var visibility = ParseVisibility(item.Value<string>("Visibility"));
         // 第一次上传不贴开发用的更新日志
-        string note = id == 0 ? FirstNote(folder) : ChangeNote(root, folder, since);
+        string note = id == 0 ? FirstNote(folder) : ChangeNote(root, folder, since, gameVersion);
 
         // 上传前检查：内容文件夹、预览图、长度限制
         var problems = new List<string>();
+        if (titles.Values.Concat(descriptions.Values).Any(s => s.Contains("{GameVersion}")))
+            problems.Add("标题或说明里有 {GameVersion}，但没能从 DBModKit/Compat.cs 的 TestedVersions 读出游戏版本");
         if (!Directory.Exists(folder) || !Directory.EnumerateFiles(folder, "*", SearchOption.AllDirectories).Any()) problems.Add($"内容文件夹不存在或是空的：{folder}（先跑 pack.ps1）");
         if (!File.Exists(preview)) problems.Add($"预览图不存在：{preview}");
         else if (new FileInfo(preview).Length >= 1024 * 1024) problems.Add("预览图要小于 1 MB");
@@ -202,20 +206,36 @@ internal static class Program
     }
 
     // 更新说明：条目 dbmod.json 的版本 + 对应插件 CHANGELOG.md（中文）和 CHANGELOG.en.md（英文）里这一版的条目；
-    // 给了 since 时带上 since 之后（不含）的每一版，每版前面写版本号
-    private static string ChangeNote(string root, string folder, string since)
+    // 给了 since 时带上 since 之后（不含）的每一版，每版前面写版本号。运行环境的版本号后面注明适配的游戏版本
+    private static string ChangeNote(string root, string folder, string since, string gameVersion)
     {
         string manifest = Path.Combine(folder, "dbmod.json");
         if (!File.Exists(manifest)) return "";
         var m = JObject.Parse(File.ReadAllText(manifest));
         string version = m.Value<string>("Version");
-        string plugin = m.Value<string>("Type") == "runtime" ? "DBModKit" : m.Value<string>("Name");
+        bool runtime = m.Value<string>("Type") == "runtime";
+        string plugin = runtime ? "DBModKit" : m.Value<string>("Name");
         var entries = new[] { "CHANGELOG.md", "CHANGELOG.en.md" }
             .Select(f => since == null ? ChangelogEntry(Path.Combine(root, plugin, f), version) : ChangelogSince(Path.Combine(root, plugin, f), since))
             .Where(e => e.Length > 0);
         string head = since == null ? version : $"{since} → {version}";
+        if (runtime && gameVersion != null) head += $"（适配游戏 {gameVersion} / for game version {gameVersion}）";
         return $"{head}\n{string.Join("\n\n", entries)}".Trim();
     }
+
+    // DBModKit 适配的游戏版本：Compat.TestedVersions 里的字符串，多个用"、"连接；读不到返回 null
+    private static string TargetGameVersion(string root)
+    {
+        string compat = Path.Combine(root, "DBModKit", "Compat.cs");
+        if (!File.Exists(compat)) return null;
+        var match = System.Text.RegularExpressions.Regex.Match(File.ReadAllText(compat), @"TestedVersions\s*=\s*\{([^}]*)\}");
+        if (!match.Success) return null;
+        var versions = System.Text.RegularExpressions.Regex.Matches(match.Groups[1].Value, "\"([^\"]+)\"").Select(v => v.Groups[1].Value).ToList();
+        return versions.Count > 0 ? string.Join("、", versions) : null;
+    }
+
+    private static Dictionary<string, string> FillGameVersion(Dictionary<string, string> texts, string gameVersion)
+        => gameVersion == null ? texts : texts.ToDictionary(t => t.Key, t => t.Value.Replace("{GameVersion}", gameVersion));
 
     private static string ChangelogSince(string log, string since)
     {
