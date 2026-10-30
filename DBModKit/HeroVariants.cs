@@ -199,7 +199,7 @@ namespace DBModKit
             if (evt != null) Safe.InvokeEach(evt, nameof(Changed));
         }
 
-        // ---- 出生（由 Hooks 在 bby.lll 前后调用，只对本地玩家）----
+        // ---- 出生（由 Hooks 在 bbx.lmq 前后调用，只对本地玩家）----
 
         internal static object BeforeSpawn(int heroId)
         {
