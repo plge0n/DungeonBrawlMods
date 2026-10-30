@@ -1,29 +1,58 @@
-# 地下城竞技场 Mods 0.36
+# 地下城竞技场 Mods 0.37
 
-[English](#dungeonbrawl-mods-036)
+**适配游戏版本：7.11**（其他游戏版本见[适配的游戏版本](#适配的游戏版本)）
+
+[English](#dungeonbrawl-mods-037)
 
 ## 升级须知（必读）
 
-**游戏更新到 7.10 后，旧的运行环境会自动停用所有 Mod（游戏照常可玩）。这次更新了运行环境（DBModKit 0.35.0 → 0.36.0），升级后必须重新安装运行环境，Mod 才会恢复。**
+**游戏更新到 7.11 后，旧的运行环境会自动停用所有 Mod（游戏照常可玩）。这次更新了运行环境（DBModKit 0.36.0 → 0.37.0），升级后必须重新安装运行环境，Mod 才会恢复。**
 
 - **从创意工坊装的**：等 Steam 把条目更新下载完，**退出游戏**，到运行环境的条目文件夹
   （`<Steam 库>\steamapps\workshop\content\4246640\3824690979\`）里**再双击一次 `install.bat`**，然后启动游戏。
   游戏里看到"运行环境有更新"的提示也是这个意思。
 - **用压缩包装的**：退出游戏，把「仅插件」包（plugins）解压到游戏目录、覆盖旧文件。
-- 装好后点主菜单的「Mod」按钮，确认 DBModKit 是 0.36.0，所有 Mod 都在运行。其他 Mod 这次没有改动，不用重新订阅。
+- 装好后点主菜单的「Mod」按钮，确认 DBModKit 是 0.37.0，所有 Mod 都在运行。其他 Mod 这次没有改动，不用重新订阅。
 
 ### 可能的冲突和处理
 
 | 现象 | 原因 | 处理 |
 |---|---|---|
-| 进游戏提示"游戏版本 7.10 与 DBModKit 不兼容"，所有 Mod 停用 | 运行环境还是旧的（0.35.0 及以前不支持游戏 7.10） | 退出游戏，重新运行运行环境的 `install.bat`（压缩包用户：覆盖「仅插件」包） |
+| 进游戏提示"游戏版本 7.11 与 DBModKit 不兼容"，所有 Mod 停用 | 运行环境还是旧的（0.36.0 及以前不支持游戏 7.11） | 退出游戏，重新运行运行环境的 `install.bat`（压缩包用户：覆盖「仅插件」包） |
 | 订阅了工坊的新版，游戏里还是旧版（Mod 列表显示"已经装了同一个插件，用的是本地那份"） | `BepInEx\plugins` 里有以前用压缩包装的同名 Mod，**本地那份优先** | 二选一：要用工坊版，就删掉 `BepInEx\plugins` 下对应的文件夹（比如 `Hextech`；**不要删 `DBModKit`**，它由 install.bat 管理）；要用压缩包版，就用新的压缩包覆盖 |
 | 开发者环境：`BepInEx\scripts` 里有同名 dll | 同上，`scripts` 里的优先 | 删掉 `scripts` 里的旧 dll |
-| 联机时提示"装的不一样"，海克斯等改玩法的内容停用 | 房间里有人还是旧版本（联机握手会比对 DBModKit 和每个 Mod 的版本） | **房间里每个人都更新到 0.36**；或者房主在 F9 → Mod 页 → DBModKit → 联机里勾选"允许改玩法的内容" |
+| 联机时提示"装的不一样"，海克斯等改玩法的内容停用 | 房间里有人还是旧版本（联机握手会比对 DBModKit 和每个 Mod 的版本） | **房间里每个人都更新到 0.37**；或者房主在 F9 → Mod 页 → DBModKit → 联机里勾选"允许改玩法的内容" |
 | 关掉了 Hextech 的总开关，联机还是提示"装的不一样" | 0.31 起关着的 Hextech 不算改玩法的内容；对方如果还是旧版，旧版会把自己的 Hextech 算进去 | 让对方也更新 |
 | 更新后进游戏报错、Mod 都没加载 | 运行环境文件不完整（比如游戏开着时运行了 install.bat） | 退出游戏，运行 `uninstall.bat`，再运行 `install.bat`；工坊条目可以在 Steam 里"验证"后再装 |
 
 设置文件（`BepInEx\config` 下的 .cfg、.json）和存档都不受影响，不需要删。
+
+## 适配的游戏版本
+
+**这一版（0.37）适配游戏 7.11。** 游戏每次更新都会重新混淆代码，所以每个 Mod 版本只适配一个游戏版本（游戏版本在主菜单「Mod」按钮里能看到）。
+游戏作者会在 Steam 放出历史版本（库里右键游戏 → 属性 → 测试版）。想固定在某个游戏版本、不跟着更新的话：
+
+1. 在下表找到适配这个游戏版本的 Mod 版本，到 [GitHub Releases](https://github.com/plge0n/DungeonBrawlMods/releases) 下载那一版的「仅插件」包（plugins）。
+2. 退出游戏，解压到游戏目录覆盖旧文件。压缩包装的 Mod（`BepInEx\plugins` 里）比创意工坊的优先，订阅着的工坊条目以后再更新也不影响。
+3. 固定版本期间运行环境条目再更新，**不要**运行它的 `install.bat`，游戏里的"运行环境有更新"提示可以忽略。
+
+| Mod 版本 | 适配游戏版本 | DBModKit |
+|---|---|---|
+| 0.37 | 7.11 | 0.37.0 |
+| 0.36 | 7.10 | 0.36.0 |
+| 0.35 | 7.06 | 0.35.0 |
+| 0.34 | 7.03 | 0.34.0 |
+| 0.33 | 7.02 | 0.33.0 |
+| 0.32 | 7.01 | 0.32.0 |
+| 0.31 | 6.45 | 0.31.0 |
+| 0.2 | 6.45 | 0.26.0 |
+| 0.1、0.1.1 | 6.45 | 0.24.0 |
+
+## 0.37 的改动
+
+- **DBModKit 0.37.0：适配游戏 7.11**。**这一版没有实机测试**，只确认了编译通过、游戏启动后所有 Mod 正常加载。遇到问题请在 Mod 列表里导出报告反馈
+- 游戏版本不兼容时，提示里写明这一版适配的游戏版本，可以等 Mod 更新，也可以在 Steam 里把游戏切回那个版本；Mod 列表顶部也显示适配的游戏版本
+- 创意工坊的运行环境条目在标题和说明里注明适配的游戏版本，说明里加了固定游戏版本的方法
 
 ## 0.36 的改动
 
@@ -99,7 +128,7 @@ Hextech 从 0.3.0 直接跳到 0.31.0，中间的 0.4.0–0.8.0 是开发中的�
 
 | Mod | 版本 | 一句话 |
 |---|---|---|
-| DBModKit | 0.36.0 | 公共依赖库，其他 Mod 都需要它；主菜单"Mod"按钮、Mod 列表、联机握手、创意工坊加载器、内容包 |
+| DBModKit | 0.37.0 | 公共依赖库，其他 Mod 都需要它；主菜单"Mod"按钮、Mod 列表、联机握手、创意工坊加载器、内容包 |
 | SmartSkill | 0.7.0 | 自动释放技能时，给每个技能单独设条件（血量、敌人数量、Boss、斩杀……） |
 | SmartMove | 0.3.0 | 自动躲避地面红色预警（F8 开关） |
 | AutoPickup | 0.1.0 | 战斗中自动捡身边的掉落物，可按类别开关 |
@@ -146,31 +175,60 @@ Hextech 从 0.3.0 直接跳到 0.31.0，中间的 0.4.0–0.8.0 是开发中的�
 
 ---
 
-# DungeonBrawl Mods 0.36
+# DungeonBrawl Mods 0.37
 
-[中文](#地下城竞技场-mods-036)
+**For game version 7.11** (other game versions: see [Game versions](#game-versions))
+
+[中文](#地下城竞技场-mods-037)
 
 ## Upgrading (read this first)
 
-**After the game updated to 7.10, the old runtime disables every mod (the game itself keeps working). This update changes the runtime (DBModKit 0.35.0 → 0.36.0); reinstall the runtime after updating and the mods come back.**
+**After the game updated to 7.11, the old runtime disables every mod (the game itself keeps working). This update changes the runtime (DBModKit 0.36.0 → 0.37.0); reinstall the runtime after updating and the mods come back.**
 
 - **Installed from the Steam Workshop**: wait for Steam to download the update, **quit the game**, and **double-click `install.bat` again** in the runtime item's folder
   (`<Steam library>\steamapps\workshop\content\4246640\3824690979\`), then start the game. The in-game "runtime update available" notice means the same thing.
 - **Installed from the zip**: quit the game and extract the "plugins" package into the game folder, overwriting the old files.
-- Afterwards, click the main-menu "Mod" button and check that DBModKit is 0.36.0 and all mods are running. The other mods are unchanged this time; no need to resubscribe.
+- Afterwards, click the main-menu "Mod" button and check that DBModKit is 0.37.0 and all mods are running. The other mods are unchanged this time; no need to resubscribe.
 
 ### Possible conflicts
 
 | Symptom | Cause | Fix |
 |---|---|---|
-| On start-up: "game version 7.10 is not compatible with DBModKit", all mods disabled | The runtime is still the old version (0.35.0 and earlier don't support game 7.10) | Quit the game and run the runtime's `install.bat` again (zip users: extract the new "plugins" package) |
+| On start-up: "game version 7.11 is not compatible with DBModKit", all mods disabled | The runtime is still the old version (0.36.0 and earlier don't support game 7.11) | Quit the game and run the runtime's `install.bat` again (zip users: extract the new "plugins" package) |
 | You subscribed to the new Workshop version but the game still runs the old one (the mod list says "already installed, using the local copy") | `BepInEx\plugins` has an older copy from the zip; **the local copy wins** | Pick one: to use the Workshop version, delete that mod's folder under `BepInEx\plugins` (e.g. `Hextech`; **don't delete `DBModKit`**, install.bat manages it); to use the zip version, extract the new zip |
 | Developer setups: a same-named dll in `BepInEx\scripts` | Same as above, `scripts` wins | Delete the old dll in `scripts` |
-| In multiplayer, "installed differently" and Hextech / other gameplay content is disabled | Someone in the room is still on an old version (the handshake compares DBModKit and every mod's version) | **Everyone updates to 0.36**, or the host ticks "allow gameplay content" under F9 → Mod → DBModKit → Multiplayer |
+| In multiplayer, "installed differently" and Hextech / other gameplay content is disabled | Someone in the room is still on an old version (the handshake compares DBModKit and every mod's version) | **Everyone updates to 0.37**, or the host ticks "allow gameplay content" under F9 → Mod → DBModKit → Multiplayer |
 | Hextech's main switch is off but multiplayer still says "installed differently" | From 0.31 a disabled Hextech doesn't count as gameplay content, but an older version on the other side still counts its own | Ask them to update too |
 | After updating, errors on start and no mods load | Incomplete runtime files (e.g. install.bat ran while the game was open) | Quit the game, run `uninstall.bat`, then `install.bat`; for the Workshop item you can "verify" it in Steam first |
 
 Your settings (the .cfg / .json files under `BepInEx\config`) and saves are unaffected; don't delete them.
+
+## Game versions
+
+**This release (0.37) is for game version 7.11.** Every game update re-obfuscates the game's code, so each mod release works with exactly one game version (the main-menu "Mod" button shows your game version).
+The game's author is publishing older game versions on Steam (right-click the game in your library → Properties → Betas). To stay on a game version instead of following updates:
+
+1. Find the mod release for that game version in the table below and download its "plugins" package from [GitHub Releases](https://github.com/plge0n/DungeonBrawlMods/releases).
+2. Quit the game and extract it into the game folder, overwriting files. Zip-installed mods (in `BepInEx\plugins`) take priority over the Workshop ones, so later Workshop updates won't interfere.
+3. While you stay on an older game version, **don't** run the runtime item's `install.bat` when it updates; you can ignore the in-game "runtime update available" notice.
+
+| Mods version | Game version | DBModKit |
+|---|---|---|
+| 0.37 | 7.11 | 0.37.0 |
+| 0.36 | 7.10 | 0.36.0 |
+| 0.35 | 7.06 | 0.35.0 |
+| 0.34 | 7.03 | 0.34.0 |
+| 0.33 | 7.02 | 0.33.0 |
+| 0.32 | 7.01 | 0.32.0 |
+| 0.31 | 6.45 | 0.31.0 |
+| 0.2 | 6.45 | 0.26.0 |
+| 0.1, 0.1.1 | 6.45 | 0.24.0 |
+
+## Changes in 0.37
+
+- **DBModKit 0.37.0: updated for game version 7.11**. **This release was not play-tested**; we only checked that it builds and that every mod loads when the game starts. If something breaks, please export a report from the mod list and let us know
+- When the game version is incompatible, the notice now says which game version this release is for: wait for a mod update, or switch the game back to that version on Steam. The mod list also shows it at the top
+- The Workshop runtime item now states the supported game version in its title and description, plus how to stay on a game version
 
 ## Changes in 0.36
 
@@ -246,7 +304,7 @@ First public release. Everything was built and tested against game version 6.45.
 
 | Mod | Version | Summary |
 |---|---|---|
-| DBModKit | 0.36.0 | Shared library required by all other mods; main-menu "Mod" button, mod list, multiplayer handshake, Workshop loader, content packs |
+| DBModKit | 0.37.0 | Shared library required by all other mods; main-menu "Mod" button, mod list, multiplayer handshake, Workshop loader, content packs |
 | SmartSkill | 0.7.0 | Per-skill conditions for auto-cast (HP, enemy count, bosses, execute thresholds, …) |
 | SmartMove | 0.3.0 | Automatically steps out of red ground telegraphs (toggle with F8) |
 | AutoPickup | 0.1.0 | Picks up nearby drops during combat, filterable by category |
