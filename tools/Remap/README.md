@@ -6,10 +6,10 @@
 ```powershell
 dotnet build tools/Remap -c Release
 $remap = "tools/Remap/bin/Release/net8.0/Remap.dll"
-dotnet $remap update --old ../backup/7.11                 # 只检查，报告在 tools/Remap/out/report.md
-dotnet $remap update --old ../backup/7.11 --write         # 写回 DBModKit 源码
-dotnet $remap snapshot --version 7.12                                   # 适配完新版本后保存，作为下次的 --old
-dotnet $remap selftest --old ../backup/7.11 --mutate 0.03 # 自测
+dotnet $remap update --old ../backup/7.13                 # 只检查，报告在 tools/Remap/out/report.md
+dotnet $remap update --old ../backup/7.13 --write         # 写回 DBModKit 源码
+dotnet $remap snapshot --version 7.14                                   # 适配完新版本后保存，作为下次的 --old
+dotnet $remap selftest --old ../backup/7.13 --mutate 0.03 # 自测
 ```
 `dotnet $remap help` 查看全部选项。`--notes ../tools/NOTES.md` 会同时改笔记里反引号中的 `类型.成员`。
 
@@ -53,3 +53,5 @@ dotnet $remap selftest --old ../backup/7.11 --mutate 0.03 # 自测
 **7.06 → 7.10（2026-10-30，跳过了 7.07–7.09）**：改名 1968 处。这次有几个方法改了签名，工具对应不上（报"没有对应"）：伤害结算 `ez.dzr` 末尾加了 `AttackType? k`（只影响伤害数字的显示类型）→ `ey.eae`；技能工厂 `ez.eba` 末尾加了 `Quaternion? j`（朝向覆盖）→ `ey.ebn`，Harmony 的参数类型数组要补上 `typeof(Quaternion?)`；炸弹初始化 `bif.nez` → `bii.niw`（签名没变，但诱饵副本太像）；大厅成员数据读取 `chq.uig` → `chv.umv`（逐字节相同的副本任选一个）。做法：反编译新版，按签名找候选，数调用次数——诱饵副本没有调用者，真的那个有（`ey.eae` 189 处）。
 
 **7.10 → 7.11（2026-10-30）**：作者修 bug 的小更新，没有全部重新混淆，改名 665 处。只有大厅成员数据读取 `chv.umv` → `chv.umw` 要手动补；报告里 `yl.lbz` 的"重载对应到不同的名字"可以忽略（用到的是 `bbx.lbz(rv)`），字符串 `"cd"` 是表格列名，不用改。
+
+**7.11 → 7.13（2026-11-03）**：改名 2179 处，对应率 71.3%。手动补大厅成员数据 `chv.umx` → `cjp.vda`（Set）、`chv.umw` → `cjp.vcz`（Get），按 P/Invoke 入口核对；重载提示按实际签名修正 `yl.jfu(float)` → `yn.jhz(float)`、`bbx.lbx(string)` → `bca.lep(string)`、`ey.eai` → `ez.ecc`、`ey.eaq` → `ez.eck`，后两者与遗物工厂均确认有调用者。新坑：参数位置的普通字符串也可能与混淆类型同名，被误当类型名改写（JSON 字段 `"do"` → `"dr"`、GameObject 名称 `"bqs"` → `"bra"`）；要检查字符串 diff 并撤销这类误改。

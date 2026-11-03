@@ -1,4 +1,4 @@
-DungeonBrawl Mods 0.37 (for game version 7.11) - Installation and usage
+DungeonBrawl Mods 0.38 (for game version 7.13) - Installation and usage
 中文说明见 安装说明.txt
 
 Note: the in-game UI of these mods is Chinese only for now.
@@ -12,7 +12,7 @@ The package contains 7 mods, each in its own folder under BepInEx\plugins. Delet
   Hextech      Hextech augments
   DBStudio     In-game mod workbench (F9)
 Features not yet fully verified in game, and what to do when an update breaks something, are in docs\FAQ.md; changes in each release are in CHANGELOG.md.
-This release only works with game version 7.11 (every game update re-obfuscates the code). To stay on another game version, see "Staying on a game version" in docs\FAQ.md.
+This release only works with game version 7.13 (every game update re-obfuscates the code). To stay on another game version, see "Staying on a game version" in docs\FAQ.md.
 
 [Install]
 1. In Steam, right-click the game -> Manage -> Browse local files to open the game folder (the one with DungeonBrawl.exe).

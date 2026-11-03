@@ -1,5 +1,11 @@
 # DBModKit changelog (English)
 
+## 0.38.0
+**Updated for game version 7.13. After updating, quit the game and run install.bat in the runtime item again** (zip users: extract the new "plugins" package), otherwise all mods stay disabled.
+
+- Rebuilt the mappings with `tools/Remap`; manually checked lobby member data access, overloaded method signatures and callers, and reverted unintended changes to the content-pack `do` field and a UI object name
+- **Not play-tested**; we only checked that it builds and that every mod loads when the game starts. If something breaks, please export a report and let us know
+
 ## 0.37.0
 **Updated for game version 7.11. After updating, quit the game and run install.bat in the runtime item again** (zip users: extract the new "plugins" package), otherwise all mods stay disabled.
 
