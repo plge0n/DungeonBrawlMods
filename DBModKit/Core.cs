@@ -129,6 +129,7 @@ namespace DBModKit
             // 第一帧：Chainloader 已经加载完 plugins 目录，再加载工坊插件（依赖检查才准）
             Workshop.Start();
             ContentPacks.Start();
+            CardCollection.Tick();
             Safe.Run("联机握手", Multiplayer.Tick);
             bool inBattle = InBattle();
             if (inBattle != wasInBattle)

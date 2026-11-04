@@ -166,6 +166,27 @@ namespace DBStudio
             => GameData.Entries(DataTable.Skill).Where(e => e.Icon != null)
                 .Select(e => new Item { Key = e.Key, Name = e.Name, IconPath = e.IconPath, Icon = e.Icon });
 
+        public static void Confirm(string title, string message, Action confirm)
+        {
+            Close();
+            if (Studio.ModalHost == null) return;
+            var window = NativeUi.Window(Studio.ModalHost, title, new Vector2(900f, 460f), Close);
+            root = window.Root;
+            root.SetAsLastSibling();
+            var column = NativeUi.Column(window.Body);
+            NativeUi.Stretch(column);
+            NativeUi.Label(column, message, 22);
+            Widgets.Spacer(column);
+            var row = NativeUi.Row(column, 52f);
+            NativeUi.Button(row, "取消", false, 180f, Close);
+            NativeUi.Button(row, "确认永久写入", true, 240f, () =>
+            {
+                Close();
+                confirm();
+            });
+            window.Status.text = "此操作会修改真实存档";
+        }
+
         public static void Show(string title, IEnumerable<Item> items, Action<Item> onPick)
         {
             Close();

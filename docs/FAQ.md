@@ -22,6 +22,9 @@ Changes in each release are in [CHANGELOG.md](../CHANGELOG.md); per-mod change l
 
 ## Read this first
 
+- The in-combat editor on DBStudio's Build page only works in single-player combat. Passives support adding and removing. Equipment and relic levels can be adjusted.
+- The runtime card unlock is off by default and remembers its setting. Deck and preset edits made while enabled stay in memory. Disabling restores the original collection and decks while retaining newly earned cards. Crafting, dismantling and capacity upgrades are blocked while enabled. Toggling during combat affects the next run.
+- Permanent save writing is available outside combat. The result persists after uninstalling and Steam Cloud syncs it. Recovery requires a backup. Before changing data, the mod copies `save.json*` to `DBModKit-backup-<yyyyMMdd-HHmmss>/` inside the active save directory. A copy failure aborts the operation. The completed backup path is shown on screen. The default save directory is `%USERPROFILE%\AppData\LocalLow\UndergroundCat\DungeonBrawl\`.
 - **No leaderboard uploads while mods are installed** (the game author's rule). Your run results are not uploaded; nothing else is affected. Uninstall the mods if you want to compete on the leaderboard.
 - **Multiplayer**: players with the mods compare their "gameplay-changing content" (custom skills, relics, equipment, content packs, DBStudio packs).
   It only takes effect when you're alone, when everyone in the room has exactly the same content, or when the host explicitly allows it; otherwise only cosmetics (skins) stay on for that run. Helper mods (auto-cast, dodging, pickup, damage meter) only affect yourself and always work.
@@ -56,6 +59,7 @@ These are implemented and compile, but haven't been fully verified in the game y
 
 | Feature | Untested part |
 |---|---|
+| Build and cards (DBModKit / DBStudio 0.39.0, **no in-game functional testing yet**) | Skill edits, equipment/relic level changes and stat/UI updates, mod content, disabled multiplayer controls, runtime collection/deck restoration, reload and exit save isolation, earned cards, resource-operation blocking, permanent writing and backup recovery. Only compilation and main-menu loading logs were checked |
 | Custom equipment (DBModKit 0.24.0) | Tested in single-player (effects on existing equipment, new equipment, content packs, build-data filtering); untested: multiplayer, upgrading, retrying a wave, actually picking it from the artifact choice |
 | Dependencies and conflicts (DBModKit 0.23.0) | Missing-dependency notice and "Subscribe" button, choosing which mod handles auto-cast/movement, warning when two mods change the same value |
 | Leaderboard block | Blocking at the real "upload your score?" dialog at the end of a run (the hook is installed but hasn't fired in a real run yet) |

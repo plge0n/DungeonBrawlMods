@@ -183,6 +183,394 @@ namespace DBModKit
         // bca.leo(编号, 等级)：游戏的遗物三选一（ez.eea）就调它；超过本局获取上限、或王者模式禁用时返回 null
         public static bool GiveRelic(Component p, int id) => ck.brui.beil.ContainsKey((ItemType)id) && ((bca)p).leo(id, 0) != null;
 
+        // ---- 卡牌。所有快照均深拷贝，避免编卡组/改预设污染真实收藏 ----
+        private sealed class CardSnapshot
+        {
+            public df.GameSaveData Save;
+            public Dictionary<int, zt.HaveCardData> Cards;
+            public List<zt.HaveCardData> SavedCards;
+            public int Capacity, PresetIndex;
+            public List<int> Deck;
+            public List<df.EquipCardPresetData> Presets;
+
+            public static CardSnapshot Capture() => new CardSnapshot
+            {
+                Save = df.bbmh,
+                Cards = new Dictionary<int, zt.HaveCardData>(df.bbme),
+                SavedCards = df.bbmh.haveCardDataDic == null ? null : new List<zt.HaveCardData>(df.bbmh.haveCardDataDic),
+                Capacity = df.bbmh.maxCapacity,
+                PresetIndex = df.bbmh.currentEquipCardPresetIndex,
+                Deck = df.bbmh.equipCards == null ? null : new List<int>(df.bbmh.equipCards),
+                Presets = df.bbmh.equipCardPresets?.Select(p => p == null ? null : new df.EquipCardPresetData
+                {
+                    presetName = p.presetName, isSaved = p.isSaved,
+                    equipCards = p.equipCards == null ? null : new List<int>(p.equipCards),
+                }).ToList(),
+            };
+
+            // 只做字段交换，finally 中不分配、不调用游戏 UI 或成就事件。
+            public void Apply()
+            {
+                df.bbme = Cards;
+                Save.haveCardDataDic = SavedCards;
+                Save.maxCapacity = Capacity;
+                Save.currentEquipCardPresetIndex = PresetIndex;
+                Save.equipCards = Deck;
+                Save.equipCardPresets = Presets;
+            }
+        }
+
+        private static CardSnapshot realCards;
+        private static int cardReadDepth, cardSaveDepth, cardReturnDepth;
+        private static class CardAccess
+        {
+            public static readonly AccessTools.FieldRef<dd, FileStream> SessionLock = AccessTools.FieldRefAccess<dd, FileStream>("bblh");
+            public static dd Session => AccessTools.StaticFieldRefAccess<dd>(typeof(df), "bbmn");
+        }
+
+        public static bool CardSaveReady() => cardReadDepth == 0 && cardSaveDepth == 0 && df.bruy && df.bbmh != null && df.bbme != null && TablesReady();
+
+        public static void EnableCardUnlock()
+        {
+            if (!CardSaveReady() || cardReadDepth != 0 || cardSaveDepth != 0) return;
+            if (realCards != null && ReferenceEquals(realCards.Save, df.bbmh)) return;
+            var snapshot = CardSnapshot.Capture();
+            // 先完整准备，再切换，异常时仍保留原数据。
+            var unlocked = new Dictionary<int, zt.HaveCardData>(df.bbme);
+            FillUnlockedCards(unlocked);
+            realCards = snapshot;
+            df.bbme = unlocked;
+            df.bbmh.maxCapacity = 50;
+            RunLog.Info(ModKitPlugin.Name, "卡牌", "运行时全解锁已应用", ("卡牌种类", ck.brui.beip.Count));
+        }
+
+        private static void FillUnlockedCards(Dictionary<int, zt.HaveCardData> cards)
+        {
+            // beip 在加载时已经排除了 lock=TRUE。保留超出 7 张的库存和原有进度。
+            foreach (int id in ck.brui.beip.Keys)
+            {
+                cards.TryGetValue(id, out var card);
+                card.cardId = id;
+                card.haveNum = Math.Max(7, card.haveNum);
+                cards[id] = card;
+            }
+        }
+
+        public static void DisableCardUnlock()
+        {
+            // 保存回调中改变开关时，等外层 finally 恢复后再处理，期间保留真实快照以保护后续保存。
+            if (realCards == null || cardSaveDepth != 0) return;
+            if (ReferenceEquals(realCards.Save, df.bbmh)) realCards.Apply();
+            realCards = null;
+        }
+
+        private sealed class CardSaveScope : IDisposable
+        {
+            private readonly CardSnapshot overlay;
+            private bool disposed;
+            public CardSaveScope(CardSnapshot overlay) { this.overlay = overlay; }
+            public void Dispose()
+            {
+                if (disposed) return;
+                disposed = true;
+                try
+                {
+                    if (overlay != null && ReferenceEquals(overlay.Save, df.bbmh)) overlay.Apply();
+                }
+                finally { cardSaveDepth--; }
+            }
+        }
+
+        public static IDisposable BeginCardSave()
+        {
+            CardSnapshot overlay = null;
+            if (cardSaveDepth == 0 && realCards != null && ReferenceEquals(realCards.Save, df.bbmh))
+                overlay = CardSnapshot.Capture();
+            var scope = new CardSaveScope(overlay);
+            cardSaveDepth++;
+            if (overlay != null) realCards.Apply();
+            return scope;
+        }
+
+        public static void BeginCardRead()
+        {
+            DisableCardUnlock();
+            cardReadDepth++;
+        }
+
+        public static void EndCardRead(bool success)
+        {
+            cardReadDepth--;
+            if (success && cardReadDepth == 0 && ModKit.Compatible && CardCollection.Available && CardCollection.Enabled) EnableCardUnlock();
+        }
+
+        public static void BeginCardReturn() => cardReturnDepth++;
+        public static void EndCardReturn() => cardReturnDepth--;
+
+        public static void TrackCardGain(int id)
+        {
+            if (realCards == null || cardReturnDepth != 0 || cardSaveDepth != 0 || !ReferenceEquals(realCards.Save, df.bbmh)) return;
+            realCards.Cards.TryGetValue(id, out var card);
+            card.cardId = id;
+            card.haveNum = Math.Min(999, card.haveNum + 1);
+            realCards.Cards[id] = card;
+        }
+
+        public static void TrackCardProgress(int id, int amount)
+        {
+            if (realCards == null || cardSaveDepth != 0 || !ReferenceEquals(realCards.Save, df.bbmh)
+                || !ck.brui.beip.TryGetValue(id, out var data) || data.progress <= 0) return;
+            realCards.Cards.TryGetValue(id, out var card);
+            card.cardId = id;
+            long progress = (long)card.curProgress + amount;
+            if (progress >= data.progress)
+            {
+                card.haveNum = (int)Math.Min(999L, card.haveNum + progress / data.progress);
+                progress %= data.progress;
+            }
+            card.curProgress = (int)progress;
+            realCards.Cards[id] = card;
+        }
+
+        public static string CardCollectionSummary() => df.bbmh == null || df.bbme == null ? "存档未加载"
+            : $"收藏 {df.bbme.Count} 种，库存共 {df.bbme.Values.Sum(c => (long)c.haveNum)} 张，容量 {df.bbmh.maxCapacity}";
+
+        public static void RefreshCardCollection()
+        {
+            if (!CardSaveReady()) return;
+            var cards = ca.dhp<zt>();
+            if (cards != null)
+                cards.bgzn = df.bbmh.equipCards.Sum(id => ck.brui.beip.TryGetValue(id, out var data) ? data.capacity : 0);
+            // 不调用 kfk，它会触发容量成就事件。这里只更新已打开界面的显示。
+            var ui = ck.brty?.dun<bpy>();
+            if (ui != null && ui.bbov) ui.pfp();
+        }
+
+        public static string BackupCardSave()
+        {
+            if (!CardSaveReady()) throw new InvalidOperationException("存档尚未加载");
+            string directory = df.bruz;
+            string backup = Path.Combine(directory, "DBModKit-backup-" + DateTime.Now.ToString("yyyyMMdd-HHmmss"));
+            if (Directory.Exists(backup)) throw new IOException("同名备份已存在，请稍后重试");
+            var files = Directory.GetFiles(directory, "save.json*");
+            if (!files.Any(p => Path.GetFileName(p) == "save.json")) throw new IOException("找不到 save.json，已中止");
+            Directory.CreateDirectory(backup);
+            foreach (string file in files)
+            {
+                string target = Path.Combine(backup, Path.GetFileName(file));
+                if (Path.GetFileName(file) != "save.json.lock") File.Copy(file, target, false);
+                else
+                {
+                    // dd 持有 FileShare.None 的锁文件，借用它的流只读复制，最后恢复位置。
+                    var session = CardAccess.Session;
+                    var stream = session == null ? null : CardAccess.SessionLock(session);
+                    if (stream == null || !stream.CanRead || !stream.CanSeek) throw new IOException("无法复制存档锁文件");
+                    long position = stream.Position;
+                    try
+                    {
+                        stream.Position = 0;
+                        using (var output = new FileStream(target, FileMode.CreateNew, FileAccess.Write)) stream.CopyTo(output);
+                    }
+                    finally { stream.Position = position; }
+                }
+            }
+            return backup;
+        }
+
+        public static bool WriteCardsPermanently()
+        {
+            if (!CardSaveReady() || nt.bryb != null || realCards != null) return false;
+            var before = CardSnapshot.Capture();
+            int oldVersion = df.bbmh.cardCapacityProgressionVersion;
+            bool saved = false;
+            try
+            {
+                FillUnlockedCards(df.bbme);
+                df.bbmh.maxCapacity = 50;
+                df.bbmh.cardCapacityProgressionVersion = Math.Max(1, oldVersion);
+                df.bbmh.haveCardDataDic = new List<zt.HaveCardData>(df.bbme.Values);
+                if (!df.dpg(JsonUtility.ToJson(df.bbmh))) return false;
+                df.dos();
+                // dou 内部捕获 IO 异常，不能把方法正常返回当成保存成功。
+                if (df.bbmz != null) return false;
+                string json = File.ReadAllText(Path.Combine(df.bruz, "save.json"));
+                if (!df.dpg(json)) return false;
+                var disk = JsonUtility.FromJson<df.GameSaveData>(json);
+                var counts = disk.haveCardDataDic.ToDictionary(c => c.cardId, c => c.haveNum);
+                saved = disk.maxCapacity == 50 && disk.cardCapacityProgressionVersion >= 1
+                    && ck.brui.beip.Keys.All(id => counts.TryGetValue(id, out int count) && count >= Math.Max(7, before.Cards.TryGetValue(id, out var card) ? card.haveNum : 0));
+                return saved;
+            }
+            finally
+            {
+                if (!saved)
+                {
+                    before.Apply();
+                    df.bbmh.cardCapacityProgressionVersion = oldVersion;
+                }
+            }
+        }
+
+        // ---- 工作台构筑。主动和被动共用 roleSkillList / MaxSkillNum ----
+        public static int LoadoutCapacity(LoadoutKind kind) => kind == LoadoutKind.Equipment ? nt.MaxEquipNum : nt.MaxSkillNum;
+
+        public static List<LoadoutEntry> LoadoutEntries(LoadoutKind kind)
+        {
+            var list = new List<LoadoutEntry>();
+            if (kind == LoadoutKind.Active)
+            {
+                foreach (var kv in ck.brui.beij.OrderBy(k => (int)k.Key))
+                    if (kv.Key != ActiveSkillEnum.None)
+                        list.Add(new LoadoutEntry(kind, (int)kv.Key, Localize("a_" + (int)kv.Key, ((int)kv.Key).ToString()), IconPath("Skill/", kv.Value.icon)));
+                return list;
+            }
+            string table = kind == LoadoutKind.Passive ? "passsiveSkill" : kind == LoadoutKind.Equipment ? "equipment" : "remains";
+            foreach (var row in RawRows(table))
+            {
+                if (!int.TryParse(Cell(row, "id"), out int id)) continue;
+                if (kind == LoadoutKind.Relic && !ck.brui.beil.ContainsKey((ItemType)id)) continue;
+                string key = kind == LoadoutKind.Passive ? "p_" : kind == LoadoutKind.Equipment ? "equip_" : "pickitem_";
+                string folder = kind == LoadoutKind.Passive ? "Skill/" : kind == LoadoutKind.Equipment ? "Equipment/" : "Remains/";
+                string icon = Cell(row, kind == LoadoutKind.Equipment ? "equipmentIcon" : "icon");
+                list.Add(new LoadoutEntry(kind, id, Localize(key + id, id.ToString()), IconPath(folder, icon)));
+            }
+            return list.OrderBy(e => e.Id).ToList();
+        }
+
+        public static List<LoadoutItem> LoadoutCurrent(LoadoutKind kind)
+        {
+            var p = nt.bryb;
+            var result = new List<LoadoutItem>();
+            if (p == null || p.playerAttribute == null) return result;
+            var entries = LoadoutEntries(kind).ToDictionary(e => e.Id);
+            LoadoutEntry Entry(int id, string icon) => entries.TryGetValue(id, out var e) ? e : new LoadoutEntry(kind, id, id.ToString(), icon);
+            if (kind == LoadoutKind.Active || kind == LoadoutKind.Passive)
+            {
+                for (int i = 0; i < p.roleSkillList.Count; i++)
+                {
+                    var s = p.roleSkillList[i];
+                    if (s == null || (s is qy) != (kind == LoadoutKind.Passive)) continue;
+                    int id = kind == LoadoutKind.Active ? (int)s.bjsh : int.TryParse(s.bjsm, out var n) ? n : 0;
+                    result.Add(new LoadoutItem(Entry(id, IconPath("Skill/", s.bjsi)), i, s.k474e18bf33a3493e8a2d2b37d5a6693e, -1, false, s, p));
+                }
+            }
+            else if (kind == LoadoutKind.Equipment)
+            {
+                for (int i = 0; i < p.playerAttribute.bhjj.Count; i++)
+                {
+                    var e = p.playerAttribute.bhjj[i];
+                    if (e == null) continue;
+                    int.TryParse(e.bcll, out int id);
+                    result.Add(new LoadoutItem(Entry(id, IconPath("Equipment/", e.bclm)), i, e.kff7e9fdc37fd4ea58a588f0b690e4623, e.bcmq,
+                        e.kff7e9fdc37fd4ea58a588f0b690e4623 < e.bcmq, e, p));
+                }
+            }
+            else
+            {
+                for (int i = 0; i < p.playerAttribute.bhjk.Count; i++)
+                {
+                    var r = p.playerAttribute.bhjk[i];
+                    if (r == null) continue;
+                    int.TryParse(r.bexq, out int id);
+                    result.Add(new LoadoutItem(Entry(id, IconPath("", r.bexn)), i, r.bexw, r.hcp(), r.bexw < int.MaxValue && r.hcq(), r, p));
+                }
+            }
+            return result;
+        }
+
+        private static bool OwnsLoadoutItem(LoadoutItem item)
+        {
+            var p = nt.bryb;
+            if (item == null || p == null || item.Owner != p) return false;
+            if (item.Native is biy s) return p.roleSkillList.Contains(s);
+            if (item.Native is kd e) return p.playerAttribute.bhjj.Contains(e);
+            return item.Native is sc r && p.playerAttribute.bhjk.Contains(r);
+        }
+
+        public static bool LoadoutAdd(LoadoutKind kind, int id, LoadoutItem replace)
+        {
+            var p = nt.bryb;
+            if (!LoadoutEntries(kind).Any(e => e.Id == id)) return false;
+            if (replace != null && (!OwnsLoadoutItem(replace) || replace.Entry.Kind != LoadoutKind.Active || kind != LoadoutKind.Active)) return false;
+            if (kind == LoadoutKind.Active || kind == LoadoutKind.Passive)
+            {
+                if (replace == null && p.roleSkillList.Count >= nt.MaxSkillNum) return false;
+                // 现有 GiveSkill 只在满格时传替换句柄，这里必须始终传具体实例。
+                if (kind == LoadoutKind.Active) p.jey((ActiveSkillEnum)id, replace?.Native as biy);
+                else
+                {
+                    int before = p.roleSkillList.Count;
+                    return GivePassive(id, -1) && p.roleSkillList.Count == before + 1;
+                }
+                return p.roleSkillList.Any(s => (int)s.bjsh == id && !(s is qy));
+            }
+            if (kind == LoadoutKind.Equipment) return GiveEquipment(id);
+            return GiveRelic(p, id, 0);
+        }
+
+        public static bool LoadoutRemove(LoadoutItem item)
+        {
+            if (!OwnsLoadoutItem(item)) return false;
+            var p = nt.bryb;
+            if (item.Native is biy s) return ez.edt(s) >= 0;
+            if (item.Native is kd e)
+            {
+                p.playerAttribute.kc6cf6f7872c24e719dea5e3fb2fba921(e, true);
+                return !p.playerAttribute.bhjj.Contains(e);
+            }
+            p.ler((sc)item.Native);
+            return !p.playerAttribute.bhjk.Contains((sc)item.Native);
+        }
+
+        public static bool LoadoutSetLevel(LoadoutItem item, int level)
+        {
+            if (!OwnsLoadoutItem(item) || level < 0) return false;
+            var p = nt.bryb;
+            if (item.Native is kd e)
+            {
+                if (level > e.bcmq) return false;
+                int old = e.kff7e9fdc37fd4ea58a588f0b690e4623;
+                // 绝对等级 setter 只改基础属性。用正式升降入口，同时更新 kj 和共享装备特效。
+                if (level > old) e.kf1dc0eb1b8f64fe894ca43bb2518c267(false, level - old);
+                else if (level < old)
+                {
+                    e.kc15c7ba2537446fc8359216d5cdbe313(level);
+                    foreach (var effect in e.eze()) effect.fbp(old - level);
+                    p.playerAttribute.k19dc666848a74e8ba2fc2e8ef7b815c9(e, level - old);
+                }
+                ck.brty?.dun<brh>()?.pnt();
+                return e.kff7e9fdc37fd4ea58a588f0b690e4623 == level;
+            }
+            if (!(item.Native is sc r)) return false;
+            int max = r.hcp();
+            if (max >= 0 && level > max) return false;
+            if (level >= r.bexw)
+            {
+                while (r.bexw < level && r.hcq()) p.les(r);
+                ck.brty?.dun<brh>()?.pnn();
+                return r.bexw == level;
+            }
+            // 工厂先建新实例，再移除旧实例。leq 是 leo 的正式挂载入口，避免重新获取次数限制使降级丢失遗物。
+            var next = (sc)AccessTools.Method(typeof(bca), "lep", new[] { typeof(string) }).Invoke(null, new object[] { Cell(r.bexo, "skill") });
+            if (next == null) return false;
+            next.bexq = r.bexq;
+            next.bexo = r.bexo;
+            next.bexr = r.bexr;
+            next.bexw = level;
+            next.bexx = r.bexx == null ? null : (float[])r.bexx.Clone();
+            next.bexy = r.bexy == null ? null : (RelicValueType[])r.bexy.Clone();
+            next.bexz = r.bexz == null ? null : (float[])r.bexz.Clone();
+            p.ler(r);
+            try { p.leq(next, r.bexn); }
+            catch
+            {
+                if (p.playerAttribute.bhjk.Contains(next)) p.ler(next);
+                p.leq(r, r.bexn);
+                throw;
+            }
+            return p.playerAttribute.bhjk.Contains(next) && next.bexw == level;
+        }
+
         // ---- 掉落物：ck.brun（ot）.bctu，ou 的 bcty = 编号、bctz = 所属玩家 netId（0 = 公共）、bcua = ItemType、bcuc = 位置 ----
         public static void ReadLoot(List<LootItem> output)
         {
