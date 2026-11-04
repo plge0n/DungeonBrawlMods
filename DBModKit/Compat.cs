@@ -169,13 +169,12 @@ namespace DBModKit
         // 卡牌保护单独检查。它失败时仅停用卡牌，其他 Mod 继续使用原来的兼容检查。
         private static readonly (string type, string[] members)[] CardRequired =
         {
-            ("df", new[] { "bbme", "bbmh", "bbmn", "bruy", "bruz", "bbmz", "dou", "dph", "dpp", "dpo", "dos", "dpg" }),
+            ("df", new[] { "bbme", "bbmh", "bruy", "bruz", "bbmz", "dou", "dph", "dpp", "dpo", "dos", "dpg" }),
             ("df+GameSaveData", new[] { "maxCapacity", "cardCapacityProgressionVersion", "equipCards", "equipCardPresets", "currentEquipCardPresetIndex", "haveCardDataDic" }),
             ("df+EquipCardPresetData", new[] { "presetName", "equipCards", "isSaved" }),
             ("zt", new[] { "kfn", "kfv", "kfo", "bgzn" }),
             ("zt+HaveCardData", new[] { "cardId", "haveNum", "curProgress" }),
             ("bpy", new[] { "pgj", "pgk", "pgd", "pge", "pgq", "pfp", "bbov" }),
-            ("dd", new[] { "bblh" }),
             ("ox", new[] { "beip" }),
             ("CardData", new[] { "capacity", "progress" }),
         };

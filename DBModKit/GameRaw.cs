@@ -222,11 +222,6 @@ namespace DBModKit
 
         private static CardSnapshot realCards;
         private static int cardReadDepth, cardSaveDepth, cardReturnDepth;
-        private static class CardAccess
-        {
-            public static readonly AccessTools.FieldRef<dd, FileStream> SessionLock = AccessTools.FieldRefAccess<dd, FileStream>("bblh");
-            public static dd Session => AccessTools.StaticFieldRefAccess<dd>(typeof(df), "bbmn");
-        }
 
         public static bool CardSaveReady() => cardReadDepth == 0 && cardSaveDepth == 0 && df.bruy && df.bbmh != null && df.bbme != null && TablesReady();
 
@@ -357,22 +352,9 @@ namespace DBModKit
             Directory.CreateDirectory(backup);
             foreach (string file in files)
             {
-                string target = Path.Combine(backup, Path.GetFileName(file));
-                if (Path.GetFileName(file) != "save.json.lock") File.Copy(file, target, false);
-                else
-                {
-                    // dd 持有 FileShare.None 的锁文件，借用它的流只读复制，最后恢复位置。
-                    var session = CardAccess.Session;
-                    var stream = session == null ? null : CardAccess.SessionLock(session);
-                    if (stream == null || !stream.CanRead || !stream.CanSeek) throw new IOException("无法复制存档锁文件");
-                    long position = stream.Position;
-                    try
-                    {
-                        stream.Position = 0;
-                        using (var output = new FileStream(target, FileMode.CreateNew, FileAccess.Write)) stream.CopyTo(output);
-                    }
-                    finally { stream.Position = position; }
-                }
+                // save.json.lock 是游戏独占的空锁文件，不用备份
+                if (Path.GetFileName(file) == "save.json.lock") continue;
+                File.Copy(file, Path.Combine(backup, Path.GetFileName(file)), false);
             }
             return backup;
         }
@@ -414,7 +396,18 @@ namespace DBModKit
         // ---- 工作台构筑。主动和被动共用 roleSkillList / MaxSkillNum ----
         public static int LoadoutCapacity(LoadoutKind kind) => kind == LoadoutKind.Equipment ? nt.MaxEquipNum : nt.MaxSkillNum;
 
+        // 可选条目按种类缓存（构筑页每秒刷新 4 次），进入战斗时清空，跟上内容包和语言
+        private static readonly Dictionary<LoadoutKind, List<LoadoutEntry>> loadoutEntries = new Dictionary<LoadoutKind, List<LoadoutEntry>>();
+
+        public static void ClearLoadoutCache() => loadoutEntries.Clear();
+
         public static List<LoadoutEntry> LoadoutEntries(LoadoutKind kind)
+        {
+            if (!loadoutEntries.TryGetValue(kind, out var list)) loadoutEntries[kind] = list = BuildLoadoutEntries(kind);
+            return list;
+        }
+
+        private static List<LoadoutEntry> BuildLoadoutEntries(LoadoutKind kind)
         {
             var list = new List<LoadoutEntry>();
             if (kind == LoadoutKind.Active)
