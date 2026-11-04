@@ -5,6 +5,12 @@
 
 [English](#english)
 
+## 0.39 的改动
+
+- **DBStudio 0.39.0：新增「构筑」页**。单人战斗中可添加、替换或移除技能，增删被动，调整装备和遗物等级。
+- **卡牌全解锁提供两种方式**：默认关闭的「卡牌全解锁（不改存档）」提供每张卡至少 7 张、记忆容量 50，关闭后恢复原收藏、卡组和预设，保留期间新获得的卡牌；开启期间不能合成、分解或升级容量，战斗中切换只影响下一局。「写进存档（永久）」在局外确认后先备份再写入，结果会被 Steam 云同步，卸载 Mod 后仍保留，恢复需使用备份。
+- **DBModKit 0.39.0**：提供局内构筑编辑、卡牌全解锁和存档备份接口，支持 Mod 注册的内容。构筑页与卡牌全解锁已于 2026-11-04 实机测试通过。
+
 ## 0.38 的改动
 
 - **DBModKit 0.38.0：适配游戏 7.13**。**这一版没有实机测试**，只确认了编译通过、游戏启动后所有 Mod 正常加载。遇到问题请在 Mod 列表里导出报告反馈
@@ -92,6 +98,12 @@ Hextech 从 0.3.0 直接跳到 0.31.0，中间的 0.4.0–0.8.0 是开发中的�
 
 Changes in each suite release, newest first. Per-mod details are in each mod's `CHANGELOG.en.md` in the source.
 The game version each release supports is listed in the [latest release notes](RELEASE_NOTES.md).
+
+## Changes in 0.39
+
+- **DBStudio 0.39.0: new Build page**. During single-player combat, add, replace or remove skills, add or remove passives, and adjust equipment and relic levels.
+- **Two ways to unlock all cards**: the runtime unlock is off by default and provides at least 7 copies of each card and 50 memory capacity. Disabling it restores the original collection, decks and presets while keeping newly earned cards. Crafting, dismantling and capacity upgrades are blocked while enabled; toggling during combat affects the next run. Permanent save writing requires confirmation outside combat and creates a backup first. Steam Cloud syncs the result, which remains after uninstalling; recovery requires the backup.
+- **DBModKit 0.39.0**: adds loadout editing, card unlock and save backup APIs, including registered mod content. The Build page and card unlock were play-tested successfully on 2026-11-04.
 
 ## Changes in 0.38
 
