@@ -1,5 +1,12 @@
 # DBModKit changelog (English)
 
+## 0.39.0
+
+- Added a single-player loadout API for active skills, passives, equipment and relics, including registered mod content. Equipment and relic levels can be adjusted.
+- Added an optional runtime card unlock, off by default. It provides at least 7 copies of every available card and 50 memory capacity, preserves real progress when saving, and restores the original decks when disabled. Crafting, dismantling and capacity upgrades are blocked while enabled.
+- Added permanent card unlock outside combat, with a save backup first. Steam Cloud syncs the permanent result, which remains after uninstalling the mod.
+- **No in-game functional testing yet.** Passives currently support adding and removing. Level changes, save isolation and backup recovery still need player verification.
+
 ## 0.38.0
 **Updated for game version 7.13. After updating, quit the game and run install.bat in the runtime item again** (zip users: extract the new "plugins" package), otherwise all mods stay disabled.
 

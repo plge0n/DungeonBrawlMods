@@ -26,6 +26,8 @@ namespace DBModKit
                     prefix: nameof(LeaderboardHooks.KingSnapshotPrefix)))
                 return false;
 
+            InstallCardCollection();
+
             AutoCast.Available =
                 TryPatch(harmony, typeof(AutoCastHooks), "自动释放决策",
                     AccessTools.Method(typeof(ez), "ecc", new[] { typeof(ActiveSkillEnum), typeof(bca), typeof(int) }),
@@ -264,6 +266,58 @@ namespace DBModKit
             return true;
         }
 
+        private static void InstallCardCollection()
+        {
+            var missing = Compat.FindCardMissing();
+            if (missing.Count > 0)
+            {
+                CardCollection.UnavailableReason = "卡牌功能不兼容，缺失 " + string.Join("，", missing);
+                Log.Error(CardCollection.UnavailableReason);
+                return;
+            }
+            // 独立 owner，任一安全补丁失败就撤销这一组，其他 Mod 和排行榜保护继续工作。
+            var cards = new Harmony(ModKitPlugin.Guid + ".cards");
+            bool ok =
+                TryPatch(cards, typeof(CardCollectionHooks), "卡牌保存隔离",
+                    AccessTools.Method(typeof(df), "dou", new[] { typeof(bool) }),
+                    prefix: nameof(CardCollectionHooks.SavePrefix), finalizer: nameof(CardCollectionHooks.SaveFinalizer))
+                & TryPatch(cards, typeof(CardCollectionHooks), "卡牌读盘",
+                    AccessTools.Method(typeof(df), "dph", new[] { typeof(df.GameSaveData) }),
+                    prefix: nameof(CardCollectionHooks.ReadPrefix), finalizer: nameof(CardCollectionHooks.ReadFinalizer))
+                & TryPatch(cards, typeof(CardCollectionHooks), "卡牌旧档初始化",
+                    AccessTools.Method(typeof(df), "dpp", new[] { typeof(bool) }),
+                    prefix: nameof(CardCollectionHooks.ReadPrefix), finalizer: nameof(CardCollectionHooks.ReadFinalizer))
+                & TryPatch(cards, typeof(CardCollectionHooks), "卡牌重置存档隔离",
+                    AccessTools.Method(typeof(df), "dpo", Type.EmptyTypes),
+                    prefix: nameof(CardCollectionHooks.ReadPrefix), finalizer: nameof(CardCollectionHooks.ReadFinalizer))
+                & TryPatch(cards, typeof(CardCollectionHooks), "卡牌真实获得",
+                    AccessTools.Method(typeof(zt), "kfn", new[] { typeof(int) }), postfix: nameof(CardCollectionHooks.GainPostfix))
+                & TryPatch(cards, typeof(CardCollectionHooks), "卡牌真实收集进度",
+                    AccessTools.Method(typeof(zt), "kfv", new[] { typeof(int), typeof(int) }), postfix: nameof(CardCollectionHooks.ProgressPostfix))
+                & TryPatch(cards, typeof(CardCollectionHooks), "卡牌卸下返还",
+                    AccessTools.Method(typeof(zt), "kfo", new[] { typeof(int) }),
+                    prefix: nameof(CardCollectionHooks.ReturnPrefix), finalizer: nameof(CardCollectionHooks.ReturnFinalizer))
+                & TryPatch(cards, typeof(CardCollectionHooks), "卡牌合成拦截",
+                    AccessTools.Method(typeof(bpy), "pgj", Type.EmptyTypes), prefix: nameof(CardCollectionHooks.CraftPrefix))
+                & TryPatch(cards, typeof(CardCollectionHooks), "卡牌合成库存拦截",
+                    AccessTools.Method(typeof(bpy), "pgk", new[] { typeof(int), typeof(int) }), prefix: nameof(CardCollectionHooks.CraftPrefix))
+                & TryPatch(cards, typeof(CardCollectionHooks), "卡牌分解拦截",
+                    AccessTools.Method(typeof(bpy), "pgd", new[] { typeof(int), typeof(int) }), prefix: nameof(CardCollectionHooks.CraftPrefix))
+                & TryPatch(cards, typeof(CardCollectionHooks), "卡牌分解库存拦截",
+                    AccessTools.Method(typeof(bpy), "pge", new[] { typeof(int), typeof(int) }), prefix: nameof(CardCollectionHooks.CraftPrefix))
+                & TryPatch(cards, typeof(CardCollectionHooks), "卡牌扩容拦截",
+                    AccessTools.Method(typeof(bpy), "pgq", Type.EmptyTypes), prefix: nameof(CardCollectionHooks.CraftPrefix));
+            if (!ok)
+            {
+                cards.UnpatchSelf();
+                CardCollection.UnavailableReason = "卡牌安全补丁安装失败，功能已停用";
+                return;
+            }
+            CardCollection.Available = true;
+            CardCollection.UnavailableReason = null;
+            Log.Info("卡牌收藏保护补丁已安装（默认关闭全解锁）");
+        }
+
         private static bool TryPatch(Harmony harmony, Type hooks, string feature, MethodBase target,
             string prefix = null, string postfix = null, string finalizer = null)
         {
@@ -286,6 +340,49 @@ namespace DBModKit
                 return false;
             }
         }
+    }
+
+    internal static class CardCollectionHooks
+    {
+        internal static bool SavePrefix(out IDisposable __state)
+        {
+            __state = null;
+            try { __state = GameRaw.BeginCardSave(); return true; }
+            catch (Exception e) { CardCollection.Fail("保存隔离失败，已阻止本次保存 " + e); return false; }
+        }
+
+        internal static Exception SaveFinalizer(Exception __exception, IDisposable __state)
+        {
+            __state?.Dispose();
+            return __exception;
+        }
+
+        internal static void ReadPrefix(out bool __state)
+        {
+            __state = false;
+            GameRaw.BeginCardRead();
+            __state = true;
+        }
+
+        internal static Exception ReadFinalizer(Exception __exception, bool __state)
+        {
+            if (__state)
+            {
+                try { GameRaw.EndCardRead(__exception == null); }
+                catch (Exception e) { CardCollection.Fail("读盘后套用卡牌全解锁失败 " + e); }
+            }
+            return __exception;
+        }
+
+        internal static void GainPostfix(int __0) => GameRaw.TrackCardGain(__0);
+        internal static void ProgressPostfix(int __0, int __1) => GameRaw.TrackCardProgress(__0, __1);
+        internal static void ReturnPrefix() => GameRaw.BeginCardReturn();
+        internal static Exception ReturnFinalizer(Exception __exception)
+        {
+            GameRaw.EndCardReturn();
+            return __exception;
+        }
+        internal static bool CraftPrefix() => !CardCollection.BlockCrafting();
     }
 
     // 游戏作者的规则：装了 Mod 不能上传排行榜（违规可能被拉进按 Steam 账号判定的黑名单，连累整队）。

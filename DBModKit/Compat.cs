@@ -28,9 +28,9 @@ namespace DBModKit
             ["qy"] = new[] { "gwv", "gww" },
             ["kj"] = new[] { "bcqd", "bcqe", "bcqf", "bcqg", "bcqh", "Init", "Clear", "fay", "fbo", "fbp" },
             ["lu"] = new string[0],
-            ["sc"] = new[] { "bexq", "bexs", "bexw", "bexx", "bexz", "hbg", "hbh", "hbi", "hbk" },
+            ["sc"] = new[] { "bexq", "bexs", "bexw", "bexx", "bexz", "hbg", "hbh", "hbi", "hbk", "bexn", "bexo", "bexr", "bexy", "hcp", "hcq" },
             ["hq"] = new[] { "bcep" },
-            ["kd"] = new[] { "bclo", "eze", "bcll", "bclz", "exf", "exn", "Init", "k855040601ccd4004b658e50da9454994" },
+            ["kd"] = new[] { "bclo", "eze", "bcll", "bclz", "exf", "exn", "Init", "k855040601ccd4004b658e50da9454994", "bclm", "bcmq", "kff7e9fdc37fd4ea58a588f0b690e4623", "kf1dc0eb1b8f64fe894ca43bb2518c267", "kc15c7ba2537446fc8359216d5cdbe313" },
             ["AttackType"] = new[] { "Normal", "Skill", "Buff", "AttackEffect", "TrueDamage" },
             ["DamageSourceKind"] = new[] { "Default", "ActiveSkill", "Aura", "Status", "Reflect", "PassiveProc", "IllusoryWeapon" },
             ["os"] = new[] { "behc", "gcf" },
@@ -59,7 +59,7 @@ namespace DBModKit
                 "lgj", "k3c5f05d81410475b9f6c6314aded23f4", "k8b0b95bf0a114876b442ed99eb57eb0a",
                 "leo", "kyn", "CmdPickItem", "playerAttribute", "roleSkillList", "lhi", "onPlayerLevelUp", "onPlayerRelife", "addBagItemEvent",
                 "lep", "ler", "CmdAddBuff", "CmdAddNearbyHumanityShield", "onTeammateLevelUp", "CmdCreateItemByPosWithNum",
-                "dieEvent", "jae", "jgj", "CmdCreateSkill",
+                "dieEvent", "jae", "jgj", "CmdCreateSkill", "les", "leq",
             },
             ["EnemyDefeatContext"] = new[] { "IsBoss", "IsElite" },
             ["MyServerNetworkManager"] = new[] { "ros", "bsub" },
@@ -69,7 +69,7 @@ namespace DBModKit
             // 掉落物拾取
             ["pc"] = new[] { "bekn", "gku" },
             ["pd"] = new[] { "beks", "bekt", "beku", "bekw" },
-            ["bbt"] = new[] { "kup", "bhjj", "bhjk", "bhjm", "kuy", "kbfd6bdc3bdc14b7ab236e9d3500f9fb4" },
+            ["bbt"] = new[] { "kup", "bhjj", "bhjk", "bhjm", "kuy", "kbfd6bdc3bdc14b7ab236e9d3500f9fb4", "kc6cf6f7872c24e719dea5e3fb2fba921", "k19dc666848a74e8ba2fc2e8ef7b815c9" },
             ["AudioManager"] = new[] { "deu" },
             ["ItemType"] = new[] { "Gold", "Gem", "STRBook", "Active_Book_D", "Passsive_Book_D", "GoldCoinBag_LV1", "Talisman_Roar", "Card_0" },
             ["bsf"] = new[] { "ptt", "bbov" },
@@ -117,14 +117,14 @@ namespace DBModKit
             ["biz"] = new[] { "nrc" },
             // 嵌套类型 df.PlayerKingData / PlayerKingSkillData 的名字没混淆，按成员检查（映射重建工具不认 "de+X" 这种写法）
             ["df"] = new[] { "PlayerKingData", "PlayerKingSkillData", "PlayerKingRelicData", "PlayerKingEquipData" },
-            ["brh"] = new[] { "blpf", "bsqv", "pnt" },
+            ["brh"] = new[] { "blpf", "bsqv", "pnt", "pnn" },
             ["bri"] = new[] { "blqx", "blqz", "blqw", "pqi", "blqy" },
             ["biy"] = new[]
             {
                 "bjsh", "bjtb", "bjsy", "bjsj", "bjsg", "bspf", "k2ed993c06c594d29aa2d6519e03e82b6", "k3cf043e2f77a4673b4805a7846500b73",
                 "ke290a4fe71104531a7f8c865f67ffb50", "k9a3a2a6b88374971b87f1be77e951ac0", "k1e6e688e728f402bb29e4ccf2e11fb52",
                 "kfda6d7b2dd6b408db0ca98687af0a0d1", "ke9c0f5a8b78f4993b879cbd30d51b215", "bjsm", "bjss", "bjst", "bjti",
-                "k474e18bf33a3493e8a2d2b37d5a6693e", "gxd", "nqy",
+                "k474e18bf33a3493e8a2d2b37d5a6693e", "gxd", "nqy", "bjsi",
             },
             // 英雄专属技能：buff、重试波次、波次配置、开场界面（被动基类 qp、bff、AttackType、DamageSourceKind 在上面，
             // 字典初始化器里重复的键会让后一条覆盖前一条，这里不能再写一遍）
@@ -165,6 +165,32 @@ namespace DBModKit
             ["WorkshopItemStatus"] = new[] { "publishedFileId", "installed", "heroId", "installFolder" },
             ["LocalWorkshopManifest"] = new[] { "heroId", "title", "heroName", "heroIcon", "author", "contentType", "bundleRelativePath", "bundleAssetName" },
         };
+
+        // 卡牌保护单独检查。它失败时仅停用卡牌，其他 Mod 继续使用原来的兼容检查。
+        private static readonly (string type, string[] members)[] CardRequired =
+        {
+            ("df", new[] { "bbme", "bbmh", "bruy", "bruz", "bbmz", "dou", "dph", "dpp", "dpo", "dos", "dpg" }),
+            ("df+GameSaveData", new[] { "maxCapacity", "cardCapacityProgressionVersion", "equipCards", "equipCardPresets", "currentEquipCardPresetIndex", "haveCardDataDic" }),
+            ("df+EquipCardPresetData", new[] { "presetName", "equipCards", "isSaved" }),
+            ("zt", new[] { "kfn", "kfv", "kfo", "bgzn" }),
+            ("zt+HaveCardData", new[] { "cardId", "haveNum", "curProgress" }),
+            ("bpy", new[] { "pgj", "pgk", "pgd", "pge", "pgq", "pfp", "bbov" }),
+            ("ox", new[] { "beip" }),
+            ("CardData", new[] { "capacity", "progress" }),
+        };
+
+        public static List<string> FindCardMissing()
+        {
+            var missing = new List<string>();
+            foreach (var item in CardRequired)
+            {
+                var type = AccessTools.TypeByName(item.type);
+                if (type == null) missing.Add(item.type);
+                else foreach (string member in item.members)
+                    if (!HasMember(type, member)) missing.Add(item.type + "." + member);
+            }
+            return missing;
+        }
 
         public static string GameVersion => Application.version;
 
