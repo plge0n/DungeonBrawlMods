@@ -1,10 +1,11 @@
-地下城竞技场 Mods 0.39（适配游戏 7.13）—— 安装和使用说明
+地下城竞技场 Mods 0.40（适配游戏 7.13）—— 安装和使用说明
 English: see INSTALL-EN.txt
 
-包里有 7 个 Mod，都装在 BepInEx\plugins 下各自的文件夹里，不想要哪个就删掉它的文件夹：
+包里有 8 个 Mod，都装在 BepInEx\plugins 下各自的文件夹里，不想要哪个就删掉它的文件夹：
   DBModKit     公共依赖库，其他 Mod 都需要它（主菜单 Mod 按钮、联机握手、创意工坊加载器）
   SmartSkill   自动释放技能的条件
   SmartMove    自动躲避地面预警
+  AutoForge    自动锻体（F10 开关，可以打榜）
   AutoPickup   自动拾取
   DamageMeter  伤害统计
   Hextech      海克斯强化
@@ -36,6 +37,11 @@ SmartSkill 让你给每个技能单独设定释放条件，比如：血量低于
 5. 处决、点金术、撕咬可以勾「能斩杀的敌人 ≥」，只在能一击打死时放、优先打能打死的；
    献祭等开关技能会在条件满足时保持开启，不满足时自动关闭。
 不进战斗也能在 DBStudio（F9）的 Mod 页里查看和切换所有技能的模式。
+
+【自动锻体：AutoForge】
+按属性权重或均衡模式自动选择锻造，候选全是权重 0 的属性时照常手选。
+F10 开关，在主菜单 Mod → AutoForge → 设置调整模式、权重和快捷键。
+不会自动购买锻造器，联机只操作本机，可以打榜。没有实机测试，详见常见问题。
 
 【自动躲避：SmartMove】
 没按方向键时，地面出现红色预警（敌人技能、陷阱）会自动走出去，开不开自动战斗都生效。按 F8 开关。
@@ -93,7 +99,7 @@ Steam 联机时，面板下方的"队伍"会列出每个人的伤害、占比和
 海克斯强化也按这个规则（0.31 起；关掉 Hextech 总开关的人不算装了改玩法的内容）。房间里每个人的 Mod 版本也要一样，更新时大家一起更新。
 
 【排行榜】
-白名单 Mod（DBModKit、DamageMeter、SmartSkill、AutoPickup、SmartMove，AutoForge）可以打榜；其他 Mod、内容包、ScriptEngine、UnityExplorer 和预加载补丁会阻止上传。可在主菜单 Mod 打开「打榜模式」，重启后停用 Hextech、DBStudio、内容包等改玩法的 Mod；关闭后再重启恢复。第三方插件须自行移除。
+白名单 Mod（DBModKit、DamageMeter、SmartSkill、AutoPickup、SmartMove、AutoForge）可以打榜；其他 Mod、内容包、ScriptEngine、UnityExplorer 和预加载补丁会阻止上传。可在主菜单 Mod 打开「打榜模式」，重启后停用 Hextech、DBStudio、内容包等改玩法的 Mod；关闭后再重启恢复。第三方插件须自行移除。
 上传时重新检查资格，Mod 菜单显示当前状态和原因；不开打榜模式、只装白名单 Mod 也可上传。
 房主检查整队可见的 ModKit 玩家；旧版 ModKit 没有资格字段，视为不合格。非房主不合格时不发送国王构筑快照；原版队友按原版处理。卡牌全解锁（运行时和永久写入）不影响资格。
 
@@ -110,6 +116,3 @@ DBModKit 是其他 Mod 都要用的公共库，删了它其他 Mod 也就都不�
 按 F9 打开 DBStudio → 调试页 → 点"导出"，把生成的 BepInEx\DBModKit\report-时间.txt 发给作者；
 再附上 BepInEx\LogOutput.log 更好。
 问题能重现时，先在 Mod 页 → DBModKit 把 FileLevel 改成 Debug，出问题的那一刻按 Ctrl+F10 打个标记，方便定位。
-
-
-AutoForge（自动锻体）0.40.0：白名单 Mod，可以打榜。F10 开关（Ctrl+F10 仍为 RunLog 标记）；在 Mod → AutoForge → 设置调整属性权重或均衡模式。不自动购买锻造器；联机只操作本机。没有实机测试，只检查启动到主菜单。

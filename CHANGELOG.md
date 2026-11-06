@@ -5,6 +5,15 @@
 
 [English](#english)
 
+## 0.40 的改动
+
+- **打榜白名单**：经游戏作者同意，DBModKit、DamageMeter、SmartSkill、AutoPickup、SmartMove、AutoForge 可以打榜；只装这些 Mod 时不用开启打榜模式。
+- **打榜模式**：在主菜单「Mod」里开启，重启后停用 Hextech、DBStudio、内容包等玩法 Mod；关闭后再重启恢复。
+- **上传资格**：其他插件、内容包、ScriptEngine、UnityExplorer、额外补丁或不合格的队友会阻止上传，游戏里会写明原因。联机时全队都要合格，旧版 ModKit 队友需更新。
+- **AutoForge 0.40.0：自动锻体**。支持自定义属性权重和均衡模式，F10 开关，在「Mod → AutoForge → 设置」里调整。候选全是权重 0 的属性时照常手选；不会自动购买锻造器，联机只操作本机。
+- **DBStudio 0.40.0**：Mod 页的排行榜说明改为新规则；装着时不能打榜，可以在 Mod 菜单开启打榜模式并重启。
+- **以上都没有实机测试**，只检查编译和启动到主菜单，有问题请反馈。
+
 ## 0.39 的改动
 
 - **DBStudio 0.39.0：新增「构筑」页**。单人战斗中可添加、替换或移除技能，增删被动，调整装备和遗物等级。
@@ -98,6 +107,15 @@ Hextech 从 0.3.0 直接跳到 0.31.0，中间的 0.4.0–0.8.0 是开发中的�
 
 Changes in each suite release, newest first. Per-mod details are in each mod's `CHANGELOG.en.md` in the source.
 The game version each release supports is listed in the [latest release notes](RELEASE_NOTES.md).
+
+## Changes in 0.40
+
+- **Leaderboard whitelist**: with the game author's approval, DBModKit, DamageMeter, SmartSkill, AutoPickup, SmartMove and AutoForge can upload scores. Ranked Mode is optional if you only use these mods.
+- **Ranked Mode**: enable it in the main-menu Mod window and restart to disable Hextech, DBStudio, content packs and other gameplay mods. Turn it off and restart to restore them.
+- **Upload eligibility**: other plugins, content packs, ScriptEngine, UnityExplorer, additional patches or ineligible teammates block uploads; the game explains why. Everyone in a multiplayer team must qualify; teammates with older ModKit versions need to update.
+- **AutoForge 0.40.0: automatic forging choices**. Use custom attribute weights or balanced mode, toggle with F10, and configure under Mod → AutoForge → Settings. If all offered attributes have weight 0, choose manually as usual. It never buys forging items and only controls the local player in multiplayer.
+- **DBStudio 0.40.0**: the Mod page explains the new leaderboard rules. Having it loaded blocks uploads; enable Ranked Mode in the Mod window and restart to disable it.
+- **None of the above has been play-tested**; only compilation and main-menu startup were checked. Please report problems.
 
 ## Changes in 0.39
 

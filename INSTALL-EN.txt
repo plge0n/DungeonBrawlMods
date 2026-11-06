@@ -1,12 +1,13 @@
-DungeonBrawl Mods 0.39 (for game version 7.13) - Installation and usage
+DungeonBrawl Mods 0.40 (for game version 7.13) - Installation and usage
 中文说明见 安装说明.txt
 
 Note: the in-game UI of these mods is Chinese only for now.
 
-The package contains 7 mods, each in its own folder under BepInEx\plugins. Delete a folder to remove that mod:
+The package contains 8 mods, each in its own folder under BepInEx\plugins. Delete a folder to remove that mod:
   DBModKit     Shared library required by all the others (main-menu Mod button, multiplayer handshake, Workshop loader)
   SmartSkill   Conditions for auto-cast skills
   SmartMove    Auto-dodge ground telegraphs
+  AutoForge    Automatic forging choices (F10, leaderboard eligible)
   AutoPickup   Auto-pickup
   DamageMeter  Damage meter
   Hextech      Hextech augments
@@ -37,6 +38,11 @@ Settings are saved to BepInEx\config\SmartSkill.rules.json and shared by all her
 5. Execution-type skills (处决, 点金术, 撕咬) can use "killable enemies >=" (能斩杀的敌人 ≥) so they only fire when they can kill, targeting those enemies first;
    toggle skills such as 献祭 stay on while the conditions hold and turn off when they don't.
 You can also review and switch every skill's mode outside combat in DBStudio (F9) -> Mod page.
+
+[AutoForge - automatic forging choices]
+Uses attribute weights or balanced mode; choose manually if all offered attributes have weight 0.
+Toggle with F10; configure mode, weights and hotkey in Mod → AutoForge → Settings.
+Never buys forging items; only controls the local player in multiplayer. Leaderboard eligible. Not play-tested; see the FAQ.
 
 [SmartMove - auto-dodge]
 When you aren't pressing a direction key, it walks you out of red ground telegraphs (enemy skills, traps), with or without auto-battle. F8 toggles it.
@@ -113,6 +119,3 @@ To remove BepInEx as well, also delete: the BepInEx folder, winhttp.dll, doorsto
 Press F9 to open DBStudio -> Debug page -> "Export" (导出), and send the generated BepInEx\DBModKit\report-<time>.txt to the author;
 BepInEx\LogOutput.log helps too.
 If you can reproduce it, first set FileLevel to Debug under Mod page -> DBModKit, then press Ctrl+F10 at the moment it happens to add a marker.
-
-
-AutoForge 0.40.0 automatically selects forging offers using configurable weights or balanced progression. Whitelisted for leaderboards. F10 toggles it; Ctrl+F10 remains the RunLog marker. Configure in Mod → AutoForge → Settings. No automatic purchases; multiplayer affects only the local player. No gameplay testing; main-menu startup only.

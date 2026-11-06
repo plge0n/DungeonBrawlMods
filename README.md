@@ -13,7 +13,7 @@ BepInEx 5 插件，目标游戏：地下城竞技场（Steam 4246640，Unity 202
 | [DamageMeter](DamageMeter) | 伤害统计：按普攻、技能、召唤物分开统计本波和本局的伤害与 DPS；Steam 联机时显示装了它的队友的伤害 |
 | [Hextech](Hextech) | 海克斯强化：每局 4 次三选一，专属技能强化 + 参照海克斯大乱斗、斗魂竞技场的通用卡和队友卡（联机时要每个人装的一样或房主允许） |
 
-玩家说明见 [安装说明.txt](安装说明.txt)（英文 [INSTALL-EN.txt](INSTALL-EN.txt)），当前版本的发版说明见 [RELEASE_NOTES.md](RELEASE_NOTES.md)，以前各版的改动见 [CHANGELOG.md](CHANGELOG.md)，更新后出问题、固定游戏版本、未实测的功能见 [docs/常见问题.md](docs/常见问题.md)（英文 [docs/FAQ.md](docs/FAQ.md)）。
+玩家说明见 [安装说明.txt](安装说明.txt)（英文 [INSTALL-EN.txt](INSTALL-EN.txt)），当前版本 0.40（适配游戏 7.13）的发版说明见 [RELEASE_NOTES.md](RELEASE_NOTES.md)，以前各版的改动见 [CHANGELOG.md](CHANGELOG.md)，更新后出问题、固定游戏版本、未实测的功能见 [docs/常见问题.md](docs/常见问题.md)（英文 [docs/FAQ.md](docs/FAQ.md)）。
 
 ## 架构
 ```
@@ -79,7 +79,7 @@ public class Plugin : BaseUnityPlugin
 
 ## 打榜白名单与打榜模式
 
-白名单 Mod（DBModKit、DamageMeter、SmartSkill、AutoPickup、SmartMove，AutoForge）可以打榜；其他 Mod、内容包、ScriptEngine、UnityExplorer 和预加载补丁会阻止上传。可在主菜单 Mod 打开「打榜模式」，重启后停用 Hextech、DBStudio、内容包等改玩法的 Mod；关闭后再重启恢复。第三方插件须自行移除。
+经游戏作者同意，白名单 Mod（DBModKit、DamageMeter、SmartSkill、AutoPickup、SmartMove、AutoForge）可以打榜；其他 Mod、内容包、ScriptEngine、UnityExplorer 和预加载补丁会阻止上传。可在主菜单 Mod 打开「打榜模式」，重启后停用 Hextech、DBStudio、内容包等改玩法的 Mod；关闭后再重启恢复。第三方插件须自行移除。
 
 上传前重新检查插件、Harmony 补丁、`BepInEx/patchers`、自定义内容和大厅可见的 ModKit 队友；未知情况拦截，旧版 ModKit 队友不合格。Mod 菜单显示资格和原因。只装白名单 Mod 时无需开启打榜模式。卡牌全解锁（运行时和永久写入）不参与资格检查。AutoForge 已提供自动锻体。开发环境装着 ScriptEngine / UnityExplorer 时不能打榜。
 
@@ -155,6 +155,3 @@ dotnet $remap update --old ../backup/7.13 --notes ../tools/NOTES.md --write  # �
 ## 许可证
 本仓库的代码和文档使用 [MIT 许可证](LICENSE)。完整包和运行环境条目里再分发的 BepInEx、Doorstop（LGPL-2.1）和 HarmonyX、MonoMod、Mono.Cecil（MIT）
 按各自的许可证分发，见 [workshop/Runtime/licenses](workshop/Runtime/licenses)。游戏本身的代码和资源不在本仓库里。
-
-
-AutoForge（自动锻体）0.40.0：白名单 Mod，可以打榜。F10 开关（Ctrl+F10 仍为 RunLog 标记）；在 Mod → AutoForge → 设置调整属性权重或均衡模式。不自动购买锻造器；联机只操作本机。没有实机测试，只检查启动到主菜单。
