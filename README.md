@@ -8,11 +8,12 @@ BepInEx 5 插件，目标游戏：地下城竞技场（Steam 4246640，Unity 202
 | [SmartSkill](SmartSkill) | 给"右键技能图标自动释放"加上每个技能单独的释放条件 |
 | [DBStudio](DBStudio) | 游戏内的 Mod 工作台（F9）：调试面板、构筑、规则、强化（海克斯式三选一）、数值编辑器、英雄皮肤 |
 | [SmartMove](SmartMove) | 自动躲避地面预警（F8 开关） |
+| [AutoForge](AutoForge) | 自动锻体：自定义属性权重或均衡选择锻造，F10 开关，可以打榜 |
 | [AutoPickup](AutoPickup) | 战斗中自动拾取身边能捡的掉落物（和按 C 一样），可按类别过滤 |
 | [DamageMeter](DamageMeter) | 伤害统计：按普攻、技能、召唤物分开统计本波和本局的伤害与 DPS；Steam 联机时显示装了它的队友的伤害 |
 | [Hextech](Hextech) | 海克斯强化：每局 4 次三选一，专属技能强化 + 参照海克斯大乱斗、斗魂竞技场的通用卡和队友卡（联机时要每个人装的一样或房主允许） |
 
-玩家说明见 [安装说明.txt](安装说明.txt)（英文 [INSTALL-EN.txt](INSTALL-EN.txt)），当前版本的发版说明见 [RELEASE_NOTES.md](RELEASE_NOTES.md)，以前各版的改动见 [CHANGELOG.md](CHANGELOG.md)，更新后出问题、固定游戏版本、未实测的功能见 [docs/常见问题.md](docs/常见问题.md)（英文 [docs/FAQ.md](docs/FAQ.md)）。
+玩家说明见 [安装说明.txt](安装说明.txt)（英文 [INSTALL-EN.txt](INSTALL-EN.txt)），当前版本 0.40（适配游戏 7.13）的发版说明见 [RELEASE_NOTES.md](RELEASE_NOTES.md)，以前各版的改动见 [CHANGELOG.md](CHANGELOG.md)，更新后出问题、固定游戏版本、未实测的功能见 [docs/常见问题.md](docs/常见问题.md)（英文 [docs/FAQ.md](docs/FAQ.md)）。
 
 ## 架构
 ```
@@ -75,6 +76,14 @@ public class Plugin : BaseUnityPlugin
 ### 运行记录（RunLog）
 功能有没有生效、出了问题当时发生了什么，看 `BepInEx/DBModKit/trace.log`。测试时把 DBModKit 的 `FileLevel` 改成 `Debug`，
 看到问题按 **Ctrl+F10** 加标记；反馈问题时在调试页点"导出"，把生成的 `report-时间.txt` 发过来。详见[生命周期与基础设施](docs/api/生命周期.md#runlog)。
+
+## 打榜白名单与打榜模式
+
+经游戏作者同意，白名单 Mod（DBModKit、DamageMeter、SmartSkill、AutoPickup、SmartMove、AutoForge）可以打榜；其他 Mod、内容包、ScriptEngine、UnityExplorer 和预加载补丁会阻止上传。可在主菜单 Mod 打开「打榜模式」，重启后停用 Hextech、DBStudio、内容包等改玩法的 Mod；关闭后再重启恢复。第三方插件须自行移除。
+
+上传前重新检查插件、Harmony 补丁、`BepInEx/patchers`、自定义内容和大厅可见的 ModKit 队友；未知情况拦截，旧版 ModKit 队友不合格。Mod 菜单显示资格和原因。只装白名单 Mod 时无需开启打榜模式。卡牌全解锁（运行时和永久写入）不参与资格检查。AutoForge 已提供自动锻体。开发环境装着 ScriptEngine / UnityExplorer 时不能打榜。
+
+0.40.0 的打榜功能**没有实机测试**，仅检查启动到主菜单；真实结算和联机行为仍需验证。[接口与 Mod 作者注意事项](docs/api/打榜.md)。
 
 ## 开发
 需要 .NET SDK 8+，游戏目录已装 BepInEx 5。

@@ -33,5 +33,7 @@
 - **兼容检查**：游戏版本和 ModKit 对不上时 `ModKit.Compatible` 为 false，`ModContext.Start` 不会调用 `onLoad`。只在 `onLoad` 里注册的东西不用另外判断。
 - **本地玩家**：改数值的方法（`Player.Heal`、`AddStats` 等）只能对本地玩家用，对别人调用会抛异常。
 - **联机**：游戏不检查 Mod，伤害由各自的客户端算。改玩法的功能看 [`Multiplayer.GameplayAllowed`](联机.md)，不要自己判断 `Game.IsSolo`。
-- **排行榜**：装了 ModKit 一律不上传（游戏作者的规则），任何 Mod 都不能绕过。
+- **排行榜**：作者允许固定白名单里的显示和自动操作 Mod 打榜；其他插件、自定义内容和未知补丁会拦截。见 [打榜资格与打榜模式](打榜.md)，包含 `Ranked.Eligible` / `Ranked.Reasons` 及重启后生效的打榜模式。
 - **异常**：通过 ModKit 注册的回调各自做了异常保护，一个 Mod 出错不影响别的；同一处错误只记一次日志。
+
+- [属性锻造](锻造.md)：Forging、自动选择处理器与成功通知。

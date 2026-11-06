@@ -68,7 +68,7 @@ namespace DBModKit
             NativeUi.SetEnabled(a, false);
             NativeUi.SetEnabled(b, false);
             var label = (allow ? a : b).GetComponentInChildren<Text>();
-            if (allow) label.text = item.Status == WorkshopStatus.Loaded ? "已加载" : "加载失败";
+            if (allow) label.text = item.Status == WorkshopStatus.Loaded ? "已加载" : item.Status == WorkshopStatus.RankedDisabled ? "打榜模式下停用" : "加载失败";
             else label.text = "不加载";
             if (Workshop.PendingCount == 0) window.Status.text = "都选好了，可以关掉这个窗口";
         }
@@ -130,6 +130,7 @@ namespace DBModKit
                 case WorkshopStatus.Loaded: status = "<color=#9fd08a>已加载</color>"; break;
                 case WorkshopStatus.Pending: status = "<color=#d6b67d>等你确认</color>"; break;
                 case WorkshopStatus.Declined: status = "不加载"; break;
+                case WorkshopStatus.RankedDisabled: status = "<color=#d6b67d>打榜模式下停用</color>"; break;
                 default: status = "<color=#e07a5f>没有加载</color>"; break;
             }
             if (item.IsDev) status += "（本地测试）";

@@ -29,12 +29,13 @@ namespace DBModKit
     /// 只换外观的（皮肤、变体的模型和名字）不受限制。</item>
     /// <item>进入战斗时锁定，本局只会降级（有人中途进房、房主取消）不会升级。降级只挡之后的内容，已经拿到的不收回。</item>
     /// <item>握手结果只决定本机启不启用，不会往别人那边发任何东西；没装 ModKit 的人收不到提示。</item>
-    /// <item>别人公布的内容可以造假，造假的后果由对方自己承担；排行榜不受影响（装了 ModKit 一律不上传）。</item>
+    /// <item>玩法握手不代表打榜许可；打榜另行公布本机资格，上传时检查本机和可见的 ModKit 队友。白名单以外的 Mod 不允许打榜。</item>
     /// </list>
     /// </remarks>
     public static class Multiplayer
     {
         private const string Key = "dbmods.mods";
+        internal const string HandshakeKey = Key;
         private const string Format = "1";
         private const float Interval = 1f;
         private const int MaxEntries = 64;

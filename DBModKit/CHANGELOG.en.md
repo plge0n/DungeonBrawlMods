@@ -1,5 +1,15 @@
 # DBModKit changelog (English)
 
+## 0.40.0
+**For game version 7.13. After updating, quit the game and run install.bat in the runtime item again** (zip users: extract the new "plugins" package, overwriting old files).
+
+- **Leaderboard whitelist**: with the game author's approval, DBModKit, DamageMeter, SmartSkill, AutoPickup, SmartMove and AutoForge can upload scores. Ranked Mode is optional if you only use these mods.
+- **Ranked Mode**: enable it in the main-menu Mod window and restart to disable Hextech, DBStudio, content packs and other gameplay mods. Turn it off and restart to restore them.
+- **Upload eligibility**: other plugins, content packs, ScriptEngine, UnityExplorer, additional patches or ineligible teammates block uploads; the game explains why. Everyone in a multiplayer team must qualify; teammates with older ModKit versions need to update.
+- **AutoForge 0.40.0: automatic forging choices**. Use custom attribute weights or balanced mode, toggle with F10, and configure under Mod → AutoForge → Settings. If all offered attributes have weight 0, choose manually as usual. It never buys forging items and only controls the local player in multiplayer.
+- Added a forging-choice API for mods such as AutoForge to select offers automatically. Mod settings can open from the Mod window without DBStudio.
+- **No gameplay testing**; only compilation and main-menu startup were checked. Real upload allow/block, king snapshots, multiplayer eligibility changes, Ranked Mode restart/restore, automatic forging choices and retry restoration remain untested.
+
 ## 0.39.0
 **For game version 7.13. After updating, quit the game and run install.bat in the runtime item again** (zip users: extract the new "plugins" package, overwriting old files).
 

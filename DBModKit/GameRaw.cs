@@ -2656,6 +2656,39 @@ namespace DBModKit
         // gjl 抽稀有度、弹"属性选择"三选一，选中后经 pu.grf 加属性（官方路径，过防篡改）。直接调 gjl 和买一个一样，只是价格不涨
         private static Action<pu, pu.ForgingTier> forge;
 
+        // 只在 gre 的调用栈内识别来源；避免把别的 Mod 伪造的同名 UI 当成锻造。
+        internal static int? ForgingTierContext;
+        internal static ForgeOffer ReadForgeOffer(RoguelikeUIData[] options)
+        {
+            if (!ForgingTierContext.HasValue || nt.bryb == null || !Game.InBattle) return null;
+            var candidates = new List<ForgeCandidate>();
+            foreach (var option in options)
+            {
+                var stats = new List<ForgeStat>();
+                foreach (string part in option.data.Split('|'))
+                {
+                    var pair = part.Split('_');
+                    if (pair.Length != 2 || !Enum.TryParse(pair[0], out ForgeAttribute type)
+                        || !float.TryParse(pair[1], System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out float value)
+                        || float.IsNaN(value) || float.IsInfinity(value)) throw new InvalidOperationException("未知锻造属性：" + part);
+                    var row = ck.brui.bein.Values.FirstOrDefault(r => r.type == pair[0]);
+                    if (string.IsNullOrEmpty(row.type)) throw new InvalidOperationException("没有锻造表项：" + pair[0]);
+                    stats.Add(new ForgeStat(type, value, row.isPercent));
+                }
+                if (stats.Count < 1 || stats.Count > 2) throw new InvalidOperationException("未知锻造候选格式");
+                candidates.Add(new ForgeCandidate(option.name, option.quality, stats));
+            }
+            return new ForgeOffer((ForgeTier)ForgingTierContext.Value, candidates);
+        }
+        internal static bool ConfirmForge(bsf ui, RoguelikeUIData option, Action<RoguelikeUIData> callback)
+        {
+            // pud 内不检查淡入；确认锁、禁用项仍由游戏检查。绑定已变化时绝不确认旧候选。
+            if (!ui.bbov || !ReferenceEquals(AccessTools.Field(typeof(bsf), "blwl").GetValue(ui), callback)) return false;
+            var confirm = AccessTools.MethodDelegate<Action<bsf, RoguelikeUIData>>(AccessTools.Method(typeof(bsf), "pud", new[] { typeof(RoguelikeUIData) }));
+            confirm(ui, option);
+            return !ReferenceEquals(AccessTools.Field(typeof(bsf), "blwl").GetValue(ui), callback);
+        }
+
         public static bool CanForge() => !nt.bdhh && !ChoiceBusy() && ca.dhp<pu>() != null;
 
         public static void Forge(int tier)

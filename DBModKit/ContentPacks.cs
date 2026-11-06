@@ -71,6 +71,12 @@ namespace DBModKit
             {
                 enabled = new JsonConfig<Dictionary<string, bool>>("DBModKit.content.json");
                 Scan();
+                if (Ranked.ModeActive)
+                {
+                    Log.Info($"打榜模式：内容包全部停用（{packs.Count} 个，创意工坊、workshop-dev、BepInEx/content 均不加载）");
+                    Version++;
+                    return;
+                }
                 LoadAll();
                 int broken = packs.Count(p => p.ErrorList.Count > 0);
                 Log.Info($"内容包：{packs.Count} 个，已加载 {packs.Count(p => p.Loaded)} 个，有错误的 {broken} 个");
@@ -86,7 +92,7 @@ namespace DBModKit
         /// </summary>
         public static bool SetEnabled(ContentPack pack, bool on)
         {
-            if (enabled == null || Game.InBattle) return false;
+            if (Ranked.ModeActive || enabled == null || Game.InBattle) return false;
             enabled.Data[pack.Guid] = on;
             enabled.MarkDirty();
             for (int i = loadOrder.Count - 1; i >= 0; i--) Unload(loadOrder[i]);
@@ -99,6 +105,7 @@ namespace DBModKit
         // 按依赖排序加载打开的包：依赖的包还没加载就等它；依赖不满足的整个包不加载；剩下互相等的是循环依赖
         private static void LoadAll()
         {
+            if (Ranked.ModeActive) return;
             foreach (var p in packs)
             {
                 p.ErrorList.Clear();
@@ -192,6 +199,7 @@ namespace DBModKit
 
         private static void Load(ContentPack pack)
         {
+            if (Ranked.ModeActive) return;
             if (pack.Blocked != null)
             {
                 pack.ErrorList.Add(pack.Blocked);
@@ -426,7 +434,7 @@ namespace DBModKit
                 var m = pack.Manifest;
                 NativeUi.Label(texts, $"{WorkshopPrompt.Plain(pack.DisplayName)}  <size=16><color=#a6a6a6>{WorkshopPrompt.Plain(m.Version)}" +
                                       $"{(string.IsNullOrEmpty(m.Author) ? "" : "  作者 " + WorkshopPrompt.Plain(m.Author))}  {pack.Source}</color></size>", 22);
-                string state = pack.Loaded ? pack.Summary : ContentPacks.IsEnabled(pack) ? "没有加载" : "已关闭";
+                string state = Ranked.ModeActive ? "打榜模式下停用" : pack.Loaded ? pack.Summary : ContentPacks.IsEnabled(pack) ? "没有加载" : "已关闭";
                 NativeUi.Label(texts, state, 16, -1f, NativeUi.DimText);
                 foreach (string e in pack.Errors.Take(6))
                     NativeUi.Label(texts, $"<color=#e07a5f>{WorkshopPrompt.Plain(e)}</color>", 15);
@@ -439,7 +447,7 @@ namespace DBModKit
                 bool on = ContentPacks.IsEnabled(pack);
                 var target = pack;
                 var button = NativeUi.Button(row, on ? "关闭" : "启用", !on, 150f, () => ContentPacks.SetEnabled(target, !on));
-                button.interactable = !Game.InBattle;
+                button.interactable = !Ranked.ModeActive && !Game.InBattle;
             }
         }
     }

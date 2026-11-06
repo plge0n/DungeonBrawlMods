@@ -19,6 +19,8 @@ namespace DBModKit
         private static Canvas canvas;
         private static NativeWindow window;
         private static RectTransform content;
+        private static Text rankedStatus;
+        private static float nextRankedStatus;
         private static IDisposable inputBlock;
         private static int shownWorkshopVersion, shownContexts;
 
@@ -40,6 +42,11 @@ namespace DBModKit
                 if (label.text != text) label.text = text;
             }
             if (!IsOpen) return;
+            if (rankedStatus != null && now >= nextRankedStatus)
+            {
+                nextRankedStatus = now + 1f;
+                rankedStatus.text = WorkshopPrompt.Plain(Ranked.Check("Mod 菜单").Summary);
+            }
             if (Input.GetKeyDown(KeyCode.Escape) && !NativeUi.IsTyping)
             {
                 Close();
@@ -122,6 +129,11 @@ namespace DBModKit
 
             var plugins = ModList.Plugins();
             Block(content, Summary(), 20);
+            rankedStatus = Block(content, WorkshopPrompt.Plain(Ranked.Check("Mod 菜单").Summary), 18);
+            var rankedToggle = NativeUi.Toggle(content, "打榜模式（重启游戏后生效）", 1000f, Ranked.SetMode);
+            rankedToggle.SetIsOnWithoutNotify(Ranked.RequestedMode);
+            Block(content, "开启后只启用：" + Ranked.AllowedNames + "。Hextech、DBStudio、内容包等改玩法的 Mod 不启用；关闭后再重启恢复。" +
+                "其他第三方插件、ScriptEngine、UnityExplorer、预加载补丁仍会阻止打榜。\n本次启动打榜模式：" + (Ranked.ModeActive ? "开" : "关"), 16, NativeUi.DimText);
 
             var mods = plugins.Where(p => p.UsesModKit).ToList();
             NativeUi.Separator(content);
@@ -173,7 +185,7 @@ namespace DBModKit
                 ? Good("和游戏兼容")
                 : Bad($"和这个游戏版本不兼容，所有 Mod 已停用：等 Mod 更新，或在 Steam 里把游戏切回 {Compat.TargetVersion}");
             return $"游戏版本 {ModKit.GameVersion}  ·  {ModKitPlugin.Name} {ModKit.Version}（适配游戏 {Compat.TargetVersion}） {modKit}\n"
-                + Dim("装了 Mod 后成绩不上传排行榜（游戏作者的规则），其他功能不受影响。");
+                + Dim("白名单 Mod 可以打榜，其他 Mod 不能。可打开打榜模式，重启后停用改玩法的 Mod；上传时重新检查资格。");
         }
 
         private static void AddModRow(ModInfo p)
@@ -198,6 +210,7 @@ namespace DBModKit
                 case ModState.Failed: return Bad("启动出错，没有运行（详情见 BepInEx/LogOutput.log）");
                 case ModState.Unloaded: return Bad("已卸载（热重载中，或被游戏销毁；重启游戏后恢复）");
                 case ModState.Disabled: return Bad("已停用：DBModKit 和游戏版本不兼容");
+                case ModState.RankedDisabled: return Warn("打榜模式下停用");
                 default: return Dim("不用 DBModKit 的插件");
             }
         }

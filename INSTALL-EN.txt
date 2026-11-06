@@ -1,12 +1,13 @@
-DungeonBrawl Mods 0.39 (for game version 7.13) - Installation and usage
+DungeonBrawl Mods 0.40 (for game version 7.13) - Installation and usage
 中文说明见 安装说明.txt
 
 Note: the in-game UI of these mods is Chinese only for now.
 
-The package contains 7 mods, each in its own folder under BepInEx\plugins. Delete a folder to remove that mod:
+The package contains 8 mods, each in its own folder under BepInEx\plugins. Delete a folder to remove that mod:
   DBModKit     Shared library required by all the others (main-menu Mod button, multiplayer handshake, Workshop loader)
   SmartSkill   Conditions for auto-cast skills
   SmartMove    Auto-dodge ground telegraphs
+  AutoForge    Automatic forging choices (F10, leaderboard eligible)
   AutoPickup   Auto-pickup
   DamageMeter  Damage meter
   Hextech      Hextech augments
@@ -37,6 +38,11 @@ Settings are saved to BepInEx\config\SmartSkill.rules.json and shared by all her
 5. Execution-type skills (处决, 点金术, 撕咬) can use "killable enemies >=" (能斩杀的敌人 ≥) so they only fire when they can kill, targeting those enemies first;
    toggle skills such as 献祭 stay on while the conditions hold and turn off when they don't.
 You can also review and switch every skill's mode outside combat in DBStudio (F9) -> Mod page.
+
+[AutoForge - automatic forging choices]
+Uses attribute weights or balanced mode; choose manually if all offered attributes have weight 0.
+Toggle with F10; configure mode, weights and hotkey in Mod → AutoForge → Settings.
+Never buys forging items; only controls the local player in multiplayer. Leaderboard eligible. Not play-tested; see the FAQ.
 
 [SmartMove - auto-dodge]
 When you aren't pressing a direction key, it walks you out of red ground telegraphs (enemy skills, traps), with or without auto-battle. F8 toggles it.
@@ -96,9 +102,9 @@ LAN games have no Steam lobby, so the mods can't check what others have installe
 Hextech follows the same rule (from 0.31; a player with Hextech switched off doesn't count as having gameplay content). Everyone also needs the same mod versions, so update together.
 
 [Leaderboard]
-By the game author's rule, you can't upload to the leaderboard with mods installed. Your results won't be uploaded (you'll see a notice); nothing else is affected.
-In someone else's room your build isn't handed to the host for upload either (teammates' results still upload, just without you).
-When you host, the whole team's results won't upload. Uninstall the mods if you want to compete on the leaderboard.
+Whitelisted mods (DBModKit, DamageMeter, SmartSkill, AutoPickup, SmartMove, and AutoForge) may upload leaderboard scores. Other mods, content packs, ScriptEngine, UnityExplorer and preloader patchers block uploads. Enable Ranked Mode in the main-menu Mod window and restart to disable Hextech, DBStudio, content packs and other gameplay mods; turn it off and restart to restore them. Remove other third-party plugins yourself.
+Eligibility is checked again at upload; the Mod window shows the current status and reasons. Ranked Mode is optional when only whitelisted mods are loaded.
+The host checks all visible ModKit teammates. Older ModKit versions without the eligibility field are ineligible. An ineligible client withholds its king snapshot; vanilla teammates are treated as vanilla. Runtime and permanent card unlocks do not affect eligibility.
 
 [After a game update]
 If an update breaks compatibility, a notice at the top of the screen says "DBModKit ... 不兼容" (incompatible) and the mods are disabled.

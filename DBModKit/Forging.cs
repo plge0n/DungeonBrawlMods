@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 
 namespace DBModKit
 {
@@ -12,6 +13,16 @@ namespace DBModKit
     /// </summary>
     public static class Forging
     {
+        public static bool ChoiceAvailable { get; internal set; }
+        internal static readonly HandlerSlot<Func<ForgeOffer, int?>> Slot = new HandlerSlot<Func<ForgeOffer, int?>>("forging", "锻造选择");
+        internal static event Action<ForgeOffer, int> Chosen;
+        internal static int? Pick(ForgeOffer offer) => Slot.Active?.Invoke(offer);
+        internal static void RaiseChosen(ForgeOffer offer, int index)
+        {
+            if (Chosen == null) return;
+            foreach (Action<ForgeOffer, int> h in Chosen.GetInvocationList()) Safe.Run("锻造已选择", () => h(offer, index));
+        }
+
         /// <summary>现在能打开：在战斗里，并且三选一界面空闲。</summary>
         public static bool CanOpen => ModKit.Compatible && Game.InBattle && GameRaw.CanForge();
 

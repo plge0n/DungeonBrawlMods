@@ -162,7 +162,7 @@ namespace DBStudio.Pages
             if (ModKit.MissingMembers.Count > 0)
                 sb.AppendLine(Dim("缺失：" + string.Join("，", ModKit.MissingMembers)));
             sb.AppendLine("自动释放钩子  " + (AutoCast.Available ? Good("可用") : Bad("不可用")));
-            sb.AppendLine("排行榜  " + Dim("装了 Mod 不上传（游戏作者的规则）"));
+            sb.AppendLine("排行榜  " + Dim("白名单 Mod 可以打榜；DBStudio 启用时不能，可在主菜单 Mod 打开打榜模式并重启"));
             string room = Game.IsSolo ? "单人"
                 : Game.PlayerCount > 0 ? $"联机，你是房主，{Game.PlayerCount} 人"
                 : "联机，在别人的房间里";

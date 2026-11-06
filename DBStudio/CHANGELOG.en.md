@@ -1,5 +1,10 @@
 # DBStudio changelog (English)
 
+## 0.40.0
+
+- Updated the Mod page's leaderboard guidance: whitelisted mods can upload scores with the game author's approval. Having DBStudio loaded blocks uploads; enable Ranked Mode in the main-menu Mod window and restart to disable it. Turn the mode off and restart to restore it.
+- Requires DBModKit 0.40.0. The new leaderboard rules and mode switching have not been play-tested.
+
 ## 0.39.0
 
 - Added the Build page after Debug. During single-player combat, add, replace or remove skills, add or remove passives, and adjust equipment and relic levels. Lists show icons, localized names and levels. Actions appear in the event log.

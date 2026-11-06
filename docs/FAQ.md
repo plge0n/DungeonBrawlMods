@@ -9,6 +9,7 @@
 | DBModKit | Shared library required by all other mods; main-menu "Mod" button, mod list, multiplayer handshake, Workshop loader, content packs |
 | SmartSkill | Per-skill conditions for auto-cast (HP, enemy count, bosses, execute thresholds, …) |
 | SmartMove | Automatically steps out of red ground telegraphs (toggle with F8) |
+| AutoForge | Automatic forging choices: weighted / balanced mode, F10 toggle, leaderboard eligible |
 | AutoPickup | Picks up nearby drops during combat, filterable by category |
 | DamageMeter | Damage breakdown by basic attacks, skills, summons, equipment…; shows teammates' damage in Steam lobbies |
 | Hextech | Hextech augments: 4 picks per run — signature-skill upgrades plus generic and teammate augments inspired by ARAM: Mayhem and Arena; in multiplayer everyone needs the same mods |
@@ -25,11 +26,31 @@ Changes in each release are in [CHANGELOG.md](../CHANGELOG.md); per-mod change l
 - The in-combat editor on DBStudio's Build page only works in single-player combat. Passives support adding and removing. Equipment and relic levels can be adjusted.
 - The runtime card unlock is off by default and remembers its setting. Deck and preset edits made while enabled stay in memory. Disabling restores the original collection and decks while retaining newly earned cards. Crafting, dismantling and capacity upgrades are blocked while enabled. Toggling during combat affects the next run.
 - Permanent save writing is available outside combat. The result persists after uninstalling and Steam Cloud syncs it. Recovery requires a backup. Before changing data, the mod copies `save.json*` to `DBModKit-backup-<yyyyMMdd-HHmmss>/` inside the active save directory. A copy failure aborts the operation. The completed backup path is shown on screen. The default save directory is `%USERPROFILE%\AppData\LocalLow\UndergroundCat\DungeonBrawl\`.
-- **No leaderboard uploads while mods are installed** (the game author's rule). Your run results are not uploaded; nothing else is affected. Uninstall the mods if you want to compete on the leaderboard.
+- **Leaderboard eligibility**: Whitelisted mods (DBModKit, DamageMeter, SmartSkill, AutoPickup, SmartMove, and AutoForge) may upload leaderboard scores. Other mods, content packs, ScriptEngine, UnityExplorer and preloader patchers block uploads. Enable Ranked Mode in the main-menu Mod window and restart to disable Hextech, DBStudio, content packs and other gameplay mods; turn it off and restart to restore them. Remove other third-party plugins yourself. Upload-time checks include visible ModKit teammates; older ModKit versions are ineligible. Ranked Mode is optional with whitelist-only installs. Card unlocks do not affect eligibility.
 - **Multiplayer**: players with the mods compare their "gameplay-changing content" (custom skills, relics, equipment, content packs, DBStudio packs).
   It only takes effect when you're alone, when everyone in the room has exactly the same content, or when the host explicitly allows it; otherwise only cosmetics (skins) stay on for that run. Helper mods (auto-cast, dodging, pickup, damage meter) only affect yourself and always work.
 - License: these mods are MIT licensed (`LICENSE` in the package); licenses of BepInEx and other third-party components in the full package are in the `licenses/` folder.
 - Problems? In DBStudio (F9), Debug page → "导出" (Export), and send the generated `BepInEx/DBModKit/report-<time>.txt` to the author.
+
+## How can I upload leaderboard scores?
+
+With the game author's approval, DBModKit, DamageMeter, SmartSkill, AutoPickup, SmartMove and AutoForge are eligible. Ranked Mode is optional when you only use these mods. The main-menu Mod window shows current eligibility; it is checked again before uploading. Everyone in a multiplayer team must qualify; teammates with older ModKit versions need to update.
+
+## How do I enable Ranked Mode?
+
+Enable Ranked Mode in the main-menu Mod window, quit and restart the game. Hextech, DBStudio, content packs and other gameplay mods are disabled. Turn the mode off and restart again to restore them. Having DBStudio loaded blocks uploads; Ranked Mode lets you keep it installed while disabling it after restart. Remove other third-party plugins and developer tools yourself.
+
+## Why does it say uploads are blocked?
+
+The Mod window and upload notice explain the specific reasons. Common causes:
+
+- A plugin outside the whitelist is loaded, such as Hextech or DBStudio. Turning its feature switch off is insufficient; enable Ranked Mode and restart.
+- Content packs or other custom gameplay content are loaded.
+- Developer tools such as ScriptEngine or UnityExplorer, or additional preloader patchers under `BepInEx/patchers`, are installed. BepInEx's original compatibility patches do not affect eligibility.
+- An unapproved Harmony patch is present, or a plugin or patch source cannot be verified.
+- A teammate is ineligible, uses an older ModKit, or has not yet provided confirmed eligibility information.
+
+Runtime and permanent card unlocks do not affect eligibility. Upload permission, Ranked Mode and AutoForge have not been play-tested; only compilation and main-menu startup were checked. See the untested list below.
 
 ## Problems after an update
 
@@ -61,7 +82,8 @@ These are implemented and compile, but haven't been fully verified in the game y
 |---|---|
 | Custom equipment (DBModKit 0.24.0) | Tested in single-player (effects on existing equipment, new equipment, content packs, build-data filtering); untested: multiplayer, upgrading, retrying a wave, actually picking it from the artifact choice |
 | Dependencies and conflicts (DBModKit 0.23.0) | Missing-dependency notice and "Subscribe" button, choosing which mod handles auto-cast/movement, warning when two mods change the same value |
-| Leaderboard block | Blocking at the real "upload your score?" dialog at the end of a run (the hook is installed but hasn't fired in a real run yet) |
+| Ranked whitelist / Ranked Mode | No gameplay testing; startup to the main menu only. Verify real upload allow/block, king snapshots, teammate eligibility changes and mode restart/restore behavior. |
+| AutoForge 0.40.0 | No gameplay testing; compilation and main-menu startup only. Weighted / balanced choices, all-zero-weight manual fallback, F10 and settings, local-only multiplayer control and retry restoration remain untested |
 | King duel | Not sending the king snapshot to the host when you're in someone else's room |
 | Rooms with players who don't have the mods | Handshake should show "someone doesn't have it · disabled"; they shouldn't disconnect when you use custom content |
 | LAN mode | There's no Steam lobby on LAN, so the mods can't check what others have installed: gameplay-changing content is always disabled, skin sync and team damage aren't supported. Not tested at all |

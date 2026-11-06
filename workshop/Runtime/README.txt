@@ -13,7 +13,7 @@ Dungeon Brawl Mod Runtime (BepInEx + DBModKit)
 
 【说明】
 - 游戏的创意工坊不会自动加载代码 Mod，所以需要运行一次安装器，把加载器放进游戏目录。
-- 按游戏作者的规则，装了 Mod 后成绩不会上传排行榜，其他功能不受影响。想冲榜请先卸载。
+- 白名单 Mod（DBModKit、DamageMeter、SmartSkill、AutoPickup、SmartMove，以及预留的 AutoForge）可以打榜；其他 Mod、内容包、ScriptEngine、UnityExplorer 和预加载补丁会阻止上传。可在主菜单 Mod 打开「打榜模式」，重启后停用 Hextech、DBStudio、内容包等改玩法的 Mod；关闭后再重启恢复。第三方插件须自行移除。
 - 第三方组件和许可证见 licenses 文件夹。
 
 [Install]
@@ -28,5 +28,5 @@ Run uninstall.bat, then unsubscribe. The BepInEx folder (with settings) is kept;
 
 [Notes]
 - The game's Workshop does not load code mods by itself, so the installer puts the loader into the game folder once.
-- By the game author's rule, scores are not uploaded to the leaderboard while mods are installed.
+- Whitelisted mods (DBModKit, DamageMeter, SmartSkill, AutoPickup, SmartMove, and the reserved AutoForge) may upload leaderboard scores. Other mods, content packs, ScriptEngine, UnityExplorer and preloader patchers block uploads. Enable Ranked Mode in the main-menu Mod window and restart to disable Hextech, DBStudio, content packs and other gameplay mods; turn it off and restart to restore them. Remove other third-party plugins yourself.
 - Third-party components and licenses: see the licenses folder.
