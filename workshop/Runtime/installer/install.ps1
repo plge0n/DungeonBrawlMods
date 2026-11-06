@@ -86,5 +86,5 @@ New-Item -ItemType Directory -Force (Split-Path -Parent $marker) | Out-Null
 Write-Host ""
 Say "安装完成（$count 个文件，运行环境 $($meta.Version)）。启动游戏即可，第一次启动会慢一点。" `
     "Done ($count files, runtime $($meta.Version)). Start the game; the first launch takes a bit longer."
-Say "装了 Mod 后成绩不会上传排行榜（游戏作者的规则）。卸载请运行 uninstall.bat。" `
-    "With mods installed, scores are not uploaded to the leaderboard (game author's rule). Run uninstall.bat to remove."
+Say "白名单 Mod 可以打榜；其他 Mod 不能。可在 Mod 菜单开启打榜模式，重启后停用玩法 Mod。卸载请运行 uninstall.bat。" `
+    "Whitelisted mods may upload scores; other mods block uploads. Enable Ranked Mode in Mod and restart to disable gameplay mods. Run uninstall.bat to remove."

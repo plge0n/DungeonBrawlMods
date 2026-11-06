@@ -19,6 +19,8 @@ namespace DBModKit
         Failed,
         /// <summary>启动过，后来被卸载了（热重载中，或者插件对象被销毁）。</summary>
         Unloaded,
+        /// <summary>本次启动开启打榜模式，没有调用 OnLoad。</summary>
+        RankedDisabled,
     }
 
     /// <summary>一个已加载进 BepInEx 的插件。</summary>
@@ -41,6 +43,9 @@ namespace DBModKit
     /// <summary>已安装的插件和它们的状态，Mod 列表、设置界面共用。</summary>
     public static class ModList
     {
+        /// <summary>当前排行榜状态及原因，读取时重新检查。</summary>
+        public static string RankedStatus => Ranked.Check("Mod 列表").Summary;
+
         /// <summary>BepInEx 已加载的插件（含 ScriptEngine 热重载的），按名字排序；DBModKit 自己也在里面。</summary>
         public static List<ModInfo> Plugins()
         {
@@ -96,7 +101,7 @@ namespace DBModKit
             else if (ModContext.All.TryGetValue(meta.GUID, out var ctx))
             {
                 info.UsesModKit = true;
-                info.State = ctx.Loaded ? ModState.Running : ctx.Failed ? ModState.Failed : ctx.Unloaded ? ModState.Unloaded : ModState.Disabled;
+                info.State = ctx.RankedDisabled ? ModState.RankedDisabled : ctx.Loaded ? ModState.Running : ctx.Failed ? ModState.Failed : ctx.Unloaded ? ModState.Unloaded : ModState.Disabled;
             }
             return info;
         }

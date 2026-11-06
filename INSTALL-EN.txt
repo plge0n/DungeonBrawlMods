@@ -96,9 +96,9 @@ LAN games have no Steam lobby, so the mods can't check what others have installe
 Hextech follows the same rule (from 0.31; a player with Hextech switched off doesn't count as having gameplay content). Everyone also needs the same mod versions, so update together.
 
 [Leaderboard]
-By the game author's rule, you can't upload to the leaderboard with mods installed. Your results won't be uploaded (you'll see a notice); nothing else is affected.
-In someone else's room your build isn't handed to the host for upload either (teammates' results still upload, just without you).
-When you host, the whole team's results won't upload. Uninstall the mods if you want to compete on the leaderboard.
+Whitelisted mods (DBModKit, DamageMeter, SmartSkill, AutoPickup, SmartMove, and the reserved AutoForge) may upload leaderboard scores. Other mods, content packs, ScriptEngine, UnityExplorer and preloader patchers block uploads. Enable Ranked Mode in the main-menu Mod window and restart to disable Hextech, DBStudio, content packs and other gameplay mods; turn it off and restart to restore them. Remove other third-party plugins yourself.
+Eligibility is checked again at upload; the Mod window shows the current status and reasons. Ranked Mode is optional when only whitelisted mods are loaded.
+The host checks all visible ModKit teammates. Older ModKit versions without the eligibility field are ineligible. An ineligible client withholds its king snapshot; vanilla teammates are treated as vanilla. Runtime and permanent card unlocks do not affect eligibility.
 
 [After a game update]
 If an update breaks compatibility, a notice at the top of the screen says "DBModKit ... 不兼容" (incompatible) and the mods are disabled.

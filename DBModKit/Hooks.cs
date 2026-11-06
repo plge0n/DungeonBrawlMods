@@ -321,6 +321,15 @@ namespace DBModKit
         private static bool TryPatch(Harmony harmony, Type hooks, string feature, MethodBase target,
             string prefix = null, string postfix = null, string finalizer = null)
         {
+            // 这些组只观察伤害/波次或替玩家操作；卡牌收藏按玩家决定照常保留。
+            // 其余都是玩法扩展（含 Mod 资源、皮肤和重试快照），打榜模式保守跳过。
+            if (Ranked.ModeActive && hooks != typeof(LeaderboardHooks) && hooks != typeof(CardCollectionHooks)
+                && hooks != typeof(AutoCastHooks) && hooks != typeof(WaveHooks) && hooks != typeof(MoveHooks)
+                && hooks != typeof(DamageContextHooks) && hooks != typeof(RawDamageHooks))
+            {
+                Log.Info($"打榜模式：跳过补丁 {feature}（{hooks.Name}）");
+                return false;
+            }
             if (target == null)
             {
                 Log.Error($"{feature}：找不到目标方法，该功能停用");
@@ -385,10 +394,10 @@ namespace DBModKit
         internal static bool CraftPrefix() => !CardCollection.BlockCrafting();
     }
 
-    // 游戏作者的规则：装了 Mod 不能上传排行榜（违规可能被拉进按 Steam 账号判定的黑名单，连累整队）。
+    // 作者允许显示和自动操作类白名单 Mod 打榜；上传现场检查，任何不确定情况拦截。
     // 两道拦截：自己上传（bzy.sdi），以及在别人房间里把构筑快照交给房主上传（bca.lhi）。
     // bzy.sdi 是排行榜上传入口（由主机 MyServerNetworkManager 调用；bxl.nlq 是同签名的诱饵）。
-    // 强制拦截，不提供开关；按游戏自己的失败流程回调，结算界面会显示上传失败。
+    // 不合格时按游戏自己的失败流程回调，结算界面会显示上传失败。
     internal static class LeaderboardHooks
     {
         private static readonly MethodInfo makeFailure =
@@ -396,24 +405,50 @@ namespace DBModKit
 
         internal static bool UploadPrefix(Action<bzw> __3)
         {
-            Log.Warning("已安装 Mod：按游戏作者的规则，本局成绩不上传排行榜");
-            ScreenNotice.Show("已安装 Mod：按游戏作者的规则，本局成绩不上传排行榜。", 8f);
+            string message = "打榜：资格检查异常，本局不能上传；可以在 Mod 菜单打开打榜模式";
+            try
+            {
+                // 房主的上传入口包含整队成绩，必须检查所有可见的 ModKit 队友。
+                var result = Ranked.Check("上传成绩");
+                if (result.Eligible)
+                {
+                    Log.Info("打榜：本局成绩照常上传");
+                    ScreenNotice.Show("打榜：本局成绩照常上传", 8f);
+                    return true;
+                }
+                message = "打榜：本局成绩不上传，" + result.Brief + "。可以在 Mod 菜单打开打榜模式";
+                Log.Warning(message);
+                ScreenNotice.Show(message, 10f);
+            }
+            catch (Exception e)
+            {
+                Safe.Run("打榜判断异常", () => RunLog.Error(ModKitPlugin.Name, "打榜资格", "上传检查异常，拦截", ("异常", e.ToString())));
+            }
             if (__3 != null)
                 Safe.Run("排行榜拦截回调", () =>
-                    __3((bzw)makeFailure.Invoke(null, new object[] { LeaderboardUploadFailure.InvalidData, "Mods installed: leaderboard upload disabled." })));
+                    __3((bzw)makeFailure.Invoke(null, new object[] { LeaderboardUploadFailure.InvalidData, message })));
             return false;
         }
 
         // bca.lhi(局, 回合)：国王对决结算时把本地玩家的构筑快照（ez.efq）用 CmdUploadLocalKingData 发给房主（ody/gif/hjf 是诱饵副本）。
         // 房主（MyServerNetworkManager.rpz）把各人的快照汇总进队伍数据，再用 bzy.sdi 一起上传排行榜，只要求有房主自己的快照
-        // （qlk），别人的可以缺。房主装了 ModKit 时 quj 已被拦截；房主没装时我们拦不住它的上传，所以在这里不发，
-        // 队伍照常上传，只是不带我们。自己当房主时照常发给自己（最后的上传会被 quj 拦截，提示和原来一样）
+        // 别人的可以缺。非房主不合格时不发自己的快照，原版房主仍可上传不含自己的队伍成绩。
+        // 房主也先检查资格，最终上传时再检查全队；不能因为自己是主机就跳过检查。
         internal static bool KingSnapshotPrefix()
         {
-            if (GameRaw.ServerActive()) return true;
-            Log.Warning("已安装 Mod：按游戏作者的规则，本局构筑不提交给房主上传排行榜");
-            ScreenNotice.Show("已安装 Mod：按游戏作者的规则，本局构筑不提交排行榜（队友的成绩照常上传）。", 8f);
-            RunLog.WriteCore(ModKitPlugin.Name, "排行榜", RunLogLevel.Info, "不发送国王快照", new (string, object)[0], mirror: false);
+            try
+            {
+                // 两端都检查可见的队友；客户端只控制自己的快照，房主最终控制整队上传。
+                var result = Ranked.Check("国王快照");
+                if (result.Eligible) return true;
+                string message = "打榜：本局构筑不提交排行榜，" + result.Brief + "。可以在 Mod 菜单打开打榜模式";
+                Log.Warning(message);
+                ScreenNotice.Show(message, 10f);
+            }
+            catch (Exception e)
+            {
+                Safe.Run("打榜判断异常", () => RunLog.Error(ModKitPlugin.Name, "打榜资格", "快照检查异常，拦截", ("异常", e.ToString())));
+            }
             return false;
         }
     }

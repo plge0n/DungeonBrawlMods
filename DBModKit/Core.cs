@@ -131,6 +131,7 @@ namespace DBModKit
             ContentPacks.Start();
             CardCollection.Tick();
             Safe.Run("联机握手", Multiplayer.Tick);
+            Safe.Run("打榜资格", Ranked.Tick);
             bool inBattle = InBattle();
             if (inBattle != wasInBattle)
             {
@@ -140,14 +141,16 @@ namespace DBModKit
                     Safe.Run("运行记录（进入战斗）", LogBattleStarted);
                     GameRaw.ClearLoadoutCache();
                     // gad 的补丁没装上时，怪物行在主菜单还不存在，进入战斗时补写倍率
-                    Safe.Run("怪物倍率（进入战斗）", GameData.OnEnemyTableLoaded);
+                    if (!Ranked.ModeActive) Safe.Run("怪物倍率（进入战斗）", GameData.OnEnemyTableLoaded);
                     Safe.Run("联机握手（锁定）", Multiplayer.Lock);
                     ModEvents.RaiseBattleStarted();
+                    Ranked.BattleStarted();
                 }
                 else
                 {
                     RunLog.Info(ModKitPlugin.Name, "战斗", "离开战斗");
                     Multiplayer.Unlock();
+                    Ranked.BattleEnded();
                     ModEvents.RaiseBattleEnded();
                 }
             }
@@ -161,10 +164,10 @@ namespace DBModKit
             Safe.Run("GameEvents", GameEvents.Tick);
             if (SkillTuning.Available) Safe.Run("技能调整", SkillTuning.Tick);
             Safe.Run("技能提示", SkillTooltips.Tick);
-            Safe.Run("技能形态", SkillForms.Tick);
+            if (!Ranked.ModeActive) Safe.Run("技能形态", SkillForms.Tick);
             Safe.Run("语言", Localization.Tick);
             ModEvents.RaiseUpdate();
-            Safe.Run("皮肤同步", HeroSkinSync.Tick);
+            if (!Ranked.ModeActive) Safe.Run("皮肤同步", HeroSkinSync.Tick);
             JsonConfigRegistry.Tick();
         }
 

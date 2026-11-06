@@ -55,6 +55,8 @@ namespace DBModKit
         Failed,
         /// <summary>不是我们格式的条目（英雄模型、黑名单包等），不显示。</summary>
         Ignored,
+        /// <summary>打榜模式下未实例化的代码插件。</summary>
+        RankedDisabled,
     }
 
     public sealed class WorkshopItem
@@ -244,7 +246,18 @@ namespace DBModKit
             {
                 try
                 {
-                    candidates.AddRange(LoadAssemblies(item));
+                    var found = LoadAssemblies(item);
+                    // 先过滤再查依赖：不启动的 Mod 不参与本次依赖排序，也不实例化。
+                    foreach (var c in found)
+                    {
+                        if (Ranked.ModeActive && !Ranked.IsWhitelisted(c.Metadata.GUID))
+                        {
+                            item.Status = WorkshopStatus.RankedDisabled;
+                            item.Message = "打榜模式下停用：" + c.Metadata.Name;
+                            Log.Info($"工坊：{c.Metadata.Name} 打榜模式下停用（不实例化）");
+                        }
+                        else candidates.Add(c);
+                    }
                 }
                 catch (Exception e)
                 {
@@ -379,6 +392,13 @@ namespace DBModKit
         // （游戏切场景会销毁 BepInEx 的管理对象）
         private static void Instantiate(Candidate c)
         {
+            if (Ranked.ModeActive && !Ranked.IsWhitelisted(c.Metadata.GUID))
+            {
+                if (c.Item.Status != WorkshopStatus.Loaded) c.Item.Status = WorkshopStatus.RankedDisabled;
+                c.Item.Message = "打榜模式下停用：" + c.Metadata.Name;
+                Log.Info($"工坊：{c.Metadata.Name} 打榜模式下停用（不实例化）");
+                return;
+            }
             try
             {
                 var info = new PluginInfo();

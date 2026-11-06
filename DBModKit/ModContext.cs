@@ -54,6 +54,10 @@ namespace DBModKit
         /// <summary>启动过、后来被卸载了（<see cref="Dispose"/>）。</summary>
         public bool Unloaded { get; private set; }
 
+        /// <summary>本次启动被打榜模式停用，未调用 OnLoad。</summary>
+        public bool RankedDisabled { get; private set; }
+        internal BaseUnityPlugin Plugin { get; private set; }
+
         // 按 GUID 记下每个 Mod 最近一次启动的上下文，Mod 列表据此显示状态；热重载时新的替换旧的
         internal static readonly Dictionary<string, ModContext> All = new Dictionary<string, ModContext>();
 
@@ -86,7 +90,16 @@ namespace DBModKit
                 if (System.IO.Directory.Exists(own)) folder = own;
             }
             var ctx = new ModContext(MetadataHelper.GetMetadata(plugin), logger, onUnload, folder);
+            ctx.Plugin = plugin;
             All[ctx.Metadata.GUID] = ctx;
+            Ranked.EnsureConfigured();
+            if (Ranked.ModeActive && !Ranked.IsWhitelisted(ctx.Metadata.GUID))
+            {
+                ctx.RankedDisabled = true;
+                logger.LogInfo($"{ctx.Metadata.Name}：打榜模式下停用（未调用 OnLoad）");
+                ctx.RunLog.Info("生命周期", "打榜模式下停用");
+                return ctx;
+            }
             if (!ModKit.Compatible)
             {
                 // ModKit 不兼容时它自己会在屏幕上提示
