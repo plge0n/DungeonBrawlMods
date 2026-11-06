@@ -11,6 +11,7 @@
     <NoWarn>$(NoWarn);CS1591</NoWarn>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="BepInEx.Preloader" HintPath="$(GameDir)\BepInEx\core\BepInEx.Preloader.dll" Private="false" />
     <Reference Include="UnityEngine.JSONSerializeModule" HintPath="$(Managed)\UnityEngine.JSONSerializeModule.dll" Private="false" />
   </ItemGroup>
 </Project>

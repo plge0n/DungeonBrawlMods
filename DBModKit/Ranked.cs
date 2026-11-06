@@ -115,12 +115,10 @@ namespace DBModKit
             {
                 var patches = Harmony.GetPatchInfo(method);
                 if (patches == null) throw new InvalidOperationException("补丁列表发生变化");
-                foreach (var patch in patches.Prefixes.Concat(patches.Postfixes).Concat(patches.Transpilers).Concat(patches.Finalizers))
-                {
-                    if (!owners.Contains(patch.owner)) reasons.Add("存在未获准的 Harmony 补丁：" + patch.owner);
-                    if (patch.PatchMethod == null) throw new InvalidOperationException("无法确认补丁来源");
-                    patchedAssemblies.Add(patch.PatchMethod.Module.Assembly);
-                }
+                CheckPatches(method, patches.Prefixes, HarmonyPatchType.Prefix, patchedAssemblies, reasons);
+                CheckPatches(method, patches.Postfixes, HarmonyPatchType.Postfix, patchedAssemblies, reasons);
+                CheckPatches(method, patches.Transpilers, HarmonyPatchType.Transpiler, patchedAssemblies, reasons);
+                CheckPatches(method, patches.Finalizers, HarmonyPatchType.Finalizer, patchedAssemblies, reasons);
             }
             var seen = new HashSet<BaseUnityPlugin>();
             foreach (var info in Chainloader.PluginInfos.Values.ToArray())
@@ -155,6 +153,19 @@ namespace DBModKit
             if (CustomEquipment.All.Count > 0 || CustomEquipEffects.All.Count > 0) reasons.Add("注册了自定义装备或装备特效");
             if (HeroVariants.All.Count > 0) reasons.Add("注册了自定义英雄或变体");
             // 按玩家决定，CardCollection 运行时开关和永久写入均不参与资格。
+        }
+
+        private static void CheckPatches(MethodBase target, IEnumerable<Patch> patches, HarmonyPatchType kind,
+            HashSet<Assembly> patchedAssemblies, List<string> reasons)
+        {
+            foreach (var patch in patches)
+            {
+                var patchMethod = patch.PatchMethod;
+                if (!owners.Contains(patch.owner) && !RankedBepInEx.IsExempt(patchMethod, target, kind))
+                    reasons.Add("存在未获准的 Harmony 补丁：" + patch.owner + " → " + target.DeclaringType?.FullName + "." + target);
+                if (patchMethod == null) throw new InvalidOperationException("无法确认补丁来源");
+                patchedAssemblies.Add(patchMethod.Module.Assembly);
+            }
         }
 
         private static void CheckPlugin(BepInPlugin meta, BaseUnityPlugin plugin, string location, HashSet<Assembly> patched, List<string> reasons)
