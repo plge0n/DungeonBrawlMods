@@ -31,7 +31,13 @@ namespace DBModKit
             ModKitPlugin.Guid, ModKitPlugin.Guid + ".cards",
         };
         internal const string LobbyKey = "dbmods.ranked";
-        internal const string AllowedNames = "DBModKit、DamageMeter、SmartSkill、AutoPickup、SmartMove、AutoForge（尚未推出）";
+        internal const string AllowedNames = "DBModKit、DamageMeter、SmartSkill、AutoPickup、SmartMove、AutoForge";
+        private const string LobbyFormat = "2";
+        private const float PublishInterval = 5f;
+        private static float nextPublish;
+        private static ulong publishedLobby;
+        private static int publishedContentVersion = -1;
+        private static Result lastPublishedResult;
         private static ConfigEntry<bool> mode;
         private static bool configured, startupLogged;
         private static string configError;
@@ -87,7 +93,7 @@ namespace DBModKit
             ScreenNotice.Show("打榜模式：重启游戏后生效", 6f);
         }
 
-        internal static Result Check(string occasion, bool includeTeam = true)
+        internal static Result Check(string occasion, bool includeTeam = true, bool logOnlyChanges = false)
         {
             var reasons = new List<string>();
             try
@@ -101,8 +107,11 @@ namespace DBModKit
                 Log.Warning("打榜资格检查异常：" + e);
             }
             var result = new Result(reasons);
-            RunLog.WriteCore(ModKitPlugin.Name, "打榜资格", result.Eligible ? RunLogLevel.Info : RunLogLevel.Warning,
-                occasion, new (string, object)[] { ("合格", result.Eligible), ("原因", string.Join("；", result.Reasons)) }, mirror: false);
+            if (!logOnlyChanges || lastPublishedResult == null || result.Eligible != lastPublishedResult.Eligible
+                || !result.Reasons.SequenceEqual(lastPublishedResult.Reasons))
+                RunLog.WriteCore(ModKitPlugin.Name, "打榜资格", result.Eligible ? RunLogLevel.Info : RunLogLevel.Warning,
+                    occasion, new (string, object)[] { ("合格", result.Eligible), ("原因", string.Join("；", result.Reasons)) }, mirror: false);
+            if (logOnlyChanges) lastPublishedResult = result;
             return result;
         }
 
@@ -195,13 +204,21 @@ namespace DBModKit
         }
 
         // 只公布本机，不能公布包含队友的结果，否则会互相引用，无法恢复合格。
-        internal static void PublishLocal()
+        internal static void PublishLocal(bool force = false)
         {
-            var result = Check("大厅公布（本机）", false);
+            ulong lobby = ModKit.Compatible ? GameRaw.LobbyId() : 0UL;
+            int contentVersion = ContentPacks.Version;
+            if (!force && Time.unscaledTime < nextPublish && lobby == publishedLobby
+                && contentVersion == publishedContentVersion) return;
+            nextPublish = Time.unscaledTime + PublishInterval;
+            publishedLobby = lobby;
+            publishedContentVersion = contentVersion;
+            var result = Check("大厅公布（本机）", false, logOnlyChanges: true);
             string reason = result.Eligible ? "" : result.Reasons[0];
             if (reason.Length > 160) reason = reason.Substring(0, 160);
-            LobbySync.Publish(LobbyKey, "1|" + DateTimeOffset.UtcNow.ToUnixTimeSeconds().ToString(CultureInfo.InvariantCulture)
-                + "|" + (result.Eligible ? "1" : "0") + "|" + Convert.ToBase64String(Encoding.UTF8.GetBytes(reason)));
+            // 不比较不同电脑的系统时钟；资格变化后重发，由 Steam 大厅数据同步。
+            LobbySync.Publish(LobbyKey, LobbyFormat + "|" + (result.Eligible ? "1" : "0")
+                + "|" + Convert.ToBase64String(Encoding.UTF8.GetBytes(reason)));
         }
 
         private static void CheckTeam(List<string> reasons)
@@ -223,23 +240,27 @@ namespace DBModKit
                 if (string.IsNullOrEmpty(handshake) && string.IsNullOrEmpty(value)) continue; // 看不到 ModKit 的原版队友
                 string name = member.ToString(CultureInfo.InvariantCulture);
                 var parts = (value ?? "").Split('|');
-                if (parts.Length != 4 || parts[0] != "1" || (parts[2] != "0" && parts[2] != "1") || parts[3].Length > 1024
-                    || !long.TryParse(parts[1], NumberStyles.None, CultureInfo.InvariantCulture, out long timestamp)
-                    || timestamp < DateTimeOffset.UtcNow.ToUnixTimeSeconds() - 10 || timestamp > DateTimeOffset.UtcNow.ToUnixTimeSeconds() + 5)
+                if (parts.Length != 3 || parts[0] != LobbyFormat || (parts[1] != "0" && parts[1] != "1") || parts[2].Length > 1024)
                 {
-                    reasons.Add("队友 " + name + " 的 ModKit 未提供有效打榜资格（旧版或数据过期）");
+                    reasons.Add("队友 " + name + " 的 ModKit 未提供有效打榜资格（旧版或数据缺失）");
                     continue;
                 }
-                string reason = Encoding.UTF8.GetString(Convert.FromBase64String(parts[3]));
-                if (parts[2] == "1" && reason.Length == 0) continue;
+                string reason = Encoding.UTF8.GetString(Convert.FromBase64String(parts[2]));
+                if (parts[1] == "1" && reason.Length == 0) continue;
                 reasons.Add("队友 " + name + " 不能打榜" + (reason.Length == 0 ? "" : "：" + reason));
             }
         }
 
-        internal static void BattleStarted() => battleNoticeAt = Time.unscaledTime + 5f;
+        internal static void BattleStarted()
+        {
+            battleNoticeAt = Time.unscaledTime + 5f;
+            PublishLocal(force: true);
+        }
 
         internal static void Tick()
         {
+            // 每帧只比较时间、大厅和内容版本；定期或状态变化时才做完整扫描。
+            PublishLocal();
             if (!startupLogged && Time.unscaledTime >= 12f)
             {
                 startupLogged = true;

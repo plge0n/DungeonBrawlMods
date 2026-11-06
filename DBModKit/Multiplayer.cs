@@ -196,7 +196,6 @@ namespace DBModKit
 
         private static void Refresh(bool solo)
         {
-            Ranked.PublishLocal();
             Signature = BuildSignature();
             ulong lobby = GameRaw.LobbyId();
             if (lobby == 0)

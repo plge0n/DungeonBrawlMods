@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <DeployToGame>false</DeployToGame>
+    <EnableNETAnalyzers>false</EnableNETAnalyzers>
+    <NoWarn>$(NoWarn);CS0649</NoWarn>
+  </PropertyGroup>
+  <ItemGroup>
+    <!-- 隔离夹具只编译源码和桩，不引用游戏或插件程序集。 -->
+    <Reference Remove="@(Reference)" />
+    <Compile Include="../../../DBModKit/Ranked.cs" Link="Ranked.cs" />
+  </ItemGroup>
+</Project>
