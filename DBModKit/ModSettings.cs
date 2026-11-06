@@ -51,16 +51,43 @@ namespace DBModKit
 
         public static void Unregister(SettingsSection section)
         {
-            if (sections.Remove(section)) Version++;
+            if (sections.Remove(section)) { Version++; CloseStandalone(); }
         }
 
         private static Action<string> opener;
 
-        /// <summary>有设置界面（装了 DBStudio）。</summary>
-        public static bool CanOpen => opener != null;
+        /// <summary>有设置界面（外部工作台或 ModKit 自定义设置窗口）。</summary>
+        public static bool CanOpen => opener != null || sections.Count > 0;
 
         /// <summary>打开设置界面并选中 guid 这个插件；guid 为 null 时只打开。没有设置界面时什么也不做。</summary>
-        public static void Open(string guid) => opener?.Invoke(guid);
+        public static void Open(string guid)
+        {
+            if (opener != null) { opener(guid); return; }
+            OpenStandalone(guid);
+        }
+        private static NativeWindow standalone;
+        private static Canvas canvas;
+        private static IDisposable input;
+        private static void CloseStandalone()
+        {
+            standalone?.Destroy(); standalone = null;
+            if (canvas != null) UnityEngine.Object.Destroy(canvas.gameObject);
+            canvas = null; input?.Dispose(); input = null;
+        }
+        private static void OpenStandalone(string guid)
+        {
+            CloseStandalone();
+            if (!NativeUi.Load()) return;
+            canvas = NativeUi.Overlay("DBModKit.Settings");
+            standalone = NativeUi.Window(canvas.transform, "Mod 设置", new Vector2(950, 900), CloseStandalone);
+            var content = NativeUi.ScrollView(standalone.Body, out var scroll);
+            foreach (var section in sections.ToArray()) {
+                if (guid != null && section.OwnerGuid != guid) continue;
+                NativeUi.Heading(content, section.Title);
+                Safe.Run("构建 Mod 设置", () => section.Build(content));
+            }
+            input = GameInput.Block();
+        }
 
         /// <summary>设置界面登记自己的打开方法（主菜单的 Mod 列表用它跳过去），Dispose 时撤下。</summary>
         public static IDisposable SetOpener(Action<string> open)

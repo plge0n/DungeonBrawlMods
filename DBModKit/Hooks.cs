@@ -27,6 +27,17 @@ namespace DBModKit
                 return false;
 
             InstallCardCollection();
+            var forgeMissing = Compat.FindForgingMissing();
+            if (forgeMissing.Count == 0)
+                Forging.ChoiceAvailable =
+                    TryPatch(harmony, typeof(ForgingHooks), "锻造档次", AccessTools.Method(typeof(pu), "gre", new[] { typeof(pu.ForgingTier) }),
+                        prefix: nameof(ForgingHooks.TierPrefix), finalizer: nameof(ForgingHooks.TierFinalizer))
+                    && TryPatch(harmony, typeof(ForgingHooks), "锻造选择", AccessTools.Method(typeof(bsf), "ptt", new[] {
+                        typeof(RoguelikeUIData[]), typeof(Action<RoguelikeUIData>), typeof(string), typeof(bsf.RefreshActionEvent),
+                        typeof(Action), typeof(float), typeof(List<df.TeamBuildData>), typeof(string) }),
+                        prefix: nameof(ForgingHooks.OpenPrefix), postfix: nameof(ForgingHooks.OpenPostfix));
+            else Log.Warning("锻造自动选择停用：" + string.Join("，", forgeMissing));
+            if (Forging.ChoiceAvailable) Log.Info("锻造自动选择：档次与选择补丁已安装（原生开窗后确认）");
 
             AutoCast.Available =
                 TryPatch(harmony, typeof(AutoCastHooks), "自动释放决策",
@@ -325,7 +336,8 @@ namespace DBModKit
             // 其余都是玩法扩展（含 Mod 资源、皮肤和重试快照），打榜模式保守跳过。
             if (Ranked.ModeActive && hooks != typeof(LeaderboardHooks) && hooks != typeof(CardCollectionHooks)
                 && hooks != typeof(AutoCastHooks) && hooks != typeof(WaveHooks) && hooks != typeof(MoveHooks)
-                && hooks != typeof(DamageContextHooks) && hooks != typeof(RawDamageHooks))
+                && hooks != typeof(DamageContextHooks) && hooks != typeof(RawDamageHooks)
+                && hooks != typeof(ForgingHooks) && hooks != typeof(CheckpointHooks))
             {
                 Log.Info($"打榜模式：跳过补丁 {feature}（{hooks.Name}）");
                 return false;
@@ -909,7 +921,7 @@ namespace DBModKit
         {
             if (!GameRaw.CheckpointValid()) return;
             RunLog.Info(ModKitPlugin.Name, "重试波次", "快照", ("波次", Game.Wave));
-            SkillTuning.SaveCheckpoint();
+            if (!Ranked.ModeActive) SkillTuning.SaveCheckpoint();
             ModEvents.RaiseCheckpointSaved();
         }
 
@@ -917,7 +929,7 @@ namespace DBModKit
         {
             if (!__result) return;
             RunLog.Info(ModKitPlugin.Name, "重试波次", "还原", ("波次", Game.Wave));
-            SkillTuning.RestoreCheckpoint();
+            if (!Ranked.ModeActive) SkillTuning.RestoreCheckpoint();
             ModEvents.RaiseCheckpointRestored();
         }
     }
@@ -1242,6 +1254,55 @@ namespace DBModKit
             if (stack.Count == 0) return false;
             ctx = stack[stack.Count - 1];
             return ctx.Target == target && ctx.Attacker == attacker;
+        }
+    }
+}
+
+namespace DBModKit
+{
+    internal static class ForgingHooks
+    {
+        internal static void TierPrefix(pu.ForgingTier a, out int? __state)
+        {
+            __state = GameRaw.ForgingTierContext;
+            GameRaw.ForgingTierContext = a == pu.ForgingTier.Epic ? 2 : a == pu.ForgingTier.Gold ? 1 : 0;
+        }
+        internal static Exception TierFinalizer(Exception __exception, int? __state)
+        {
+            GameRaw.ForgingTierContext = __state;
+            return __exception;
+        }
+        internal static void OpenPrefix(RoguelikeUIData[] a, ref Action<RoguelikeUIData> b, string h, out ForgeOffer __state)
+        {
+            __state = null;
+            if (!Forging.ChoiceAvailable || h != "forging") return;
+            try
+            {
+                var offer = GameRaw.ReadForgeOffer(a);
+                if (offer == null) return;
+                var original = b;
+                b = picked => {
+                    original?.Invoke(picked);
+                    int index = Array.IndexOf(a, picked);
+                    if (index >= 0) Forging.RaiseChosen(offer, index);
+                };
+                __state = offer;
+            }
+            catch (Exception e) { Safe.Report("读取锻造选择（保留手选）", e); }
+        }
+        internal static void OpenPostfix(bsf __instance, RoguelikeUIData[] a, Action<RoguelikeUIData> b, ForgeOffer __state)
+        {
+            if (__state == null) return;
+            try
+            {
+                int? pick = Forging.Pick(__state);
+                if (!pick.HasValue) return;
+                if (pick.Value < 0 || pick.Value >= a.Length) throw new ArgumentOutOfRangeException("handler 返回下标");
+                if (!Game.InBattle || Game.LocalPlayer == null) return;
+                if (!GameRaw.ConfirmForge(__instance, a[pick.Value], b))
+                    RunLog.Warning(ModKitPlugin.Name, "锻造", "原生确认未接受，保留手选");
+            }
+            catch (Exception e) { Safe.Report("自动锻造选择（保留手选）", e); }
         }
     }
 }

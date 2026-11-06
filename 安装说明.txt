@@ -93,7 +93,7 @@ Steam 联机时，面板下方的"队伍"会列出每个人的伤害、占比和
 海克斯强化也按这个规则（0.31 起；关掉 Hextech 总开关的人不算装了改玩法的内容）。房间里每个人的 Mod 版本也要一样，更新时大家一起更新。
 
 【排行榜】
-白名单 Mod（DBModKit、DamageMeter、SmartSkill、AutoPickup、SmartMove，以及预留的 AutoForge）可以打榜；其他 Mod、内容包、ScriptEngine、UnityExplorer 和预加载补丁会阻止上传。可在主菜单 Mod 打开「打榜模式」，重启后停用 Hextech、DBStudio、内容包等改玩法的 Mod；关闭后再重启恢复。第三方插件须自行移除。
+白名单 Mod（DBModKit、DamageMeter、SmartSkill、AutoPickup、SmartMove，AutoForge）可以打榜；其他 Mod、内容包、ScriptEngine、UnityExplorer 和预加载补丁会阻止上传。可在主菜单 Mod 打开「打榜模式」，重启后停用 Hextech、DBStudio、内容包等改玩法的 Mod；关闭后再重启恢复。第三方插件须自行移除。
 上传时重新检查资格，Mod 菜单显示当前状态和原因；不开打榜模式、只装白名单 Mod 也可上传。
 房主检查整队可见的 ModKit 玩家；旧版 ModKit 没有资格字段，视为不合格。非房主不合格时不发送国王构筑快照；原版队友按原版处理。卡牌全解锁（运行时和永久写入）不影响资格。
 
@@ -110,3 +110,6 @@ DBModKit 是其他 Mod 都要用的公共库，删了它其他 Mod 也就都不�
 按 F9 打开 DBStudio → 调试页 → 点"导出"，把生成的 BepInEx\DBModKit\report-时间.txt 发给作者；
 再附上 BepInEx\LogOutput.log 更好。
 问题能重现时，先在 Mod 页 → DBModKit 把 FileLevel 改成 Debug，出问题的那一刻按 Ctrl+F10 打个标记，方便定位。
+
+
+AutoForge（自动锻体）0.40.0：白名单 Mod，可以打榜。F10 开关（Ctrl+F10 仍为 RunLog 标记）；在 Mod → AutoForge → 设置调整属性权重或均衡模式。不自动购买锻造器；联机只操作本机。没有实机测试，只检查启动到主菜单。

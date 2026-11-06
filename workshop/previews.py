@@ -10,6 +10,7 @@ GRAY = (170, 170, 175)
 
 # 条目名 → (大标题, 中文副标题, 英文副标题)
 ITEMS = {
+    "AutoForge": ("AutoForge", "自动锻体", "Automatic forging"),
     "SmartSkill": ("SmartSkill", "技能自动释放条件", "Smarter auto-cast"),
     "SmartMove": ("SmartMove", "自动躲避预警", "Auto-dodge telegraphs"),
     "AutoPickup": ("AutoPickup", "自动拾取", "Auto pickup"),

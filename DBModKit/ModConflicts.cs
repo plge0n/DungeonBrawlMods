@@ -75,6 +75,7 @@ namespace DBModKit
 
             AddSlot(list, AutoCast.Slot);
             AddSlot(list, MoveControl.Slot);
+            AddSlot(list, Forging.Slot);
             foreach (var (what, first, second, cleared) in GameData.Overlaps)
                 list.Add(new ModIssue(ModIssueKind.Conflict, cleared ? $"数值：{second} 载入改动时清掉了 {first} 改的 {what}" : $"数值：{first} 和 {second} 都改了 {what}",
                     cleared ? "现在只有后载入的改动" : $"后改的生效（{second}）"));
@@ -158,6 +159,7 @@ namespace DBModKit
 
             AddChooser(AutoCast.Slot);
             AddChooser(MoveControl.Slot);
+            AddChooser(Forging.Slot);
             var issues = ModConflicts.All();
             if (issues.Count == 0)
             {

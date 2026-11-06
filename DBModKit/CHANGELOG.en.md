@@ -2,10 +2,12 @@
 
 ## 0.40.0
 
+- Added UseForgingChoice / ForgeOffer and successful-choice notifications with HandlerSlot ownership and native UI confirmation. Available in Ranked Mode, including retry checkpoint notifications and standalone custom settings.
+
 - Whitelisted display and automation mods may upload scores. Upload-time checks cover plugins, patches, preloader patchers, custom content and visible ModKit teammates; blocked uploads show reasons.
 - Added Ranked Mode in the main-menu Mod window, off by default and applied after restart. It disables Hextech, DBStudio, content packs and other gameplay mods; turn it off and restart to restore them. Remove third-party debugging plugins yourself.
 - The Mod window shows eligibility and each run gets one notice. Card unlocks do not affect eligibility.
-- AutoForge is only reserved in the whitelist and has not been released. Older ModKit teammates without eligibility data are ineligible.
+- AutoForge now implements automatic forging choices. Older ModKit teammates without eligibility data are ineligible.
 - **No gameplay testing**; only build and main-menu startup checks. Real uploads, king snapshots, multiplayer and gameplay restoration still need verification.
 
 ## 0.39.0

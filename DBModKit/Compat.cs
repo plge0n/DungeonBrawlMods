@@ -179,6 +179,25 @@ namespace DBModKit
             ("CardData", new[] { "capacity", "progress" }),
         };
 
+        // 独立检查失败仅停用自动锻造；反射签名由安装过程再次核验。
+        public static List<string> FindForgingMissing()
+        {
+            var required = new (string type, string[] members)[] {
+                ("pu", new[] { "gre" }), ("pu+ForgingTier", new[] { "Normal", "Gold", "Epic" }),
+                ("bsf", new[] { "ptt", "pud", "blwl", "bbov" }),
+                ("RoguelikeUIData", new[] { "name", "quality", "data" }),
+                ("ck", new[] { "brui" }), ("ox", new[] { "bein" }), ("nt", new[] { "bryb" }),
+                ("ForgingData", new[] { "type", "isPercent" }),
+            };
+            var missing = new List<string>();
+            foreach (var item in required) {
+                var type = AccessTools.TypeByName(item.type);
+                if (type == null) missing.Add(item.type);
+                else foreach (string member in item.members) if (!HasMember(type, member)) missing.Add(item.type + "." + member);
+            }
+            return missing;
+        }
+
         public static List<string> FindCardMissing()
         {
             var missing = new List<string>();

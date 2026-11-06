@@ -318,6 +318,19 @@ namespace DBModKit
             AddCleanup(() => AutoCast.ClearHandler(Metadata.GUID));
         }
 
+        /// <summary>接管本机锻造选择；返回 null 保留手选。先注册者优先，可在依赖和冲突中切换。</summary>
+        public void UseForgingChoice(Func<ForgeOffer, int?> handler)
+        {
+            Forging.Slot.Set(Metadata.GUID, handler);
+            AddCleanup(() => Forging.Slot.Clear(Metadata.GUID));
+        }
+        /// <summary>原生属性回调成功后通知，包含自动和手动选择。</summary>
+        public void OnForgingChosen(Action<ForgeOffer, int> handler)
+        {
+            Forging.Chosen += handler;
+            AddCleanup(() => Forging.Chosen -= handler);
+        }
+
         public void OnAutoCastResolved(Action<AutoCastResult> handler)
         {
             AutoCast.Resolved += handler;

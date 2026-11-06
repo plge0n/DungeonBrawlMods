@@ -96,7 +96,7 @@ LAN games have no Steam lobby, so the mods can't check what others have installe
 Hextech follows the same rule (from 0.31; a player with Hextech switched off doesn't count as having gameplay content). Everyone also needs the same mod versions, so update together.
 
 [Leaderboard]
-Whitelisted mods (DBModKit, DamageMeter, SmartSkill, AutoPickup, SmartMove, and the reserved AutoForge) may upload leaderboard scores. Other mods, content packs, ScriptEngine, UnityExplorer and preloader patchers block uploads. Enable Ranked Mode in the main-menu Mod window and restart to disable Hextech, DBStudio, content packs and other gameplay mods; turn it off and restart to restore them. Remove other third-party plugins yourself.
+Whitelisted mods (DBModKit, DamageMeter, SmartSkill, AutoPickup, SmartMove, and AutoForge) may upload leaderboard scores. Other mods, content packs, ScriptEngine, UnityExplorer and preloader patchers block uploads. Enable Ranked Mode in the main-menu Mod window and restart to disable Hextech, DBStudio, content packs and other gameplay mods; turn it off and restart to restore them. Remove other third-party plugins yourself.
 Eligibility is checked again at upload; the Mod window shows the current status and reasons. Ranked Mode is optional when only whitelisted mods are loaded.
 The host checks all visible ModKit teammates. Older ModKit versions without the eligibility field are ineligible. An ineligible client withholds its king snapshot; vanilla teammates are treated as vanilla. Runtime and permanent card unlocks do not affect eligibility.
 
@@ -113,3 +113,6 @@ To remove BepInEx as well, also delete: the BepInEx folder, winhttp.dll, doorsto
 Press F9 to open DBStudio -> Debug page -> "Export" (导出), and send the generated BepInEx\DBModKit\report-<time>.txt to the author;
 BepInEx\LogOutput.log helps too.
 If you can reproduce it, first set FileLevel to Debug under Mod page -> DBModKit, then press Ctrl+F10 at the moment it happens to add a marker.
+
+
+AutoForge 0.40.0 automatically selects forging offers using configurable weights or balanced progression. Whitelisted for leaderboards. F10 toggles it; Ctrl+F10 remains the RunLog marker. Configure in Mod → AutoForge → Settings. No automatic purchases; multiplayer affects only the local player. No gameplay testing; main-menu startup only.
