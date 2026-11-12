@@ -12,6 +12,7 @@
 ## 本版改动
 
 - **DBModKit 0.41.0：适配游戏 7.15**。**这一版没有实机测试**，只确认了编译通过、游戏启动后所有 Mod 正常加载。遇到问题请在 Mod 列表里导出报告反馈。
+- **AutoForge 0.41.0**：游戏 7.15 自带了「自动锻造器」（商店批量做黄金锻造，不弹选择窗口），和 AutoForge 不冲突；AutoForge 继续处理普通/黄金锻造器、英雄被动、Hextech 等弹出的三选一。只更新了说明，代码没改。
 
 ## 适配的游戏版本
 
@@ -52,6 +53,7 @@ Upgrading leaves settings and saves intact; permanent card unlock modifies the s
 ### Changes
 
 - **DBModKit 0.41.0: updated for game 7.15**. **Not play-tested**; we only checked that it builds and that every mod loads when the game starts. If something breaks, please export a report from the Mod list.
+- **AutoForge 0.41.0**: game 7.15 added its own Auto Forger (bulk gold forging from the shop, no choice window). It doesn't conflict with AutoForge, which keeps handling the pick-one-of-three choices from regular/gold forgers, hero passives, Hextech and so on. Documentation only, no code changes.
 
 ### Game versions
 

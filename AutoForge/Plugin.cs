@@ -20,7 +20,7 @@ namespace AutoForge
     {
         public const string Guid = "plge0n.dungeonbrawl.autoforge";
         public const string Name = "AutoForge";
-        public const string Version = "0.40.0";
+        public const string Version = "0.41.0";
         private ModContext mod;
         private JsonConfig<Settings> config;
         private Dictionary<ForgeAttribute, float> totals = new Dictionary<ForgeAttribute, float>();
