@@ -1,5 +1,11 @@
 # DBModKit changelog (English)
 
+## 0.41.0
+**For game version 7.15. After updating, quit the game and run install.bat in the runtime item again** (zip users: extract the new "plugins" package, overwriting old files).
+
+- Rebuilt obfuscated mappings; verified real forging entry points, the new casting parameter and level-up event parameters; corrected compatibility string lists. The game removed epic forging choices; the API enum remains, but opening that tier returns false.
+- **Not play-tested**; we only checked that it builds and that every mod loads when the game starts. If something breaks, please export a report.
+
 ## 0.40.0
 **For game version 7.13. After updating, quit the game and run install.bat in the runtime item again** (zip users: extract the new "plugins" package, overwriting old files).
 
