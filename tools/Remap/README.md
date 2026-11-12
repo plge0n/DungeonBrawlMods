@@ -6,10 +6,10 @@
 ```powershell
 dotnet build tools/Remap -c Release
 $remap = "tools/Remap/bin/Release/net8.0/Remap.dll"
-dotnet $remap update --old ../backup/7.15                 # 只检查，报告在 tools/Remap/out/report.md
-dotnet $remap update --old ../backup/7.15 --write         # 写回 DBModKit 源码
+dotnet $remap update --old ../backup/7.16                 # 只检查，报告在 tools/Remap/out/report.md
+dotnet $remap update --old ../backup/7.16 --write         # 写回 DBModKit 源码
 dotnet $remap snapshot --version 7.16                                   # 适配完新版本后保存，作为下次的 --old
-dotnet $remap selftest --old ../backup/7.15 --mutate 0.03 # 自测
+dotnet $remap selftest --old ../backup/7.16 --mutate 0.03 # 自测
 ```
 `dotnet $remap help` 查看全部选项。`--notes ../tools/NOTES.md` 会同时改笔记里反引号中的 `类型.成员`。
 
@@ -57,3 +57,5 @@ dotnet $remap selftest --old ../backup/7.15 --mutate 0.03 # 自测
 **7.11 → 7.13（2026-11-03）**：改名 2179 处，对应率 71.3%。手动补大厅成员数据 `chv.umx` → `cjp.vda`（Set）、`chv.umw` → `cjp.vcz`（Get），按 P/Invoke 入口核对；重载提示按实际签名修正 `yl.jfu(float)` → `yn.jhz(float)`、`bbx.lbx(string)` → `bca.lep(string)`、`ey.eai` → `ez.ecc`、`ey.eaq` → `ez.eck`，后两者与遗物工厂均确认有调用者。新坑：参数位置的普通字符串也可能与混淆类型同名，被误当类型名改写（JSON 字段 `"do"` → `"dr"`、GameObject 名称 `"bqs"` → `"bra"`）；要检查字符串 diff 并撤销这类误改。
 
 **7.13 → 7.15（2026-11-12）**：源码改名 2261 处，对应率 69.7%。手动补 `bca.lem` → `beb.llg`、`ez.ecj` → `fb.ejo`（末尾新增 `float?`）、大厅成员数据 Set → `cpv.eys`，按实际签名修正遗物工厂 → `beb.lzz`。升级事件新增等级参数；游戏删除 `ForgingTier.Epic`。元组形式的 Compat 成员数组和嵌套类型名不会自动更新，要逐项同步；类型字符串与同名方法冲突也可能误改类型键（`yn` 被改成方法 `dkn`，正确类型是 `zj`）。锻造真实入口为 `qj.hds/hdt`、`bvb.qpf/qpp`，已核对游戏调用者。撤销 JSON 字段 `do` → `dr` 的误改。
+
+**7.15 → 7.16（2026-11-12）**：源码改名 2315 处，对应率 72.4%。卡牌保存 `df.duz(bool)` → `di.dvd(bool, bool = false)` 新增异步写盘参数，Harmony 签名需同步；保存隔离仍在序列化前完成。大厅成员数据包装手动对应 `cpv.eys/wrq` → `cpy.ekh/wse`。修正重载字符串 `beb.mbx(int)` → `bee.mcl(int)`、`bgf.nos` → `bgi.nph`；Compat 元组/嵌套类型清单逐项同步。撤销 GameObject 名 `bqs` → `bqv` 的普通字符串误改。
