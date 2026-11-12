@@ -4,6 +4,7 @@ using System.Collections.Generic;
 namespace DBModKit
 {
     /// <summary>属性锻造器的档次（商店里的属性锻造器 / 黄金属性锻造器 / 史诗属性锻造器）。</summary>
+    // Epic 保留给已有 Mod 的二进制兼容；游戏 7.15 已移除该档选择，Open(Epic) 返回 false。
     public enum ForgeTier { Normal, Gold, Epic }
 
     /// <summary>
@@ -29,7 +30,7 @@ namespace DBModKit
         /// <summary>打开一次锻造，界面忙时返回 false（这时什么都不做，稍后再试）。</summary>
         public static bool Open(ForgeTier tier = ForgeTier.Normal)
         {
-            if (!CanOpen) return false;
+            if (tier == ForgeTier.Epic || !CanOpen) return false;
             string caller = RunLog.CallerMod();
             try
             {
