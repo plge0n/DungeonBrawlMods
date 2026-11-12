@@ -13,7 +13,7 @@ BepInEx 5 插件，目标游戏：地下城竞技场（Steam 4246640，Unity 202
 | [DamageMeter](DamageMeter) | 伤害统计：按普攻、技能、召唤物分开统计本波和本局的伤害与 DPS；Steam 联机时显示装了它的队友的伤害 |
 | [Hextech](Hextech) | 海克斯强化：每局 4 次三选一，专属技能强化 + 参照海克斯大乱斗、斗魂竞技场的通用卡和队友卡（联机时要每个人装的一样或房主允许） |
 
-玩家说明见 [安装说明.txt](安装说明.txt)（英文 [INSTALL-EN.txt](INSTALL-EN.txt)），当前版本 0.41（适配游戏 7.15）的发版说明见 [RELEASE_NOTES.md](RELEASE_NOTES.md)，以前各版的改动见 [CHANGELOG.md](CHANGELOG.md)，更新后出问题、固定游戏版本、未实测的功能见 [docs/常见问题.md](docs/常见问题.md)（英文 [docs/FAQ.md](docs/FAQ.md)）。
+玩家说明见 [安装说明.txt](安装说明.txt)（英文 [INSTALL-EN.txt](INSTALL-EN.txt)），当前版本 0.42（适配游戏 7.16）的发版说明见 [RELEASE_NOTES.md](RELEASE_NOTES.md)，以前各版的改动见 [CHANGELOG.md](CHANGELOG.md)，更新后出问题、固定游戏版本、未实测的功能见 [docs/常见问题.md](docs/常见问题.md)（英文 [docs/FAQ.md](docs/FAQ.md)）。
 
 ## 架构
 ```
@@ -142,8 +142,8 @@ pwsh ./pack.ps1                                 # 生成 dist/ 下的发布包�
 ```powershell
 dotnet build tools/Remap -c Release
 $remap = "tools/Remap/bin/Release/net8.0/Remap.dll"
-dotnet $remap update --old ../backup/7.15 --notes ../tools/NOTES.md          # 只检查，看 tools/Remap/out/report.md
-dotnet $remap update --old ../backup/7.15 --notes ../tools/NOTES.md --write  # 写回源码和笔记
+dotnet $remap update --old ../backup/7.16 --notes ../tools/NOTES.md          # 只检查，看 tools/Remap/out/report.md
+dotnet $remap update --old ../backup/7.16 --notes ../tools/NOTES.md --write  # 写回源码和笔记
 ```
 1. 先跑一遍不带 `--write` 的，看报告里"需要人工处理"和标 ⚠ 的项，必要时对照反编译代码（`../tools/` 里的工具重新解密字符串、反编译）。
 2. 加 `--write` 写回，检查 `git diff`，编译，进游戏看 `BepInEx/LogOutput.log`（DBModKit 会列出找不到的成员），实机测一遍。

@@ -1,5 +1,11 @@
 # DBModKit changelog (English)
 
+## 0.42.0
+**For game version 7.16. After updating, quit the game and run install.bat in the runtime item again** (zip users: extract the new "plugins" package, overwriting old files).
+
+- Rebuilt obfuscated mappings and verified real forging entry points; updated the optional card-save parameter, Steam lobby member-data wrappers and compatibility string lists.
+- **Not play-tested**; we only checked that it builds and that every mod loads when the game starts. If something breaks, please export a report.
+
 ## 0.41.0
 **For game version 7.15. After updating, quit the game and run install.bat in the runtime item again** (zip users: extract the new "plugins" package, overwriting old files).
 
