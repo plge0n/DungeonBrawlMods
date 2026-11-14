@@ -1,5 +1,12 @@
 # DBModKit changelog (English)
 
+## 0.43.0
+**For game version 7.18. After updating, quit the game and run install.bat in the runtime item again** (zip users: extract the new "plugins" package, overwriting old files).
+
+- Rebuilt obfuscated mappings and verified real forging entry points; updated the Steam lobby member-data wrappers, reflected method names for auto-cast, skill tuning and custom relics, and compatibility string lists.
+- Game 7.18 added a manual pick-one-of-three (epic tier) to the epic forging panel. It does not go through the regular/gold forger entry, so ModKit does not auto-pick it; you choose by hand.
+- **Not play-tested**; we only checked that it builds and that every mod loads when the game starts. If something breaks, please export a report.
+
 ## 0.42.0
 **For game version 7.16. After updating, quit the game and run install.bat in the runtime item again** (zip users: extract the new "plugins" package, overwriting old files).
 
