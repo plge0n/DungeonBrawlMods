@@ -5,6 +5,10 @@
 
 [English](#english)
 
+## 0.44 的改动
+
+- **DBModKit 0.44.0：适配游戏 7.19**。**这一版没有实机测试**，只确认了编译通过、游戏启动后所有 Mod 正常加载。遇到问题请在 Mod 列表里导出报告反馈。
+
 ## 0.43 的改动
 
 - **DBModKit 0.43.0：适配游戏 7.18**。**这一版没有实机测试**，只确认了编译通过、游戏启动后所有 Mod 正常加载。遇到问题请在 Mod 列表里导出报告反馈。
@@ -120,6 +124,10 @@ Hextech 从 0.3.0 直接跳到 0.31.0，中间的 0.4.0–0.8.0 是开发中的�
 
 Changes in each suite release, newest first. Per-mod details are in each mod's `CHANGELOG.en.md` in the source.
 The game version each release supports is listed in the [latest release notes](RELEASE_NOTES.md).
+
+## Changes in 0.44
+
+- **DBModKit 0.44.0: updated for game 7.19**. **Not play-tested**; we only checked that it builds and that every mod loads when the game starts. If something breaks, please export a report from the Mod list.
 
 ## Changes in 0.43
 
