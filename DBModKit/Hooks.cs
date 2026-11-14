@@ -13,7 +13,7 @@ namespace DBModKit
         public static bool Install(Harmony harmony)
         {
             if (!TryPatch(harmony, typeof(LeaderboardHooks), "排行榜上传拦截",
-                    AccessTools.Method(typeof(cfd), "tkd", new[]
+                    AccessTools.Method(typeof(cfd), "tkf", new[]
                     {
                         typeof(int), typeof(int), typeof(di.TeamBuildData), typeof(Action<cfb>),
                         typeof(Action<LeaderboardUploadStage>), typeof(string),
@@ -22,7 +22,7 @@ namespace DBModKit
                 return false;
             // 在别人的房间里：不把自己的构筑快照发给房主（房主没装 Mod 时会替我们上传）
             if (!TryPatch(harmony, typeof(LeaderboardHooks), "国王快照拦截",
-                    AccessTools.Method(typeof(beh), "mgd", new[] { typeof(int), typeof(int) }),
+                    AccessTools.Method(typeof(beh), "mge", new[] { typeof(int), typeof(int) }),
                     prefix: nameof(LeaderboardHooks.KingSnapshotPrefix)))
                 return false;
 
@@ -30,9 +30,9 @@ namespace DBModKit
             var forgeMissing = Compat.FindForgingMissing();
             if (forgeMissing.Count == 0)
                 Forging.ChoiceAvailable =
-                    TryPatch(harmony, typeof(ForgingHooks), "锻造档次", AccessTools.Method(typeof(qo), "hgb", new[] { typeof(qo.ForgingTier) }),
+                    TryPatch(harmony, typeof(ForgingHooks), "锻造档次", AccessTools.Method(typeof(qo), "hgc", new[] { typeof(qo.ForgingTier) }),
                         prefix: nameof(ForgingHooks.TierPrefix), finalizer: nameof(ForgingHooks.TierFinalizer))
-                    && TryPatch(harmony, typeof(ForgingHooks), "锻造选择", AccessTools.Method(typeof(bvz), "qwg", new[] {
+                    && TryPatch(harmony, typeof(ForgingHooks), "锻造选择", AccessTools.Method(typeof(bvz), "qwi", new[] {
                         typeof(RoguelikeUIData[]), typeof(Action<RoguelikeUIData>), typeof(string), typeof(bvz.RefreshActionEvent),
                         typeof(Action), typeof(float), typeof(List<di.TeamBuildData>), typeof(string) }),
                         prefix: nameof(ForgingHooks.OpenPrefix), postfix: nameof(ForgingHooks.OpenPostfix));
@@ -48,7 +48,7 @@ namespace DBModKit
                     prefix: nameof(AutoCastHooks.TargetPrefix));
 
             GameEvents.WaveEventsAvailable = TryPatch(harmony, typeof(WaveHooks), "波次事件",
-                AccessTools.Method(typeof(MyServerNetworkManager), "svr", new[] { typeof(ClientNetMessage) }),
+                AccessTools.Method(typeof(MyServerNetworkManager), "svt", new[] { typeof(ClientNetMessage) }),
                 postfix: nameof(WaveHooks.MessagePostfix));
 
             // 分开打：gad 失败时 ModKit 在进入战斗时补写倍率，gaf 失败时出场覆盖的数值不乘倍率
@@ -60,52 +60,52 @@ namespace DBModKit
                 postfix: nameof(GameDataHooks.EnemyTablePostfix));
 
             TryPatch(harmony, typeof(GameDataHooks), "怪物倍率（受伤）",
-                AccessTools.Method(typeof(zo), "jwb", new[]
+                AccessTools.Method(typeof(zo), "jwc", new[]
                 {
                     typeof(zo), typeof(double), typeof(float), typeof(AttackType), typeof(bool), typeof(float?), typeof(ActiveSkillEnum),
                     typeof(DamageSourceKind), typeof(bio), typeof(PlayerDamageFeedbackKind),
                 }),
                 prefix: nameof(GameDataHooks.EnemyDamagePrefix));
 
-            // 三选一卡片 bvt.quw 按品质给图标染色（原版的深色技能图标染了才有色调），Mod 注册的图标保留原色
+            // 三选一卡片 bvt.quy 按品质给图标染色（原版的深色技能图标染了才有色调），Mod 注册的图标保留原色
             TryPatch(harmony, typeof(ChoiceIconHooks), "三选一图标保留原色",
-                AccessTools.Method(typeof(bvt), "quw", new[] { typeof(RoguelikeUIData), typeof(int), typeof(bool), typeof(int) }),
+                AccessTools.Method(typeof(bvt), "quy", new[] { typeof(RoguelikeUIData), typeof(int), typeof(bool), typeof(int) }),
                 postfix: nameof(ChoiceIconHooks.CardPostfix));
 
             // 男枪弹药 bcc：lpz 开始装填、lqb 推进装填、lqc 冲锋、lpx 补满（同签名的其他方法是诱饵）；
-            // PlayerShotgunMode.ith 每帧（补战术装填）、llk 同步；boa.LateUpdate 弹药条。前 4 个都装上才算可用
+            // PlayerShotgunMode.iti 每帧（补战术装填）、llk 同步；boa.LateUpdate 弹药条。前 4 个都装上才算可用
             Shotgun.Available =
                 TryPatch(harmony, typeof(ShotgunHooks), "男枪弹药（开始装填）",
-                    AccessTools.Method(typeof(bfk), "nkx", Type.EmptyTypes), prefix: nameof(ShotgunHooks.StartReloadPrefix))
+                    AccessTools.Method(typeof(bfk), "nky", Type.EmptyTypes), prefix: nameof(ShotgunHooks.StartReloadPrefix))
                 && TryPatch(harmony, typeof(ShotgunHooks), "男枪弹药（装填进度）",
-                    AccessTools.Method(typeof(bfk), "nkz", new[] { typeof(float), typeof(float), typeof(float) }), prefix: nameof(ShotgunHooks.AdvanceReloadPrefix))
+                    AccessTools.Method(typeof(bfk), "nla", new[] { typeof(float), typeof(float), typeof(float) }), prefix: nameof(ShotgunHooks.AdvanceReloadPrefix))
                 && TryPatch(harmony, typeof(ShotgunHooks), "男枪弹药（冲锋）",
-                    AccessTools.Method(typeof(bfk), "nla", Type.EmptyTypes), prefix: nameof(ShotgunHooks.DashPrefix))
+                    AccessTools.Method(typeof(bfk), "nlb", Type.EmptyTypes), prefix: nameof(ShotgunHooks.DashPrefix))
                 && TryPatch(harmony, typeof(ShotgunHooks), "男枪弹药（补满）",
-                    AccessTools.Method(typeof(bfk), "nkv", Type.EmptyTypes), prefix: nameof(ShotgunHooks.FillPrefix));
+                    AccessTools.Method(typeof(bfk), "nkw", Type.EmptyTypes), prefix: nameof(ShotgunHooks.FillPrefix));
             if (Shotgun.Available)
             {
                 TryPatch(harmony, typeof(ShotgunHooks), "男枪弹药（战术装填）",
-                    AccessTools.Method(typeof(PlayerShotgunMode), "ith", Type.EmptyTypes), postfix: nameof(ShotgunHooks.TickPostfix));
+                    AccessTools.Method(typeof(PlayerShotgunMode), "iti", Type.EmptyTypes), postfix: nameof(ShotgunHooks.TickPostfix));
                 TryPatch(harmony, typeof(ShotgunHooks), "男枪弹药（同步）",
-                    AccessTools.Method(typeof(PlayerShotgunMode), "ned", Type.EmptyTypes), prefix: nameof(ShotgunHooks.SyncPrefix));
+                    AccessTools.Method(typeof(PlayerShotgunMode), "nee", Type.EmptyTypes), prefix: nameof(ShotgunHooks.SyncPrefix));
                 TryPatch(harmony, typeof(ShotgunHooks), "男枪弹药条",
                     AccessTools.Method(typeof(boa), "LateUpdate", Type.EmptyTypes), prefix: nameof(ShotgunHooks.UiPrefix));
             }
 
             // 沙漠死神噬魂一击的溅射：lkt 是强化普攻结算完、清除强化的方法（镜像 Boss 的子类在 GameRaw 里排除）
-            // 致命伤害拦截：zo.jwc 是所有伤害最后结算的地方（怪物打本机、beh.mub 远端伤害都走到这里）
+            // 致命伤害拦截：zo.jwd 是所有伤害最后结算的地方（怪物打本机、beh.muc 远端伤害都走到这里）
             Combat.LethalGuardAvailable = TryPatch(harmony, typeof(LethalHooks), "致命伤害拦截",
-                AccessTools.Method(typeof(zo), "jwc", new[]
+                AccessTools.Method(typeof(zo), "jwd", new[]
                 {
                     typeof(double), typeof(AttackType), typeof(zo), typeof(float), typeof(bool), typeof(bool), typeof(RoleHitFeedbackType),
                     typeof(ActiveSkillEnum), typeof(bgl.Origin).MakeByRefType(), typeof(PlayerDamageFeedbackKind),
                 }),
                 prefix: nameof(LethalHooks.SettlePrefix));
 
-            // 撕咬击杀加生命上限：服务器上的 beh.lwo（只在主机执行）
+            // 撕咬击杀加生命上限：服务器上的 beh.lwp（只在主机执行）
             SkillForms.BiteAvailable = TryPatch(harmony, typeof(SkillFormHooks), "撕咬成长",
-                AccessTools.Method(typeof(beh), "lwo", new[] { typeof(zb) }),
+                AccessTools.Method(typeof(beh), "lwp", new[] { typeof(zb) }),
                 prefix: nameof(SkillFormHooks.BitePrefix), postfix: nameof(SkillFormHooks.BitePostfix));
             // 炸弹的十字范围：bkx.InitSkill 初始化时算 bivg（ffq、fuw 是诱饵副本）
             SkillForms.BombAvailable = TryPatch(harmony, typeof(SkillFormHooks), "炸弹范围",
@@ -113,33 +113,33 @@ namespace DBModKit
                 postfix: nameof(SkillFormHooks.BombPostfix));
 
             SoulDevourer.Available = TryPatch(harmony, typeof(SoulDevourerHooks), "噬魂一击溅射",
-                AccessTools.Method(typeof(PlayerKoboldMode), "naf", Type.EmptyTypes),
+                AccessTools.Method(typeof(PlayerKoboldMode), "nag", Type.EmptyTypes),
                 prefix: nameof(SoulDevourerHooks.StrikeEndPrefix));
 
             HeroSkins.Available = TryPatch(harmony, typeof(HeroSkinHooks), "英雄皮肤（查找模型）",
-                AccessTools.Method(typeof(cch), "sjk", new[] { typeof(int), typeof(string).MakeByRefType(), typeof(LocalWorkshopManifest).MakeByRefType() }),
+                AccessTools.Method(typeof(cch), "sjm", new[] { typeof(int), typeof(string).MakeByRefType(), typeof(LocalWorkshopManifest).MakeByRefType() }),
                 prefix: nameof(HeroSkinHooks.ResolvePrefix));
             // 出生、变身期间记下是哪个角色：pwu 据此对其他玩家返回原版（模型和名字都按原版）
             HeroSkins.OnlyLocalPlayerAvailable =
                 TryPatch(harmony, typeof(HeroSkinHooks), "英雄皮肤（出生）",
-                    AccessTools.Method(typeof(beh), "moe", new[] { typeof(Vector3), typeof(uint), typeof(HeroType), typeof(string) }),
+                    AccessTools.Method(typeof(beh), "mof", new[] { typeof(Vector3), typeof(uint), typeof(HeroType), typeof(string) }),
                     prefix: nameof(HeroSkinHooks.SpawnPrefix), finalizer: nameof(HeroSkinHooks.RestoreOwner))
                 & TryPatch(harmony, typeof(HeroSkinHooks), "英雄皮肤（变身技能）",
-                    AccessTools.Method(typeof(bkg), "olu", new[] { typeof(string) }),
+                    AccessTools.Method(typeof(bkg), "olw", new[] { typeof(string) }),
                     prefix: nameof(HeroSkinHooks.SkillTransformPrefix), finalizer: nameof(HeroSkinHooks.RestoreOwner))
                 & TryPatch(harmony, typeof(HeroSkinHooks), "英雄皮肤（变身恢复）",
-                    AccessTools.Method(typeof(bex), "niv", new[] { typeof(beh) }),
+                    AccessTools.Method(typeof(bex), "niw", new[] { typeof(beh) }),
                     prefix: nameof(HeroSkinHooks.CheckpointTransformPrefix), finalizer: nameof(HeroSkinHooks.RestoreOwner));
 
             // 开关技能开着时，自动释放直接把它关掉，不经过 dxx
             if (AutoCast.Available)
                 TryPatch(harmony, typeof(AutoCastHooks), "开关技能自动关闭",
-                    AccessTools.Method(typeof(blg), "kc7b47610f29641cb971b7f4213d59a64", new Type[0]),
+                    AccessTools.Method(typeof(blg), "k0d55525c89b44bdfa4f12b119f48dfb7", new Type[0]),
                     prefix: nameof(AutoCastHooks.TogglePrefix), postfix: nameof(AutoCastHooks.TogglePostfix));
 
             MoveControl.Available =
                 TryPatch(harmony, typeof(MoveHooks), "走位（待机/移动）",
-                    AccessTools.Method(typeof(beh), "loi", new[] { typeof(bool) }),
+                    AccessTools.Method(typeof(beh), "loj", new[] { typeof(bool) }),
                     prefix: nameof(MoveHooks.Prefix), postfix: nameof(MoveHooks.Postfix))
                 && TryPatch(harmony, typeof(MoveHooks), "走位（攻击中）",
                     AccessTools.Method(typeof(beh), "AttackUpdate", new Type[0]),
@@ -148,19 +148,19 @@ namespace DBModKit
             // 伤害上下文：没装上时命中事件照常，只是没有类型、来源和技能实例
             Combat.ContextAvailable =
                 TryPatch(harmony, typeof(DamageContextHooks), "伤害上下文（iwk）",
-                    AccessTools.Method(typeof(zo), "jwb", new[]
+                    AccessTools.Method(typeof(zo), "jwc", new[]
                     {
                         typeof(zo), typeof(double), typeof(float), typeof(AttackType), typeof(bool), typeof(float?),
                         typeof(ActiveSkillEnum), typeof(DamageSourceKind), typeof(bio), typeof(PlayerDamageFeedbackKind),
                     }),
                     prefix: nameof(DamageContextHooks.HitPrefix), finalizer: nameof(DamageContextHooks.Pop))
                 & TryPatch(harmony, typeof(DamageContextHooks), "伤害上下文（iwr）",
-                    AccessTools.Method(typeof(zo), "jwi", new[] { typeof(AttackType), typeof(double), typeof(bool), typeof(zo), typeof(bool) }),
+                    AccessTools.Method(typeof(zo), "jwj", new[] { typeof(AttackType), typeof(double), typeof(bool), typeof(zo), typeof(bool) }),
                     prefix: nameof(DamageContextHooks.DotPrefix), finalizer: nameof(DamageContextHooks.Pop));
 
             // 原始伤害：没装上时 HitInfo.RawDamage 等于 Damage
             TryPatch(harmony, typeof(RawDamageHooks), "原始伤害（lvz）",
-                AccessTools.Method(typeof(bgl), "nsa", new[]
+                AccessTools.Method(typeof(bgl), "nsb", new[]
                 {
                     typeof(zo), typeof(zo), typeof(long), typeof(AttackType), typeof(long), typeof(bgl.Origin).MakeByRefType(),
                 }),
@@ -183,7 +183,7 @@ namespace DBModKit
                     }),
                     prefix: nameof(TuningHooks.CastPrefix), finalizer: nameof(TuningHooks.Restore))
                 && TryPatch(harmony, typeof(TuningHooks), "技能调整（伤害）",
-                    AccessTools.Method(typeof(zo), "jwb", new[]
+                    AccessTools.Method(typeof(zo), "jwc", new[]
                     {
                         typeof(zo), typeof(double), typeof(float), typeof(AttackType), typeof(bool), typeof(float?), typeof(ActiveSkillEnum),
                         typeof(DamageSourceKind), typeof(bio), typeof(PlayerDamageFeedbackKind),
@@ -193,10 +193,10 @@ namespace DBModKit
             // 两个都装上才通知：只有一半时还原会出错
             CheckpointHooks.Available =
                 TryPatch(harmony, typeof(CheckpointHooks), "重试波次（快照）",
-                    AccessTools.Method(typeof(xi), "hwo", Type.EmptyTypes),
+                    AccessTools.Method(typeof(xi), "hwp", Type.EmptyTypes),
                     postfix: nameof(CheckpointHooks.SavedPostfix))
                 && TryPatch(harmony, typeof(CheckpointHooks), "重试波次（还原）",
-                    AccessTools.Method(typeof(xi), "hwq", Type.EmptyTypes),
+                    AccessTools.Method(typeof(xi), "hwr", Type.EmptyTypes),
                     postfix: nameof(CheckpointHooks.RestoredPostfix));
 
             // 先装构筑数据的过滤（保证自定义被动不会传给没装 Mod 的人），都装上了才接管被动的创建
@@ -205,7 +205,7 @@ namespace DBModKit
                     AccessTools.Method(typeof(ff), "eol", Type.EmptyTypes),
                     postfix: nameof(PassiveHooks.KingSkillsPostfix))
                 && TryPatch(harmony, typeof(PassiveHooks), "自定义被动（镜像 Boss 过滤）",
-                    AccessTools.Method(typeof(bdo), "lnm", Type.EmptyTypes),
+                    AccessTools.Method(typeof(bdo), "lnn", Type.EmptyTypes),
                     postfix: nameof(PassiveHooks.MirrorSnapshotPostfix))
                 && TryPatch(harmony, typeof(PassiveHooks), "自定义被动（文本）",
                     AccessTools.Method(typeof(cm), "dqe", new[] { typeof(string), typeof(string), typeof(bool) }),
@@ -230,7 +230,7 @@ namespace DBModKit
                     AccessTools.Method(typeof(ff), "eni", new[] { typeof(Dictionary<ItemType, RemainsData>), typeof(HashSet<ItemType>), typeof(HashSet<ItemType>) }),
                     postfix: nameof(RelicHooks.PoolPostfix))
                 && TryPatch(harmony, typeof(RelicHooks), "自定义遗物（创建）",
-                    AccessTools.Method(typeof(beh), "mdk", new[] { typeof(string) }),
+                    AccessTools.Method(typeof(beh), "mdl", new[] { typeof(string) }),
                     postfix: nameof(RelicHooks.CreatePostfix));
             // 自定义装备和特效：和被动共用文本；先装构筑数据和神器候选的过滤，都装上了才追加特效、接管特效的创建
             CustomEquipEffects.Available = PassiveSkills.Available
@@ -238,13 +238,13 @@ namespace DBModKit
                     AccessTools.Method(typeof(ff), "eom", Type.EmptyTypes),
                     postfix: nameof(EquipmentHooks.KingEquipPostfix))
                 && TryPatch(harmony, typeof(EquipmentHooks), "自定义装备（神器候选）",
-                    AccessTools.Method(typeof(qo), "hed", new[] { typeof(int), typeof(object) }),
+                    AccessTools.Method(typeof(qo), "hee", new[] { typeof(int), typeof(object) }),
                     postfix: nameof(EquipmentHooks.ArtifactPostfix))
                 && TryPatch(harmony, typeof(EquipmentHooks), "自定义装备特效（追加）",
                     AccessTools.Method(typeof(kj), "Init", new[] { typeof(RoleType) }),
                     postfix: nameof(EquipmentHooks.InitPostfix))
                 && TryPatch(harmony, typeof(EquipmentHooks), "自定义装备特效（创建）",
-                    AccessTools.Method(typeof(bea), "ltq", new[] { typeof(EquipSkillType), typeof(ma).MakeByRefType(), typeof(kp).MakeByRefType() }),
+                    AccessTools.Method(typeof(bea), "ltr", new[] { typeof(EquipSkillType), typeof(ma).MakeByRefType(), typeof(kp).MakeByRefType() }),
                     postfix: nameof(EquipmentHooks.CreatePostfix));
             CustomEquipment.Available = CustomEquipEffects.Available;
 
@@ -258,12 +258,12 @@ namespace DBModKit
                 AccessTools.Method(typeof(Resources), nameof(Resources.Load), new[] { typeof(string), typeof(Type) }),
                 prefix: nameof(AssetHooks.ResourcesPrefix));
             TryPatch(harmony, typeof(AssetHooks), "Mod 图标（技能栏）",
-                AccessTools.Method(typeof(bvb), "qtf"),
+                AccessTools.Method(typeof(bvb), "qth"),
                 postfix: nameof(AssetHooks.SkillButtonPostfix));
 
             // 变体英雄：出生时临时换属性表和专属技能，结束后换回；名字在出生后改
             HeroVariants.Available = TryPatch(harmony, typeof(VariantHooks), "变体英雄（出生）",
-                AccessTools.Method(typeof(beh), "moe", new[] { typeof(Vector3), typeof(uint), typeof(HeroType), typeof(string) }),
+                AccessTools.Method(typeof(beh), "mof", new[] { typeof(Vector3), typeof(uint), typeof(HeroType), typeof(string) }),
                 prefix: nameof(VariantHooks.SpawnPrefix), postfix: nameof(VariantHooks.SpawnPostfix), finalizer: nameof(VariantHooks.SpawnFinalizer));
 
             try
@@ -303,22 +303,22 @@ namespace DBModKit
                     AccessTools.Method(typeof(di), "dxf", Type.EmptyTypes),
                     prefix: nameof(CardCollectionHooks.ReadPrefix), finalizer: nameof(CardCollectionHooks.ReadFinalizer))
                 & TryPatch(cards, typeof(CardCollectionHooks), "卡牌真实获得",
-                    AccessTools.Method(typeof(bat), "kux", new[] { typeof(int) }), postfix: nameof(CardCollectionHooks.GainPostfix))
+                    AccessTools.Method(typeof(bat), "kuy", new[] { typeof(int) }), postfix: nameof(CardCollectionHooks.GainPostfix))
                 & TryPatch(cards, typeof(CardCollectionHooks), "卡牌真实收集进度",
-                    AccessTools.Method(typeof(bat), "kvf", new[] { typeof(int), typeof(int) }), postfix: nameof(CardCollectionHooks.ProgressPostfix))
+                    AccessTools.Method(typeof(bat), "kvg", new[] { typeof(int), typeof(int) }), postfix: nameof(CardCollectionHooks.ProgressPostfix))
                 & TryPatch(cards, typeof(CardCollectionHooks), "卡牌卸下返还",
-                    AccessTools.Method(typeof(bat), "kuy", new[] { typeof(int) }),
+                    AccessTools.Method(typeof(bat), "kuz", new[] { typeof(int) }),
                     prefix: nameof(CardCollectionHooks.ReturnPrefix), finalizer: nameof(CardCollectionHooks.ReturnFinalizer))
                 & TryPatch(cards, typeof(CardCollectionHooks), "卡牌合成拦截",
-                    AccessTools.Method(typeof(btr), "qjs", Type.EmptyTypes), prefix: nameof(CardCollectionHooks.CraftPrefix))
+                    AccessTools.Method(typeof(btr), "qju", Type.EmptyTypes), prefix: nameof(CardCollectionHooks.CraftPrefix))
                 & TryPatch(cards, typeof(CardCollectionHooks), "卡牌合成库存拦截",
-                    AccessTools.Method(typeof(btr), "qjt", new[] { typeof(int), typeof(int) }), prefix: nameof(CardCollectionHooks.CraftPrefix))
+                    AccessTools.Method(typeof(btr), "qjv", new[] { typeof(int), typeof(int) }), prefix: nameof(CardCollectionHooks.CraftPrefix))
                 & TryPatch(cards, typeof(CardCollectionHooks), "卡牌分解拦截",
-                    AccessTools.Method(typeof(btr), "qjm", new[] { typeof(int), typeof(int) }), prefix: nameof(CardCollectionHooks.CraftPrefix))
+                    AccessTools.Method(typeof(btr), "qjo", new[] { typeof(int), typeof(int) }), prefix: nameof(CardCollectionHooks.CraftPrefix))
                 & TryPatch(cards, typeof(CardCollectionHooks), "卡牌分解库存拦截",
-                    AccessTools.Method(typeof(btr), "qjn", new[] { typeof(int), typeof(int) }), prefix: nameof(CardCollectionHooks.CraftPrefix))
+                    AccessTools.Method(typeof(btr), "qjp", new[] { typeof(int), typeof(int) }), prefix: nameof(CardCollectionHooks.CraftPrefix))
                 & TryPatch(cards, typeof(CardCollectionHooks), "卡牌扩容拦截",
-                    AccessTools.Method(typeof(btr), "qjz", Type.EmptyTypes), prefix: nameof(CardCollectionHooks.CraftPrefix));
+                    AccessTools.Method(typeof(btr), "qkb", Type.EmptyTypes), prefix: nameof(CardCollectionHooks.CraftPrefix));
             if (!ok)
             {
                 cards.UnpatchSelf();
@@ -408,13 +408,13 @@ namespace DBModKit
     }
 
     // 作者允许显示和自动操作类白名单 Mod 打榜；上传现场检查，任何不确定情况拦截。
-    // 两道拦截：自己上传（cfd.tkd），以及在别人房间里把构筑快照交给房主上传（beh.mgd）。
-    // cfd.tkd 是排行榜上传入口（由主机 MyServerNetworkManager 调用；bxl.nlq 是同签名的诱饵）。
+    // 两道拦截：自己上传（cfd.tkf），以及在别人房间里把构筑快照交给房主上传（beh.mge）。
+    // cfd.tkf 是排行榜上传入口（由主机 MyServerNetworkManager 调用；bxl.nlq 是同签名的诱饵）。
     // 不合格时按游戏自己的失败流程回调，结算界面会显示上传失败。
     internal static class LeaderboardHooks
     {
         private static readonly MethodInfo makeFailure =
-            AccessTools.Method(typeof(cfd), "tkn", new[] { typeof(LeaderboardUploadFailure), typeof(string) });
+            AccessTools.Method(typeof(cfd), "tkp", new[] { typeof(LeaderboardUploadFailure), typeof(string) });
 
         internal static bool UploadPrefix(Action<cfb> __3)
         {
@@ -443,8 +443,8 @@ namespace DBModKit
             return false;
         }
 
-        // beh.mgd(局, 回合)：国王对决结算时把本地玩家的构筑快照（ff.eop）用 CmdUploadLocalKingData 发给房主（ody/gif/hjf 是诱饵副本）。
-        // 房主（MyServerNetworkManager.swy）把各人的快照汇总进队伍数据，再用 cfd.tkd 一起上传排行榜，只要求有房主自己的快照
+        // beh.mge(局, 回合)：国王对决结算时把本地玩家的构筑快照（ff.eop）用 CmdUploadLocalKingData 发给房主（ody/gif/hjf 是诱饵副本）。
+        // 房主（MyServerNetworkManager.sxa）把各人的快照汇总进队伍数据，再用 cfd.tkf 一起上传排行榜，只要求有房主自己的快照
         // 别人的可以缺。非房主不合格时不发自己的快照，原版房主仍可上传不含自己的队伍成绩。
         // 房主也先检查资格，最终上传时再检查全队；不能因为自己是主机就跳过检查。
         internal static bool KingSnapshotPrefix()
@@ -539,14 +539,14 @@ namespace DBModKit
             return false;
         }
 
-        // bht.kcac92…()：bvb.qth 每帧在冷却好时调用的自动释放入口。开关技能开着（bhnv）时它会直接关掉技能，
+        // bht.kcac92…()：bvb.qtj 每帧在冷却好时调用的自动释放入口。开关技能开着（bhnv）时它会直接关掉技能，
         // 这里先问处理器：Skip = 保持开着，其余 = 照原版关掉
         internal static bool TogglePrefix(blg __instance, ref bool __result, out State? __state)
         {
             __state = null;
             var handler = AutoCast.Handler;
-            var native = __instance.bmgi?.bomt;
-            if (handler == null || native == null || !native.bmgx || __instance.bmgf == null || __instance.bmgf != GameRaw.LocalPlayer())
+            var native = __instance.bmgk?.bomv;
+            if (handler == null || native == null || !native.bmgz || __instance.bmgh == null || __instance.bmgh != GameRaw.LocalPlayer())
                 return true;
 
             var slot = SkillSlot.Wrap(native);
@@ -579,7 +579,7 @@ namespace DBModKit
     // ff.eop(_, _)：本地玩家的构筑数据（PlayerKingData），遗物数组直接从 playerAttribute.bfna 生成；同步给队友（CmdUploadSyncPlayerData）、
     //   国王对决、信息面板、结算界面都用它（eiu / dpt / hlq / obw 是没有调用者的诱饵副本）
     // ff.eni(遗物表, 排除, 已有)：三选一候选池按品级分组，ead（随机）和 eaa（固定品级）都经过它
-    // beh.mau(效果名)：遗物表 skill 列 → rn 子类的大 switch，未知名字返回 new rn()
+    // beh.mav(效果名)：遗物表 skill 列 → rn 子类的大 switch，未知名字返回 new rn()
     internal static class RelicHooks
     {
         internal static void KingDataPostfix(ref di.PlayerKingData __result)
@@ -621,10 +621,10 @@ namespace DBModKit
     }
 
     // 自定义装备和特效（见 CustomEquipment、CustomEquipEffects）：
-    // ff.eom()：本地玩家的装备构筑数据（PlayerKingEquipData[]，没有装备时 null），ff.eop 和 beh.mgu（穿脱时 CmdUploadSyncSkillEquipData）都用它
-    // qo.hed(编号, 行)：神器三选一（pq.ghn）的候选条件，isArtifact 列或编号 101~999
-    // kj.Init(RoleType)：按装备表初始化装备实例（特效列表 bayo / bayp），商店、神器、发放（qo.hea）、说明预览（kj.fjt）都经过它
-    // bea.ltq(特效, out lm, out ke)：特效类型 → lm / ke 子类的大 switch，未知类型两个都是 null（调用者 bea.llz、镜像 Boss 的 bdb.llz）
+    // ff.eom()：本地玩家的装备构筑数据（PlayerKingEquipData[]，没有装备时 null），ff.eop 和 beh.mgv（穿脱时 CmdUploadSyncSkillEquipData）都用它
+    // qo.hee(编号, 行)：神器三选一（pq.ghn）的候选条件，isArtifact 列或编号 101~999
+    // kj.Init(RoleType)：按装备表初始化装备实例（特效列表 bayo / bayp），商店、神器、发放（qo.heb）、说明预览（kj.fjt）都经过它
+    // bea.ltr(特效, out lm, out ke)：特效类型 → lm / ke 子类的大 switch，未知类型两个都是 null（调用者 bea.lma、镜像 Boss 的 bdb.lma）
     internal static class EquipmentHooks
     {
         internal static void KingEquipPostfix(ref di.PlayerKingEquipData[] __result)
@@ -679,10 +679,10 @@ namespace DBModKit
 
     // 自定义被动、主动技能（见 PassiveSkills、ActiveSkills）：
     // ff.emf(实例编号, 技能, 位置, 施法者, _, 朝向, 目标, 技能书, 工厂, 朝向覆盖?)：每个客户端收到技能释放后创建技能实例（ey 里另有几个同签名、没有调用者的诱饵副本）
-    // ff.eod(类名)：被动表 class 列 → qp 实例的大 switch，未知类名返回 null。学技能（zo.jut / iuz）、镜像 Boss（bch.lin 兜底）都经过它
+    // ff.eod(类名)：被动表 class 列 → qp 实例的大 switch，未知类名返回 null。学技能（zo.juu / iuz）、镜像 Boss（bch.lio 兜底）都经过它
     // cm.dqe(键, 默认值, 找不到时返回键)：dfe / dff 的真正实现（mee 是同签名的诱饵）
     // ff.eol()：构筑里的技能列表（"p_" / "a_" + 编号），ff.eop 用它生成同步给队友、上传国王对决的数据
-    // bdo.lnm()：镜像 Boss 用的本地玩家快照（jwm 是没有调用者的副本）
+    // bdo.lnn()：镜像 Boss 用的本地玩家快照（jwm 是没有调用者的副本）
     internal static class PassiveHooks
     {
         internal static void CreatePostfix(string __0, ref sd __result)
@@ -775,7 +775,7 @@ namespace DBModKit
         }
     }
 
-    // 变体英雄（见 HeroVariants）：beh.moe(位置, 编号, 英雄, Steam 名)，每个客户端对每个玩家都会调用，只处理本地玩家
+    // 变体英雄（见 HeroVariants）：beh.mof(位置, 编号, 英雄, Steam 名)，每个客户端对每个玩家都会调用，只处理本地玩家
     internal static class VariantHooks
     {
         internal static void SpawnPrefix(beh __instance, HeroType __2, out object __state)
@@ -820,8 +820,8 @@ namespace DBModKit
         }
     }
 
-    // beh.loi(bool)：待机/移动状态每帧的控制逻辑（含官方自动战斗）；beh.AttackUpdate()：攻击状态每帧，玩家有移动输入时会打断攻击。
-    // 两者都从 pr.bgka / pr.bgkb 读移动输入。处理器要移动时，在调用期间把方向写进输入、结束后还原，
+    // beh.loj(bool)：待机/移动状态每帧的控制逻辑（含官方自动战斗）；beh.AttackUpdate()：攻击状态每帧，玩家有移动输入时会打断攻击。
+    // 两者都从 pr.bgkc / pr.bgkd 读移动输入。处理器要移动时，在调用期间把方向写进输入、结束后还原，
     // 游戏就会按"玩家按住方向键"处理：转向、移速、碰撞、打断攻击都走原版逻辑。
     internal static class MoveHooks
     {
@@ -844,8 +844,8 @@ namespace DBModKit
         {
             if (__state is Saved s)
             {
-                pr.bgka = s.X;
-                pr.bgkb = s.Z;
+                pr.bgkc = s.X;
+                pr.bgkd = s.Z;
             }
         }
 
@@ -853,9 +853,9 @@ namespace DBModKit
         {
             var handler = MoveControl.Handler;
             if (handler == null || player == null || player != GameRaw.LocalPlayer()) return null;
-            if (player.roleType == RoleType.King || nz.bfeq) return null;
+            if (player.roleType == RoleType.King || nz.bfes) return null;
             // 玩家自己在操作
-            if (!Mathf.Approximately(pr.bgka, 0f) || !Mathf.Approximately(pr.bgkb, 0f)) return null;
+            if (!Mathf.Approximately(pr.bgkc, 0f) || !Mathf.Approximately(pr.bgkd, 0f)) return null;
 
             var p = Game.LocalPlayer;
             if (p == null) return null;
@@ -872,9 +872,9 @@ namespace DBModKit
             if (!cmd.Override) return null;
 
             MoveControl.Last = cmd;
-            var saved = new Saved { X = pr.bgka, Z = pr.bgkb };
-            pr.bgka = cmd.Direction.x;
-            pr.bgkb = cmd.Direction.z;
+            var saved = new Saved { X = pr.bgkc, Z = pr.bgkd };
+            pr.bgkc = cmd.Direction.x;
+            pr.bgkd = cmd.Direction.z;
             return saved;
         }
     }
@@ -883,7 +883,7 @@ namespace DBModKit
     // ff.emf(…, 技能, …, 施法者, …)：所有技能实例的工厂，范围、持续时间、damageExValue 等都在这里从表里读出来交给技能实例；
     // ff.elg(技能, 玩家, 技能书)：按键后检查蓝量、选瞄准方式；ff.eli(玩家, 技能, …, 技能数据, …)：真正放出，扣蓝时 ff.elj 重新查表。
     // 施法者是本地玩家时，调用期间把 bcrw[技能] 换成调过的副本，结束后（finalizer，原方法抛异常也会执行）换回原版。
-    // zo.jwb(攻击者, 伤害, …, 技能 g, 来源, 技能实例 i, …)：在受害者身上调用的真正受伤方法，伤害只在攻击方客户端算
+    // zo.jwc(攻击者, 伤害, …, 技能 g, 来源, 技能实例 i, …)：在受害者身上调用的真正受伤方法，伤害只在攻击方客户端算
     internal static class TuningHooks
     {
         internal static void FactoryPrefix(ActiveSkillEnum __1, zo __3, out bool __state) => __state = GameRaw.BeginSwap(__3, (int)__1);
@@ -905,15 +905,15 @@ namespace DBModKit
         internal static void DamagePrefix(zo __0, ref double __1, ActiveSkillEnum __6, bio __8)
         {
             if (__0 == null || __0 != GameRaw.LocalPlayer()) return;
-            var skill = __8 != null ? __8.blod : __6;
+            var skill = __8 != null ? __8.blof : __6;
             if (skill == ActiveSkillEnum.None) return;
             float m = SkillTuning.Get((int)skill).Damage;
             if (m != 1f) __1 *= m;
         }
     }
 
-    // 重试波次（wb）：xi.hwo 在 OnStartRest 之后的下一次网络循环里拍快照（xi.bvpo 为真表示快照有效）；
-    // xi.hwq 是点"重试"后的还原入口，同步执行完还原，返回是否成功
+    // 重试波次（wb）：xi.hwp 在 OnStartRest 之后的下一次网络循环里拍快照（xi.bvpq 为真表示快照有效）；
+    // xi.hwr 是点"重试"后的还原入口，同步执行完还原，返回是否成功
     internal static class CheckpointHooks
     {
         public static bool Available { get; internal set; }
@@ -958,25 +958,25 @@ namespace DBModKit
             __result.shiled *= EnemyBoosts.Shield;
         }
 
-        // zo.jwb 挂在受伤的一方：玩家被怪物（xo）打时按 EnemyBoosts.Attack 放大伤害。
+        // zo.jwc 挂在受伤的一方：玩家被怪物（xo）打时按 EnemyBoosts.Attack 放大伤害。
         // 联机时每只怪的控制权在它的主人那边（bey.cs 200），怪的 AI 和命中都在主人本机算（xo 的命中要求 bqbw），
         // 打到别的玩家时再在 iwk 里改发 CmdAttackOtherPlayer。所以只在"攻击的怪归本机"时乘，每次伤害只乘一次。
         // 单人时所有怪都归自己，和以前一样
         internal static void EnemyDamagePrefix(zo __instance, zo __0, ref double __1)
         {
             if (!EnemyBoosts.Active || EnemyBoosts.Attack == 1f || !(__0 is zb)) return;
-            if (!__0.bwxd || __instance.roleType != RoleType.Player) return;
+            if (!__0.bwxg || __instance.roleType != RoleType.Player) return;
             __1 *= EnemyBoosts.Attack;
         }
 
         // 与 gaf 的判断一致：出场类型不是 None、出场次数 ≥ 0，且 bcrv 里有出场次数不超过它的条目
         private static bool OccurrenceOverrides(pg table, EnemyType enemy, EnemySpawnKind kind, int occurrence)
         {
-            if (kind == EnemySpawnKind.None || occurrence < 0 || table?.bgfh == null) return false;
+            if (kind == EnemySpawnKind.None || occurrence < 0 || table?.bgfj == null) return false;
             // 键的格式同 pg.gqw：(int)怪物 + "_" + (int)出场类型
-            if (!table.bgfh.TryGetValue((int)enemy + "_" + (int)kind, out var list) || list == null) return false;
+            if (!table.bgfj.TryGetValue((int)enemy + "_" + (int)kind, out var list) || list == null) return false;
             foreach (var n in list)
-                if (n != null && n.bfoj <= occurrence) return true;
+                if (n != null && n.bfol <= occurrence) return true;
             return false;
         }
 
@@ -994,29 +994,29 @@ namespace DBModKit
     internal static class SkillFormHooks
     {
         // kjv：哥布林之王击杀时 bpmz（累计成长，背后是 bfpe）+= 成长量，再 iww(成长量) 加生命上限。前缀记下之前的值，后缀按差额补上多出来的部分
-        internal static void BitePrefix(beh __instance, out long __state) => __state = __instance.bwcg;
+        internal static void BitePrefix(beh __instance, out long __state) => __state = __instance.bwci;
 
         internal static void BitePostfix(beh __instance, long __state)
         {
             float m = SkillForms.BiteMultiplier;
-            if (m <= 1f || (object)__instance != nz.bvnm) return;
-            long gained = __instance.bwcg - __state;
+            if (m <= 1f || (object)__instance != nz.bvno) return;
+            long gained = __instance.bwci - __state;
             if (gained <= 0) return;
             long extra = (long)Math.Min(long.MaxValue / 4, gained * (double)(m - 1f));
             if (extra <= 0) return;
-            __instance.bwcg = __instance.bwcg + Math.Min(extra, long.MaxValue - __instance.bwcg);
-            __instance.jwn(extra);
-            (__instance.bvvd as PlayerBiteMode)?.llo();
+            __instance.bwci = __instance.bwci + Math.Min(extra, long.MaxValue - __instance.bwci);
+            __instance.jwo(extra);
+            (__instance.bvvf as PlayerBiteMode)?.llp();
         }
 
         // msj(技能, 施法者, 位置, 表, 敏捷, 时长, 范围倍率)：十字长度 biej，宽度是 biej / 6，爆炸特效按 biej / 40 缩放，都跟着变。
         // 每个客户端都会生成炸弹实例；伤害只在施法者本机算，所以只改本地玩家放的
-        internal static void BombPostfix(zo __1, ref float ___bmej, GameObject ___bmek)
+        internal static void BombPostfix(zo __1, ref float ___bmel, GameObject ___bmem)
         {
             float m = SkillForms.BombMultiplier;
-            if (m <= 1f || (object)__1 != nz.bvnm) return;
-            ___bmej *= m;
-            if (___bmek != null) ___bmek.transform.localScale *= 1f + (m - 1f) * 0.5f;
+            if (m <= 1f || (object)__1 != nz.bvno) return;
+            ___bmel *= m;
+            if (___bmem != null) ___bmem.transform.localScale *= 1f + (m - 1f) * 0.5f;
         }
     }
 
@@ -1031,10 +1031,10 @@ namespace DBModKit
         // 已经死了不拦：iwr（持续伤害）和 lfr（远端伤害）不查死亡就进 iwl，死后 hp = 0 的任何伤害都会被当成致命
         internal static void SettlePrefix(zo __instance, ref double __0, bool __4)
         {
-            if (!Combat.HasLethalGuards || __0 <= 0.0 || __instance.bikp || (object)__instance != nz.bvnm) return;
-            if (GameRaw.Hp(__instance) <= 0 || __instance.bvvb == RoleState.Dead) return;
+            if (!Combat.HasLethalGuards || __0 <= 0.0 || __instance.bikr || (object)__instance != nz.bvno) return;
+            if (GameRaw.Hp(__instance) <= 0 || __instance.bvvd == RoleState.Dead) return;
             double damage = Math.Round(__0 * (__4 ? nz.ghp() : 1f));
-            bool client = !cty.btjf;
+            bool client = !cty.btjh;
             if (client && Time.time > unsyncedUntil) unsynced = 0;
             double left = GameRaw.Hp(__instance) + GameRaw.Shield(__instance) - (client ? unsynced : 0);
             if (damage >= left && Combat.RaiseLethal(damage))
@@ -1056,7 +1056,7 @@ namespace DBModKit
         internal static void StrikeEndPrefix(object __instance) => SoulDevourer.OnStrikeEnd(__instance);
     }
 
-    // MyServerNetworkManager.svr(ClientNetMessage)：客户端（含主机自己）收到服务器消息后的分发（在 ctl.yqo 里注册，是真方法）。
+    // MyServerNetworkManager.svt(ClientNetMessage)：客户端（含主机自己）收到服务器消息后的分发（在 ctl.yqq 里注册，是真方法）。
     // 用后缀：游戏先处理完（比如更新波次），再通知 Mod
     internal static class WaveHooks
     {
@@ -1080,11 +1080,11 @@ namespace DBModKit
         }
     }
 
-    // cch.sjk(英雄编号, out 文件夹, out manifest)：查找英雄模型文件夹的唯一入口，出生、选英雄预览、变身、英雄名和头像覆盖都经过它
+    // cch.sjm(英雄编号, out 文件夹, out manifest)：查找英雄模型文件夹的唯一入口，出生、选英雄预览、变身、英雄名和头像覆盖都经过它
     //   （wy 是同签名的诱饵）。原版顺序：PlayerPrefs Workshop.LocalHeroModel.<编号> → 设置里的本地文件 Mod → 工坊绑定。
     //   只按英雄查本机设置，所以原版在你这边会把同英雄的其他玩家也换掉，名字（roleName）也换成模型里的 heroName
-    // beh.moe：出生（ClientRpcBornPos），每个客户端对每个玩家都会调用；里面 zo.jua → ff.eil 算名字、cch.six 换模型
-    // bkg.olu（变身技能）、bex.niv（变身状态恢复）：通过 cch.siz → pwl 给新模型换上 additionalModels
+    // beh.mof：出生（ClientRpcBornPos），每个客户端对每个玩家都会调用；里面 zo.jub → ff.eil 算名字、cch.siz 换模型
+    // bkg.olw（变身技能）、bex.niw（变身状态恢复）：通过 cch.sjb → pwl 给新模型换上 additionalModels
     internal static class HeroSkinHooks
     {
         // 正在出生或变身的角色；不在这些方法里时为 null（例如选英雄界面的预览）
@@ -1104,7 +1104,7 @@ namespace DBModKit
                 return true;
             }
             LocalWorkshopManifest manifest = null;
-            if (folder != null && !ccn.sln(folder, out manifest)) return true;
+            if (folder != null && !ccn.slp(folder, out manifest)) return true;
             __1 = folder ?? string.Empty;
             __2 = manifest;
             __result = folder != null;
@@ -1120,7 +1120,7 @@ namespace DBModKit
         internal static void SkillTransformPrefix(bkg __instance, out zo __state)
         {
             __state = owner;
-            owner = __instance.bloa;
+            owner = __instance.bloc;
         }
 
         internal static void CheckpointTransformPrefix(beh __0, out zo __state)
@@ -1148,7 +1148,7 @@ namespace DBModKit
         }
     }
 
-    // bgl.nsa(攻击者, 目标, 伤害, AttackType, 目标护盾, …)：触发命中事件 bgfu 前用 bgw.nuc 把伤害截到目标的护盾 + 血量，
+    // bgl.nsb(攻击者, 目标, 伤害, AttackType, 目标护盾, …)：触发命中事件 bgfu 前用 bgw.nud 把伤害截到目标的护盾 + 血量，
     // 打死目标时溢出的部分不算（goz、gxk 是同签名的诱饵）。这里记下截断前的伤害；bgfu 里的订阅者可能造成新的伤害（嵌套），用栈
     internal static class RawDamageHooks
     {
@@ -1182,9 +1182,9 @@ namespace DBModKit
         }
     }
 
-    // zo.jwb(攻击者, 伤害, 角度, AttackType, 暴击, …, ActiveSkillEnum, DamageSourceKind, 技能实例 bfe, …)：目标受到伤害的入口
-    //   （doi、hon 是同签名的诱饵）；zo.jwi(AttackType, 伤害, 暴击, 攻击者, …)：Buff 持续伤害、真实伤害，直接调 iwl。
-    // 两者里面都会走到 bgl.nsa 触发命中事件 bgfu，这里在调用期间记下伤害的类型、来源和技能实例。可能嵌套（命中触发别的伤害），用栈
+    // zo.jwc(攻击者, 伤害, 角度, AttackType, 暴击, …, ActiveSkillEnum, DamageSourceKind, 技能实例 bfe, …)：目标受到伤害的入口
+    //   （doi、hon 是同签名的诱饵）；zo.jwj(AttackType, 伤害, 暴击, 攻击者, …)：Buff 持续伤害、真实伤害，直接调 iwl。
+    // 两者里面都会走到 bgl.nsb 触发命中事件 bgfu，这里在调用期间记下伤害的类型、来源和技能实例。可能嵌套（命中触发别的伤害），用栈
     internal static class DamageContextHooks
     {
         internal struct Context
@@ -1220,7 +1220,7 @@ namespace DBModKit
 
         // 取调用栈有开销：只在有人订阅命中事件、而且是本地玩家打出的伤害时取
         private static bool ShouldTrace(zo attacker)
-            => attacker != null && attacker == nz.bvnm && Combat.HasSubscribers;
+            => attacker != null && attacker == nz.bvno && Combat.HasSubscribers;
 
         private static Type FindCaller()
         {

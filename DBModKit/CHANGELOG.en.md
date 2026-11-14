@@ -1,5 +1,11 @@
 # DBModKit changelog (English)
 
+## 0.44.0
+**For game version 7.19. After updating, quit the game and run install.bat in the runtime item again** (zip users: extract the new "plugins" package, overwriting old files).
+
+- Rebuilt obfuscated mappings (type names mostly unchanged this time, many member names renamed) and verified real forging entry points; updated the Steam lobby member-data wrappers and compatibility string lists. Forging works the same as in 7.18; the epic pick-one-of-three is still chosen by hand.
+- **Not play-tested**; we only checked that it builds and that every mod loads when the game starts. If something breaks, please export a report.
+
 ## 0.43.0
 **For game version 7.18. After updating, quit the game and run install.bat in the runtime item again** (zip users: extract the new "plugins" package, overwriting old files).
 
