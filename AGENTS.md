@@ -5,7 +5,7 @@
 - `DungeonBrawlMods.sln` 包含 DBModKit、AutoForge、AutoPickup、DamageMeter、DBStudio、Hextech、SmartMove、SmartSkill。只有 DBModKit 直接引用游戏代码，游戏绑定使用的混淆名只放在 `DBModKit/GameRaw.cs`、`Hooks.cs`、`Compat.cs`。其他 Mod 通过 DBModKit 公开接口访问游戏。
 - 读 `README.md` 的「架构」「DBModKit 接口速览」「开发」（版本号和发布段落）。写 Mod 时查 `docs/api/` 和 `templates/DBMod/`，插件直接继承 `BaseUnityPlugin`，用 `ModContext` 注册与清理，保持 ScriptEngine 热重载可用。
 - 做游戏适配时另读 `README.md` 的「游戏更新后」和 `tools/Remap/README.md`。仓库外的逆向资料在 `E:\test\地下城竞技场\tools\NOTES.md` 和 `E:\test\地下城竞技场\decompiled-<版本>\`，程序集快照在 `E:\test\地下城竞技场\backup\<版本>\`。
-- NOTES 中的未确认项要对照当前版源码或 IL 核实。改 NOTES 前先留一份 `NOTES.md.bak-<旧版或任务名>`，保留文件编码和换行。
+- NOTES 中的未确认项要对照当前版源码或 IL 核实。改 NOTES 前先在工作区的本地 git 提交一次（`git -C E:\test\地下城竞技场 commit -am "改 NOTES 前：<任务名>"`），不再另存 `.bak`；保留文件编码和换行。
 
 ## 编译、部署和测试
 
