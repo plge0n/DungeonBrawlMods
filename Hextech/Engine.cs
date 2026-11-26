@@ -303,8 +303,25 @@ namespace Hextech
             ScheduleRestOffer(Game.Wave);
         }
 
+        // 进战斗那一刻波次表可能还没就绪（例如联机进别人的房间），第一次正常回合之前按当前波次表重算
+        private static void RefreshPlan()
+        {
+            if (run.Round > 1 || run.LastOfferRest != 0) return;
+            int total = Game.TotalWaves;
+            if (total <= 1) return;
+            var relics = Game.RelicWaves;
+            int rounds = RoundPlan.RoundCount(Plugin.Rounds.Value, total);
+            var targets = RoundPlan.TargetWaves(rounds, total, relics);
+            if (rounds == run.Rounds && targets.SequenceEqual(run.TargetWaves)) return;
+            run.Rounds = rounds;
+            run.TargetWaves = targets;
+            mod.RunLog.Info("时机", "海克斯回合（重算）", ("总波数", total), ("次数", run.Rounds),
+                ("遗物回合", string.Join(",", relics)), ("目标波次", string.Join(",", run.TargetWaves)));
+        }
+
         private static void ScheduleRestOffer(int wave)
         {
+            RefreshPlan();
             int completed = Math.Max(0, run.Round - 1);
             bool scheduled = false;
             string reason;
