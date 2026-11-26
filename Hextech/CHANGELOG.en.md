@@ -1,6 +1,7 @@
 # Hextech changelog (English)
 
-## Unreleased
+## 0.46.0 (aligned with suite release 0.46)
+No runtime reinstall needed (DBModKit stays at 0.45.0); the Workshop update is enough. In multiplayer everyone needs Hextech 0.46.0.
 
 - Missed Hextech picks carry over to later breaks, up to one per break.
 - Runs with 20, 30, 40, and 50 waves now default to 4, 5, 6, and 7 picks respectively, including the opening pick. Set `General/Rounds` to 4–8 to choose a fixed count.

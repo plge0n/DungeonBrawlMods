@@ -11,9 +11,9 @@ BepInEx 5 插件，目标游戏：地下城竞技场（Steam 4246640，Unity 202
 | [AutoForge](AutoForge) | 自动锻体：自定义属性权重或均衡选择锻造，F10 开关，可以打榜 |
 | [AutoPickup](AutoPickup) | 战斗中自动拾取身边能捡的掉落物（和按 C 一样），可按类别过滤 |
 | [DamageMeter](DamageMeter) | 伤害统计：按普攻、技能、召唤物分开统计本波和本局的伤害与 DPS；Steam 联机时显示装了它的队友的伤害 |
-| [Hextech](Hextech) | 海克斯强化：每局 4 次三选一，专属技能强化 + 参照海克斯大乱斗、斗魂竞技场的通用卡和队友卡（联机时要每个人装的一样或房主允许） |
+| [Hextech](Hextech) | 海克斯强化：每局 4–7 次三选一（按波数），专属技能强化 + 参照海克斯大乱斗、斗魂竞技场的通用卡和队友卡（联机时要每个人装的一样或房主允许） |
 
-玩家说明见 [安装说明.txt](安装说明.txt)（英文 [INSTALL-EN.txt](INSTALL-EN.txt)），当前版本 0.45（适配游戏 7.20）的发版说明见 [RELEASE_NOTES.md](RELEASE_NOTES.md)，以前各版的改动见 [CHANGELOG.md](CHANGELOG.md)，更新后出问题、固定游戏版本、未实测的功能见 [docs/常见问题.md](docs/常见问题.md)（英文 [docs/FAQ.md](docs/FAQ.md)）。
+玩家说明见 [安装说明.txt](安装说明.txt)（英文 [INSTALL-EN.txt](INSTALL-EN.txt)），当前版本 0.46（适配游戏 7.20）的发版说明见 [RELEASE_NOTES.md](RELEASE_NOTES.md)，以前各版的改动见 [CHANGELOG.md](CHANGELOG.md)，更新后出问题、固定游戏版本、未实测的功能见 [docs/常见问题.md](docs/常见问题.md)（英文 [docs/FAQ.md](docs/FAQ.md)）。
 
 ## 架构
 ```
