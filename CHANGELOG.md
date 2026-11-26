@@ -5,6 +5,10 @@
 
 [English](#english)
 
+## 0.45 的改动
+
+- **DBModKit 0.45.0：适配游戏 7.20**。已验证编译、主菜单启动和 Mod 加载；未做局内、联机或存档验证。新版防守模式中不提供遗物降级。
+
 ## 0.44 的改动
 
 - **DBModKit 0.44.0：适配游戏 7.19**。**这一版没有实机测试**，只确认了编译通过、游戏启动后所有 Mod 正常加载。遇到问题请在 Mod 列表里导出报告反馈。
@@ -124,6 +128,10 @@ Hextech 从 0.3.0 直接跳到 0.31.0，中间的 0.4.0–0.8.0 是开发中的�
 
 Changes in each suite release, newest first. Per-mod details are in each mod's `CHANGELOG.en.md` in the source.
 The game version each release supports is listed in the [latest release notes](RELEASE_NOTES.md).
+
+## Changes in 0.45
+
+- **DBModKit 0.45.0: updated for game 7.20**. Verified the build, startup to the main menu, and mod loading. Gameplay, multiplayer, and saves were not tested. Relic downgrades are unavailable in the new Defense mode.
 
 ## Changes in 0.44
 
