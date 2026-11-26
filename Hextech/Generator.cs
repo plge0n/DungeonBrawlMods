@@ -4,7 +4,6 @@ using System.Linq;
 
 namespace Hextech
 {
-    internal enum Tier { Silver, Gold, Prism }
 
     internal enum BlockKind { Param, Trigger, Cost }
 

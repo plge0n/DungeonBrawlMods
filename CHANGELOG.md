@@ -5,6 +5,10 @@
 
 [English](#english)
 
+## 0.46 的改动
+
+- **Hextech 0.46.0：修复长局里海克斯只在开局弹一次**（玩家在狂欢模式里反馈）。错过的三选一会在之后的休息阶段补上；20/30/40/50 波的对局默认 4/5/6/7 次三选一，可在设置 `General/Rounds` 手动设为 4–8 次；联机中途暂停三选一时屏幕上会说明原因。运行环境不变（DBModKit 0.45.0），不用重新运行 install.bat。已验证编译、离线测试和主菜单加载，**局内没有实测**。
+
 ## 0.45 的改动
 
 - **DBModKit 0.45.0：适配游戏 7.20**。已验证编译、主菜单启动和 Mod 加载；未做局内、联机或存档验证。新版防守模式中不提供遗物降级。
@@ -128,6 +132,10 @@ Hextech 从 0.3.0 直接跳到 0.31.0，中间的 0.4.0–0.8.0 是开发中的�
 
 Changes in each suite release, newest first. Per-mod details are in each mod's `CHANGELOG.en.md` in the source.
 The game version each release supports is listed in the [latest release notes](RELEASE_NOTES.md).
+
+## Changes in 0.46
+
+- **Hextech 0.46.0: fixed Hextech picks stopping after the opening pick in long runs** (reported in Carnival mode). Missed picks carry over to later breaks; runs with 20/30/40/50 waves default to 4/5/6/7 picks, and `General/Rounds` sets a fixed 4–8; a screen notice explains when picks are paused mid-run in multiplayer. The runtime is unchanged (DBModKit 0.45.0), so there is no need to run install.bat again. Verified the build, offline tests and main-menu loading; **not play-tested in a match**.
 
 ## Changes in 0.45
 
