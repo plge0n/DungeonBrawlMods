@@ -1,17 +1,18 @@
-# 地下城竞技场 Mods 0.44 · 适配游戏 7.19
+# 地下城竞技场 Mods 0.45 · 适配游戏 7.20
 
 ## 升级
 
 1. 退出游戏。
 2. 创意工坊用户：等 Steam 把更新下载完，到运行环境的条目文件夹（`<Steam 库>\steamapps\workshop\content\4246640\3824690979\`）**重新运行 `install.bat`**。
    压缩包用户：把「仅插件」包（plugins）解压到游戏目录，覆盖旧文件。
-3. 启动游戏，点主菜单的「Mod」按钮，确认 DBModKit 是 0.44.0。打榜模式开启时 DBStudio 会停用，这是正常现象。
+3. 启动游戏，点主菜单的「Mod」按钮，确认 DBModKit 是 0.45.0。打榜模式开启时 DBStudio 会停用，这是正常现象。
 
 升级不会改动设置和存档；使用永久写入功能会修改存档。Mod 没恢复、联机提示"装的不一样"等情况见[常见问题](https://github.com/plge0n/DungeonBrawlMods/blob/main/docs/%E5%B8%B8%E8%A7%81%E9%97%AE%E9%A2%98.md)。
 
 ## 本版改动
 
-- **DBModKit 0.44.0：适配游戏 7.19**。**这一版没有实机测试**，只确认了编译通过、游戏启动后所有 Mod 正常加载。遇到问题请在 Mod 列表里导出报告反馈。
+- **DBModKit 0.45.0：适配游戏 7.20。** 史诗锻造仍保留手选；新版防守模式中不提供遗物降级。其他 Mod 的版本不变。
+- **验证范围：** 编译、主菜单启动和 Mod 加载通过；没有验证局内玩法、联机或存档。遇到问题请在 Mod 列表里导出报告反馈。
 
 ## 适配的游戏版本
 
@@ -19,6 +20,7 @@
 
 | Mod 版本 | 适配游戏版本 | DBModKit |
 |---|---|---|
+| 0.45 | 7.20 | 0.45.0 |
 | 0.44 | 7.19 | 0.44.0 |
 | 0.43 | 7.18 | 0.43.0 |
 | 0.42 | 7.16 | 0.42.0 |
@@ -41,20 +43,21 @@
 <details>
 <summary>English</summary>
 
-## DungeonBrawl Mods 0.44 · updated for game 7.19
+## DungeonBrawl Mods 0.45 · updated for game 7.20
 
 ### Upgrading
 
 1. Quit the game.
 2. Workshop users: once Steam has downloaded the update, **run `install.bat` again** in the runtime item's folder (`<Steam library>\steamapps\workshop\content\4246640\3824690979\`).
    Zip users: extract the "plugins" package into the game folder, overwriting the old files.
-3. Start the game, click the main-menu "Mod" button and check that DBModKit is 0.44.0. DBStudio is disabled when Ranked Mode is active; this is expected.
+3. Start the game, click the main-menu "Mod" button and check that DBModKit is 0.45.0. DBStudio is disabled when Ranked Mode is active; this is expected.
 
 Upgrading leaves settings and saves intact; permanent card unlock modifies the save. If the mods don't come back or multiplayer says "installed differently", see the [FAQ](https://github.com/plge0n/DungeonBrawlMods/blob/main/docs/FAQ.md).
 
 ### Changes
 
-- **DBModKit 0.44.0: updated for game 7.19**. **Not play-tested**; we only checked that it builds and that every mod loads when the game starts. If something breaks, please export a report from the Mod list.
+- **DBModKit 0.45.0: updated for game 7.20.** Epic forging remains manual. Relic downgrades are unavailable in the new Defense mode. Other mod versions are unchanged.
+- **Verification:** Build, startup to the main menu, and mod loading passed. Gameplay, multiplayer, and saves were not tested. If something breaks, please export a report from the Mod list.
 
 ### Game versions
 
@@ -62,6 +65,7 @@ Each mod release works with exactly one game version. The game's author is publi
 
 | Mods version | Game version | DBModKit |
 |---|---|---|
+| 0.45 | 7.20 | 0.45.0 |
 | 0.44 | 7.19 | 0.44.0 |
 | 0.43 | 7.18 | 0.43.0 |
 | 0.42 | 7.16 | 0.42.0 |

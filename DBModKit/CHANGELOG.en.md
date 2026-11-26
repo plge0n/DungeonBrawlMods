@@ -1,5 +1,11 @@
 # DBModKit changelog (English)
 
+## 0.45.0
+**For game version 7.20. Quit the game and rerun `install.bat` from the Workshop runtime item** (zip users: extract the new "plugins" package over the existing files).
+
+- Updated game bindings for skills, Steam lobby skin sync, card collection, and forging. Epic forging remains manual. Relic downgrades are unavailable in the new Defense mode.
+- Verified the build, startup to the main menu, and mod loading. Gameplay, multiplayer, and saves were not tested. Please export a report from the Mod list if you run into problems.
+
 ## 0.44.0
 **For game version 7.19. After updating, quit the game and run install.bat in the runtime item again** (zip users: extract the new "plugins" package, overwriting old files).
 
