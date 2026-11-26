@@ -5,7 +5,7 @@ using UnityEngine;
 
 namespace Hextech
 {
-    // 海克斯强化：每局 4 次三选一（开局 + 约 25%/50%/75% 波次附近的遗物回合之后）。
+    // 海克斯强化：开局一次，后续按总波数安排在休息阶段。
     // 专属卡由积木按品质点数自动生成（加少量手写招牌），通用卡参照 LoL 海克斯大乱斗手写；
     // 单人，或者联机时房间里每个人都装了同样的 Mod（或房主允许）时生效。企划见 docs/设计/海克斯企划.md
     [BepInPlugin(Guid, Name, Version)]
@@ -18,6 +18,7 @@ namespace Hextech
         public const string Version = "0.31.0";
 
         internal static ConfigEntry<bool> Enabled;
+        internal static ConfigEntry<int> Rounds;
         internal static ConfigEntry<int> Refreshes;
         internal static ConfigEntry<bool> EnemyAugments;
         internal static ConfigEntry<KeyboardShortcut> ListKey;
@@ -33,6 +34,8 @@ namespace Hextech
         private void OnLoad(ModContext mod)
         {
             Enabled = Config.Bind("General", "Enabled", true, "总开关（联机时要房间里每个人都装了同样的 Mod，或者房主在 DBStudio 的 Mod 页允许）");
+            Rounds = Config.Bind("General", "Rounds", 0,
+                "每局海克斯三选一的次数（含开局）。0 为自动：20 波及以下 4 次，此后每多 10 波加 1 次，最多 7 次；手动设置会限制在 4–8 次，下一局生效");
             Refreshes = Config.Bind("General", "Refreshes", 2,
                 new ConfigDescription("每局可以刷新几次（三选一里的\"刷新\"选项，不消耗游戏自己的刷新次数）", new AcceptableValueRange<int>(0, 10)));
             EnemyAugments = Config.Bind("General", "EnemyAugments", false,

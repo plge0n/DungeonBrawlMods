@@ -7,7 +7,7 @@ using UnityEngine;
 namespace Hextech
 {
     // 一局里的海克斯：什么时候弹、选中后怎么生效、释放时和击杀时的触发效果、休息时打开锻造、敌人海克斯、重试波次时的存取。
-    // 联机按 ModKit 的联机握手（Multiplayer.GameplayAllowed）：进战斗时不允许就本局不开；中途降级只是不再弹，已选的照常生效。
+    // 进战斗时握手不允许就本局不开；中途降级暂停三选一，已选的照常生效。
     // 联机时游戏不能暂停，三选一只在休息阶段弹；敌人海克斯以房主为准（怪物在房主那边生成），房主通过大厅数据公布敌人拿到的卡
     internal static class Engine
     {
@@ -16,7 +16,6 @@ namespace Hextech
         private const float IdleDelay = 1.5f;
         // 开局那次：看到游戏的开局遗物（或第一波开打、或进战斗这么久）之后才弹，避免抢在开场界面前面
         private const float OpeningFallback = 15f;
-        public const int Rounds = 4;
 
         // 本局状态。重试波次时整份存取，所以只放可以直接复制的东西
         private sealed class Run
@@ -24,6 +23,10 @@ namespace Hextech
             public int Seed;
             public List<Card> Picks = new List<Card>();
             public int Round;
+            public int Rounds;
+            // 开局定下，之后只读；快照可以共用同一个数组。
+            public int[] TargetWaves = Array.Empty<int>();
+            public int LastOfferRest;
             public int RefreshLeft;
             public int RefreshIndex;
             public int Prisms;
@@ -72,10 +75,10 @@ namespace Hextech
         private static SkillProfile profile;
         private static HeroSkill heroSkill;
         private static bool started, disabled, blocked;
+        private static string pauseReason;
         // 客户端：房主公布的敌人海克斯（上次读到的原文）、下次读的时间
         private static string hostEnemy;
         private static float hostEnemyAt;
-        private static List<int> offerWaves;
         private static float openAt, battleStart, forgeAt;
         private static bool sawGameChoice, waveStarted, inWave;
         private static float[] appliedPassive;
@@ -126,14 +129,26 @@ namespace Hextech
 
         private static void Reset()
         {
-            run = new Run { Seed = UnityEngine.Random.Range(1, int.MaxValue), RefreshLeft = Plugin.Refreshes.Value, Pending = true };
+            int total = Game.TotalWaves;
+            var relics = Game.RelicWaves;
+            int rounds = RoundPlan.RoundCount(Plugin.Rounds.Value, total);
+            run = new Run
+            {
+                Seed = UnityEngine.Random.Range(1, int.MaxValue),
+                RefreshLeft = Plugin.Refreshes.Value,
+                Pending = true,
+                Rounds = rounds,
+                TargetWaves = RoundPlan.TargetWaves(rounds, total, relics),
+            };
+            mod.RunLog.Info("时机", "海克斯回合", ("总波数", total), ("次数", run.Rounds),
+                ("遗物回合", string.Join(",", relics)), ("目标波次", string.Join(",", run.TargetWaves)));
             checkpoint = null;
             profile = null;
             heroSkill = null;
             started = disabled = blocked = false;
+            pauseReason = null;
             hostEnemy = null;
             hostEnemyAt = 0f;
-            offerWaves = null;
             appliedPassive = null;
             battleStart = Time.unscaledTime;
             openAt = battleStart + IdleDelay;
@@ -176,23 +191,14 @@ namespace Hextech
                 mod.RunLog.Info("开关", "总开关关闭，本局停用");
                 return;
             }
-            if (!Multiplayer.GameplayAllowed)
+            if (!started && !Multiplayer.GameplayAllowed)
             {
-                if (!started)
-                {
-                    // 进战斗时联机握手就不允许：本局不开（ModKit 已经提示过"改玩法的内容本局停用"）
-                    disabled = true;
-                    mod.RunLog.Info("联机", "联机握手不允许改玩法的内容，本局不开", ("说明", Multiplayer.Status));
-                    return;
-                }
-                if (!blocked)
-                {
-                    // 中途降级（有人进房、装的不一样）：之后不再弹，已经选了的不收回（和 ModKit 的约定一样）
-                    blocked = true;
-                    run.Pending = false;
-                    mod.RunLog.Info("联机", "联机握手降级，之后不再弹三选一", ("说明", Multiplayer.Status));
-                }
+                // 进战斗时联机握手就不允许：本局不开（ModKit 已经提示过"改玩法的内容本局停用"）
+                disabled = true;
+                mod.RunLog.Info("联机", "联机握手不允许改玩法的内容，本局不开", ("说明", Multiplayer.Status));
+                return;
             }
+            UpdateOfferPause();
             if (ChoicePanel.IsBusy) sawGameChoice = true;
             if (!started)
             {
@@ -211,6 +217,19 @@ namespace Hextech
             TickMana(player);
             TickConvert(player);
             TickBatch2(player);
+        }
+
+        private static void UpdateOfferPause()
+        {
+            if (!Active) return;
+            bool shouldPause = !Multiplayer.GameplayAllowed;
+            if (blocked == shouldPause) return;
+            blocked = shouldPause;
+            string status = Multiplayer.Status;
+            pauseReason = blocked ? status : null;
+            string message = blocked ? "三选一暂停" : "三选一已恢复";
+            mod.RunLog.Info("联机", message, ("说明", status));
+            ScreenNotice.Show($"{message}：{status}", 8f);
         }
 
         private static void Start(Player player)
@@ -280,33 +299,33 @@ namespace Hextech
             }
             // 休息阶段：限时加成提前结束（游戏随后拍重试快照，快照里不能带着加成）
             Triggers.Clear(revert: true);
-            if (run.Round >= Rounds || run.Round == 0) return;
-            if (OfferWaves().Contains(Game.Wave) && !blocked)
-            {
-                run.Pending = true;
-                openAt = Time.unscaledTime + IdleDelay;
-            }
+            UpdateOfferPause();
+            ScheduleRestOffer(Game.Wave);
         }
 
-        // 第 2、3、4 次：约 25%、50%、75% 波次附近的遗物回合（没有遗物回合时就按比例取波次）
-        private static List<int> OfferWaves()
+        private static void ScheduleRestOffer(int wave)
         {
-            if (offerWaves != null) return offerWaves;
-            int total = Game.TotalWaves;
-            if (total <= 1) return new List<int>();
-            var relics = Game.RelicWaves.Where(w => w > 1).ToList();
-            var list = new List<int>();
-            foreach (float frac in new[] { 0.25f, 0.5f, 0.75f })
+            int completed = Math.Max(0, run.Round - 1);
+            bool scheduled = false;
+            string reason;
+            if (disabled || !Plugin.Enabled.Value || (!started && !Multiplayer.GameplayAllowed)) reason = "本局停用";
+            else if (blocked) reason = "联机暂停";
+            else if (run.Round == 0) reason = "开局回合尚未完成";
+            else if (run.Pending)
             {
-                float target = total * frac;
-                var pool = (relics.Count > 0 ? relics : Enumerable.Range(2, total - 1).ToList()).Where(w => !list.Contains(w)).ToList();
-                if (pool.Count == 0) break;
-                list.Add(pool.OrderBy(w => Math.Abs(w - target)).ThenByDescending(w => w).First());
+                run.LastOfferRest = wave;
+                reason = "已有正常回合待弹";
             }
-            list.Sort();
-            offerWaves = list;
-            mod.RunLog.Info("时机", "海克斯回合", ("总波数", total), ("遗物回合", string.Join(",", relics)), ("海克斯", "开局," + string.Join(",", list)));
-            return list;
+            else if (RoundPlan.HasDueOffer(run.TargetWaves, wave, completed, run.LastOfferRest))
+            {
+                scheduled = run.Pending = true;
+                run.LastOfferRest = wave;
+                openAt = Time.unscaledTime + IdleDelay;
+                reason = "有已到达的目标回合待补";
+            }
+            else reason = run.LastOfferRest == wave ? "本次休息已安排过" : "没有到期的目标回合";
+            mod.RunLog.Info("时机", "波次结束", ("当前波次", wave), ("目标波次", string.Join(",", run.TargetWaves)),
+                ("已完成正常回合", completed), ("暂停", blocked), ("本次安排三选一", scheduled), ("原因", reason));
         }
 
         private static void TickOffer()
@@ -336,29 +355,14 @@ namespace Hextech
                 openAt = now + IdleDelay;
                 return false;
             }
-            // 联机时游戏不暂停：只在休息阶段弹，错过开局的话等第一波打完；额外的（棱彩蛋、嬗变）单人也等休息
-            if (inWave && (!Game.IsSolo || !run.Pending))
+            // 开局沿用原来的时机。后续正常回合和额外选择都只在休息阶段弹。
+            if (inWave && (!Game.IsSolo || !run.Pending || run.Round != 0))
             {
                 openAt = now + IdleDelay;
                 return false;
             }
             if (run.Round == 0 && !sawGameChoice && !waveStarted && now - battleStart < OpeningFallback) return false;
             return now >= openAt;
-        }
-
-        private static Tier TierFor(int round, System.Random rng)
-        {
-            double r = rng.NextDouble();
-            Tier t;
-            switch (round)
-            {
-                case 0: t = r < 0.6 ? Tier.Silver : Tier.Gold; break;
-                case 1: t = r < 0.2 ? Tier.Silver : r < 0.9 ? Tier.Gold : Tier.Prism; break;
-                case 2: t = r < 0.5 ? Tier.Gold : Tier.Prism; break;
-                default: t = r < 0.25 ? Tier.Gold : Tier.Prism; break;
-            }
-            // 一局最多 2 个棱彩
-            return t == Tier.Prism && run.Prisms >= 2 ? Tier.Gold : t;
         }
 
         public static int QualityColor(Tier t) => t == Tier.Silver ? 2 : t == Tier.Gold ? 3 : 4;
@@ -420,10 +424,11 @@ namespace Hextech
 
         private static void Offer(bool extra)
         {
-            if (extra ? run.Extra.Count == 0 : run.Round >= Rounds) return;
+            if (extra ? run.Extra.Count == 0 : run.Round >= run.Rounds) return;
             // 品质只由种子和回合决定，刷新不改品质；卡由种子、回合、刷新次数决定，重试波次后弹出来的和原来一样。额外的品质事先定好
             int key = extra ? 1000 + run.ExtraDone : run.Round;
-            var tier = extra ? run.Extra[0] : TierFor(run.Round, new System.Random(run.Seed ^ (run.Round * 7919)));
+            var tier = extra ? run.Extra[0] : RoundPlan.TierFor(run.Round, run.Rounds,
+                new System.Random(run.Seed ^ (run.Round * 7919)), run.Prisms);
             var rng = new System.Random(run.Seed ^ (key * 7919) ^ (run.RefreshIndex * 104729 + 1));
             var cards = Draw(tier, rng);
             if (cards.Count == 0)
@@ -459,7 +464,7 @@ namespace Hextech
                     IconPath = heroSkill?.IconPath ?? "Bundles/UI/Icon/Shop/forging_epic",
                 });
             string enemy = !EnemyOn ? "" : OwnEnemy ? "，敌人也会拿一张" : "，敌人海克斯跟房主走";
-            string which = extra ? "额外一次" : $"第 {run.Round + 1}/{Rounds} 次";
+            string which = extra ? "额外一次" : $"第 {run.Round + 1}/{run.Rounds} 次";
             string title = $"海克斯强化{(profile != null ? " · " + profile.Name : "")}（{TierName(tier)}，{which}{enemy}）";
             if (!ChoicePanel.TryShow(title, options, i => OnPick(cards, i, tier, extra)))
             {
@@ -477,8 +482,8 @@ namespace Hextech
             {
                 run.RefreshLeft--;
                 run.RefreshIndex++;
-                // 联机降级之后不再弹（也别挂着 Pending，否则欠的锻造一直等它）；额外的还在列表里，会再弹
-                if (!extra) run.Pending = !blocked;
+                // 暂停时也保留刷新请求，恢复后继续；额外回合还在列表里。
+                if (!extra) run.Pending = true;
                 openAt = Time.unscaledTime + 0.3f;
                 mod.RunLog.Info("三选一", "刷新", ("剩余", run.RefreshLeft));
                 return;
@@ -537,10 +542,10 @@ namespace Hextech
             string value = LobbySync.ReadHost(EnemyKey);
             if (value == hostEnemy) return;
             hostEnemy = value;
-            // 别人写的数据不可信：只认敌人卡池里的编号，最多 Rounds 张
+            // 只认敌人卡池里的编号，按房主最多能选的次数截断。
             var parts = (value ?? "").Split('|');
             var ids = parts.Length == 2 ? parts[1].Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries) : new string[0];
-            var picks = ids.Take(Rounds).Select(id => Augments.All.FirstOrDefault(a => a.Pool == AugmentPool.Enemy && a.Id == id))
+            var picks = ids.Take(RoundPlan.MaxRounds).Select(id => Augments.All.FirstOrDefault(a => a.Pool == AugmentPool.Enemy && a.Id == id))
                 .Where(a => a != null).Select(a => a.ToCard()).ToList();
             foreach (var c in picks.Skip(run.EnemyPicks.Count))
             {
@@ -909,8 +914,9 @@ namespace Hextech
         public static string Summary()
         {
             string head = profile != null ? $"海克斯强化 · {profile.Name}" : "海克斯强化";
-            if (run.Picks.Count == 0) return head + "：还没有选择。";
+            if (run.Picks.Count == 0) head += "：还没有选择。";
             var lines = run.Picks.Select(c => $"{c.Name}（{TierName(c.Tier)}）：{string.Join("；", c.Lines)}").ToList();
+            if (blocked) lines.Insert(0, $"三选一暂停：{pauseReason}");
             if (run.InfiniteBonus > 0) lines.Add($"无限循环往复：击杀已累计技能急速 +{run.InfiniteBonus}");
             if (run.Forges.Count > 0) lines.Add($"还有 {run.Forges.Count} 次属性锻造，休息时打开");
             if (Team.Carry != null) lines.Add($"正在供养：{Team.Carry.Name}");
@@ -918,7 +924,7 @@ namespace Hextech
             if (Picked("undying")) lines.Add($"不灭：本局还剩 {Math.Max(0, Batch4.UndyingCharges - run.UndyingUsed)} 次");
             if (Picked("urf") && !run.UrfDone) lines.Add($"乌尔夫的勇士：已击杀 {run.UrfKills}/{Augments.UrfKills} 只变异怪或 Boss");
             lines.AddRange(run.EnemyPicks.Select(c => $"<color=#FF6060>敌人·{c.Name}：{string.Join("；", c.Lines)}</color>"));
-            return head + "\n" + string.Join("\n", lines);
+            return lines.Count == 0 ? head : head + "\n" + string.Join("\n", lines);
         }
     }
 }

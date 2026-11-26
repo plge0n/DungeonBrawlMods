@@ -90,10 +90,13 @@ These are implemented and compile, but haven't been fully verified in the game y
 | LAN mode | There's no Steam lobby on LAN, so the mods can't check what others have installed: gameplay-changing content is always disabled, skin sync and team damage aren't supported. Not tested at all |
 | Hextech 0.4.0–0.31.0 (new in 0.31, **all untested**) | Multiplayer (handshake, rest-phase picks, host's enemy augments); all teammate and feed-the-carry augments (need two players); batches 3–5 (not even single-player): cheat death, extra lightning / sword waves, extra picks from Prismatic Egg and Transmute, Auto-cast, trade-offs, Bite / Bomb / Thunder Flash signatures |
 | Hextech (0.3.0 and earlier) | On-cast effects such as "Echo", Tank Engine losing half on death, restoring the second-batch augments (Shotgun, Tank Engine, Porcupine…) after retrying a wave |
+| Hextech (unreleased) | Extra picks in long runs, missed picks carrying over to later breaks, wave retries, multiplayer pause notices, and enemy augments when the host and clients use different pick counts |
 | DamageMeter | Attribution of summon damage in multiplayer |
 | SmartSkill execute prediction | The "killable enemies >=" condition for 处决 / 点金术 / 撕咬 and its hit-based calibration |
 
 ## Known issues
+
+- **Hextech in Defense mode** (`BattleModeId.Defense`) only offers the opening pick because Defense skips the regular wave events.
 
 - Custom skills, relics and equipment don't appear in the player info panel or the results screen.
 - Players without ModKit don't see the multiplayer handshake notice.
