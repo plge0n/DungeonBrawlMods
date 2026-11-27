@@ -6,10 +6,10 @@
 ```powershell
 dotnet build tools/Remap -c Release
 $remap = "tools/Remap/bin/Release/net8.0/Remap.dll"
-dotnet $remap update --old ../backup/7.20                 # 只检查，报告在 tools/Remap/out/report.md
-dotnet $remap update --old ../backup/7.20 --write         # 写回 DBModKit 源码
-dotnet $remap snapshot --version 7.20                                   # 适配完新版本后保存，作为下次的 --old
-dotnet $remap selftest --old ../backup/7.20 --mutate 0.03 # 自测
+dotnet $remap update --old ../backup/7.21                 # 只检查，报告在 tools/Remap/out/report.md
+dotnet $remap update --old ../backup/7.21 --write         # 写回 DBModKit 源码
+dotnet $remap snapshot --version 7.21                                   # 适配完新版本后保存，作为下次的 --old
+dotnet $remap selftest --old ../backup/7.21 --mutate 0.03 # 自测
 ```
 `dotnet $remap help` 查看全部选项。`--notes ../tools/NOTES.md` 会同时改笔记里反引号中的 `类型.成员`。
 
@@ -65,3 +65,5 @@ dotnet $remap selftest --old ../backup/7.20 --mutate 0.03 # 自测
 **7.18 → 7.19（2026-11-14）**：类型名几乎没变（只改了 4 个），成员名大面积顺移，源码改名 1155 处，对应率 73.3%。大厅成员数据包装手动对应 `cqu.wyv/wyu` → `cqu.wyx/wyw`；Compat 元组成员数组仍要逐项同步。`ff.elg`/`ff.eli` 报"重载对应到不同的名字"是因为 `beh` 里有同名但没对应上的方法，`ff` 的这两个方法名字没变，可以忽略。锻造入口 `qo.hgc`、`bvz.qwi/qws` 已核对游戏调用者。
 
 **7.19 → 7.20（2026-11-26）**：源码自动改名 2467 处，对应率 72.8%。`bio.bloc` 不再是公开字段，新代码应使用 `bpl.cacp` 属性；setter 同时记录施法者的代次。Steam 大厅数据包装有等价副本，按 P/Invoke 签名和相邻的 Get/Set 方法选 `cwr.zdb/zdc`。反射字符串的同名冲突按声明类型和签名复核，不要全局替换短名，以免意外改动长混淆名。
+
+**7.20 → 7.21（2026-11-27）**：源码自动改名 1360 处，对应率 72.4%。`ix.gqq` 的遗物类型变为 `bab`，包装仍走原生防守模式流程。Steam 大厅成员数据读写采用相邻的 `cwq.zde/zdf`，`nhs` 是等价写入副本。`fh.eqx` 的重载提示来自另一个声明类型，实际选目标方法签名保持原样。

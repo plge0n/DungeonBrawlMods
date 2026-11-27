@@ -80,6 +80,7 @@ These are implemented and compile, but haven't been fully verified in the game y
 
 | Feature | Untested part |
 |---|---|
+| Game 7.21 / DBModKit 0.47.0 | In-game checks covered main-menu startup and mod loading. Defense mode, relic and skill changes, forging, Steam lobby skin sync, card saves, and ranked submissions still need play-testing. Relic downgrades remain disabled in Defense mode to avoid losing an existing relic if the game defers the replacement. |
 | Game 7.20 / DBModKit 0.45.0 | Only main-menu startup and mod loading were checked in game. Defense mode, skill and relic changes, forging choices, Steam lobby skin sync, and card saves were not play-tested. Relic downgrades are disabled in Defense mode to avoid losing an existing relic if the game defers the replacement. |
 | Custom equipment (DBModKit 0.24.0) | Tested in single-player (effects on existing equipment, new equipment, content packs, build-data filtering); untested: multiplayer, upgrading, retrying a wave, actually picking it from the artifact choice |
 | Dependencies and conflicts (DBModKit 0.23.0) | Missing-dependency notice and "Subscribe" button, choosing which mod handles auto-cast/movement, warning when two mods change the same value |

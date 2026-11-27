@@ -5,6 +5,10 @@
 
 [English](#english)
 
+## 0.47 的改动
+
+- **DBModKit 0.47.0 适配游戏 7.21。** 工坊用户请退出游戏并重新运行运行环境条目里的 `install.bat`。压缩包用户可覆盖安装新版「仅插件」包。已验证编译、主菜单启动和 Mod 加载。局内玩法、联机和存档仍待实测。
+
 ## 0.46 的改动
 
 - **Hextech 0.46.0：修复长局里海克斯只在开局弹一次**（玩家在狂欢模式里反馈）。错过的三选一会在之后的休息阶段补上；20/30/40/50 波的对局默认 4/5/6/7 次三选一，可在设置 `General/Rounds` 手动设为 4–8 次；联机中途暂停三选一时屏幕上会说明原因。运行环境不变（DBModKit 0.45.0），不用重新运行 install.bat。已验证编译、离线测试和主菜单加载，**局内没有实测**。
@@ -132,6 +136,10 @@ Hextech 从 0.3.0 直接跳到 0.31.0，中间的 0.4.0–0.8.0 是开发中的�
 
 Changes in each suite release, newest first. Per-mod details are in each mod's `CHANGELOG.en.md` in the source.
 The game version each release supports is listed in the [latest release notes](RELEASE_NOTES.md).
+
+## Changes in 0.47
+
+- **DBModKit 0.47.0 supports game version 7.21.** Quit the game and rerun `install.bat` from the Workshop runtime item, or extract the new plugins package over the existing files. Verified the build, startup to the main menu, and mod loading. Gameplay, multiplayer, and saves still need testing.
 
 ## Changes in 0.46
 

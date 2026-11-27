@@ -1,5 +1,9 @@
 # DBModKit changelog (English)
 
+## 0.47.0
+
+**DBModKit 0.47.0 supports game version 7.21.** Quit the game and rerun `install.bat` from the Workshop runtime item, or extract the new plugins package over the existing files. Verified the build, startup to the main menu, and mod loading. Gameplay, multiplayer, and saves still need testing.
+
 ## 0.45.0
 **For game version 7.20. Quit the game and rerun `install.bat` from the Workshop runtime item** (zip users: extract the new "plugins" package over the existing files).
 
